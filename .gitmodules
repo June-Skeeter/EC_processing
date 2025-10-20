@@ -1,0 +1,3 @@
+[submodule "src/helperFunctions"]
+	path = src/helperFunctions
+	url = https://github.com/June-Skeeter/helperFunctions.git

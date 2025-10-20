@@ -3,9 +3,10 @@ import sys
 import yaml
 from datetime import datetime
 from dataclasses import dataclass, field
+from ..helperFunctions.typeEnforcer import typeEnforcer
 
 @dataclass(kw_only=True)
-class project:
+class project(typeEnforcer):
     projectPath: str
     databaseInterval: int = 1800 # in seconds
     creationDate: str = field(default_factory=lambda: datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'))
