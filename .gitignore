@@ -1,0 +1,4 @@
+.venv
+testing/outputs
+*__pycache__/
+*.pyc
