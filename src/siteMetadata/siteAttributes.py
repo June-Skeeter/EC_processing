@@ -12,10 +12,11 @@ class measurementAttributes:
     measurementID: str = None
     measurementType: str = None
     samplingFrequency: float = None  # in Hz
+    samplingInterval: float = None # in seconds
 
     def __post_init__(self):
-        print(self.sourceFile)
-        self.samplingInterval = 1.0 / self.samplingFrequency if self.samplingFrequency else None
+        if self.samplingInterval is not None:
+            self.samplingFrequency = 1.0 / self.samplingInterval
 
 @dataclass(kw_only=True)
 class siteAttributes(project,measurementAttributes):
