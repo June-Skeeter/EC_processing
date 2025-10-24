@@ -23,7 +23,7 @@ class csiTrace:
         'INT4':{'struct':'i','output':'<i4'},
         'ASCII':{'struct':'s','output':'string'},
     }
-
+    # Parsed from data file
     variableName: str
     units: str = None
     dtype: str = None
@@ -143,27 +143,6 @@ class TOA5(csiTable):
 
 
 @dataclass(kw_only=True)
-class TOA5(csiTable):
-    sourceFileType: str = 'TOA5'
-
-    def __post_init__(self):
-        super().__post_init__()
-        #First read metadata from files header
-        self.fileTimestamp = datetime.strptime(re.search(r'([0-9]{4}\_[0-9]{2}\_[0-9]{2}\_[0-9]{4})', self.sourceFileName.rsplit('.',1)[0]).group(0),'%Y_%m_%d_%H%M')
-        with open(self.sourceFileName) as self.fileObject:
-            Header = self.readAsciiHeader(nLines=4)
-            self.tableName = Header[0][-1]
-    
-        self.dataTable = pd.read_csv(self.sourceFileName,skiprows=[0,2,3],header=[0],parse_dates=[self.timestampName],date_format='ISO8601',dtype=csiTrace.defaultTypes)
-        
-        # Extract metadata for each variable
-        self.dataColumns =  {
-            columnName:csiTrace(variableName=columnName,units=units,operation=operation,dtype=dtype)#.__dict__
-                for columnName,units,operation,dtype in 
-                zip(Header[1],Header[2],Header[3],list(self.dataTable.dtypes))}
-        self.saveTable()
-
-@dataclass(kw_only=True)
 class TOB3(csiTable):
     headerSize = 12
     footerSize = 4
@@ -185,8 +164,8 @@ class TOB3(csiTable):
             # Extract metadata for each variable
             self.dataColumns = {
                 columnName:csiTrace(variableName=columnName,units = units, operation = operation,dtype=dtype)
-                    for columnName,units,operation,dtype in 
-                    zip(Header[2],Header[3],Header[4],Header[5])
+                    for i,(columnName,units,operation,dtype) in 
+                    enumerate(zip(Header[2],Header[3],Header[4],Header[5]))
                     }
             if self.extractData:
                 self.readFrames()
@@ -211,6 +190,7 @@ class TOB3(csiTable):
                     for columnName,units,operation,dtype in 
                     zip([self.timestampName,'RECORD'],['s',None],[None,None],['<f8','<i8'])
                     } | self.dataColumns
+        breakpoint()
         self.typeMap = {key:val.dtype for key,val in self.dataColumns.items()}
         self.dataTable = self.dataTable.astype(self.typeMap)  
 

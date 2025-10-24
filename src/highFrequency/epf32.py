@@ -3,6 +3,19 @@ from ..siteMetadata.siteAttributes import siteAttributes
 from ..parseDataFiles.parseCSI import TOA5,TOB3
 from ..helperFunctions.log import log
 from dataclasses import dataclass, field
+import os
+from ruamel.yaml import YAML
+yaml = YAML()
+
+@dataclass(kw_only=True)
+class GHG:
+    metadata: dict = None
+    template: str = os.path.join(os.path.dirname(os.path.abspath(__file__)),'config','GHG_metadata_map.yml')
+
+    def __post_init__(self):
+        with open(self.template, 'r') as file:
+            self.metadata = yaml.load(file)
+    
 
 @dataclass(kw_only=True)
 class epf32(siteAttributes):
@@ -24,6 +37,6 @@ class epf32(siteAttributes):
                 setattr(self,key,value)
         
         super().__post_init__()
-        # breakpoint()
+        breakpoint()
 
 
