@@ -45,12 +45,12 @@ Instruments:
   instr_1_sw_version: 
   instr_1_id: 
   instr_1_height: 
-  instr_1_wformat: 
+  instr_1_wformat: uvw  
   instr_1_wref: 
-  instr_1_north_offset: 
-  instr_1_northward_separation: 
-  instr_1_eastward_separation: 
-  instr_1_vertical_separation: 
+  instr_1_north_offset: self.sonicNorthOffset
+  instr_1_northward_separation: 0.00
+  instr_1_eastward_separation: 0.00
+  instr_1_vertical_separation: 0.00
   instr_1_vpath_length: 
   instr_1_hpath_length: 
   instr_1_tau: 
