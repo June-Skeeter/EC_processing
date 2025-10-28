@@ -195,9 +195,9 @@ class TOB3(csiTable):
         self.dataTable = self.dataTable.astype(self.typeMap)  
 
     def decodeFrame(self,frame):
-        frame = [struct.unpack('LLL', frame[:self.headerSize]),
+        frame = [struct.unpack('iii', frame[:self.headerSize]),
                  struct.unpack(self.byteMap_Body, frame[self.headerSize:-self.footerSize]),
-                 struct.unpack('L',frame[-self.footerSize:])[0]]
+                 struct.unpack('i',frame[-self.footerSize:])[0]]
         frame[0] = [frame[0][0]+frame[0][1]*self.frameResolution+self.campbellBaseTime,frame[0][2]]
         if 'H' in self.byteMap_Body:
             frame[1] = self.decode_fp2(frame[1])
