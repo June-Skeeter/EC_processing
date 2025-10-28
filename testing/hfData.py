@@ -16,11 +16,14 @@ sourceFileName = os.path.join(data,'57840_Time_Series_40.dat')
 
 print('Testing highfrequency data load from file: {}\n'.format(sourceFileName))
 
+
+
 hf = epf32.epf32(
     projectPath=projectPath,
     sourceFileName=sourceFileName,
     siteID='SCL',
-    sourceFileType='TOB3'
+    sourceFileType='TOB3',
+    sonicAnemometer= 'IRGASON',
     )
 # breakpoint()
 # print(yaml.safe_dump(hf.__dict__))

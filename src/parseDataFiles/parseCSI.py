@@ -190,7 +190,6 @@ class TOB3(csiTable):
                     for columnName,units,operation,dtype in 
                     zip([self.timestampName,'RECORD'],['s',None],[None,None],['<f8','<i8'])
                     } | self.dataColumns
-        breakpoint()
         self.typeMap = {key:val.dtype for key,val in self.dataColumns.items()}
         self.dataTable = self.dataTable.astype(self.typeMap)  
 
