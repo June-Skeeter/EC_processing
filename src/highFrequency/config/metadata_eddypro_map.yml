@@ -8,7 +8,7 @@ metadata:
     last_change_date: 
     start_date: 
     end_date: 
-    file_name: 
+    file_name: self.sourceFileName
     sw_version: 
     ini_version: 
 
@@ -22,17 +22,17 @@ metadata:
     tstamp_end: 0
 
   Site:
-    site_name: 
+    site_name: self.siteName
     site_id: self.siteID
-    altitude: 
-    latitude: 
-    longitude: 
+    altitude: self.altitude
+    latitude: self.latitude
+    longitude: lself.ongitude
     canopy_height: 
     displacement_height: 
     roughness_length: 
 
   Station:
-    station_name: 
+    station_name: self.siteName
     station_id: self.siteID
 
   Timing:

@@ -1,23 +1,56 @@
 import os
 import sys
 import yaml
-from datetime import datetime
+from datetime import datetime, UTC
+
 from dataclasses import dataclass, field
 from ..helperFunctions.typeEnforcer import typeEnforcer
+# from .siteAttributes import siteAttributes
+
+startMarker = '\n---\n'
 
 @dataclass(kw_only=True)
-class project(typeEnforcer):
+class currentProject(typeEnforcer):
     projectPath: str
+    configFileName: str = 'projectConfig.yml'
+    config = {}
     databaseInterval: int = 1800 # in seconds
-    creationDate: str = field(default_factory=lambda: datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'))
+    currentTime: str = field(default_factory=lambda: datetime.now(UTC).strftime('%Y-%m-%dT%H:%M:%SZ'))
     safeMode: bool = True # If True, prevents overwriting existing files without warning.
 
-    def pathCheck(self):
+    def __post_init__(self):
+        self.configFileName = os.path.join(self.projectPath,self.configFileName)
         if not os.path.isdir(self.projectPath) or os.listdir(self.projectPath)==[]:
-            os.makedirs(self.projectPath, exist_ok=True)
+            # os.makedirs(self.projectPath, exist_ok=True)
             os.makedirs(os.path.join(self.projectPath,'Sites'), exist_ok=True)
-            with open(os.path.join(self.projectPath,'ecDbConfig.yml'),'w') as f:
-                yaml.safe_dump({'creationDate':self.creationDate,'lastModified':self.creationDate},f)
-        elif not os.path.isfile(os.path.join(self.projectPath,'ecDbConfig.yml')):
-            sys.exit('Database path {} exists but is missing ecDbConfig.yml file. Please check.'.format(self.projectPath))
-            
+            with open(self.configFileName,'w') as f:
+                f.write('# A test comment\n# All comments before the tripple dash will be preserved unchnaged'+startMarker)
+                yaml.safe_dump({'creationDate':self.currentTime,'lastModified':self.currentTime,'siteList':[]},f)
+        elif not os.path.isfile(self.configFileName):
+            self.logError(f'Database path {self.projectPath} exists but is missing {self.configFileName} file. Please check.')
+
+        with open(self.configFileName) as f:
+            self.configHeader = f.read().split(startMarker)[0]
+        with open(self.configFileName) as f:
+            self.config = yaml.safe_load(f)
+        print(self.config)
+        
+        print(self.__class__.__name__,'!!!!!!!!!!!!!!!')
+    
+    def close(self):
+        self.config['lastModified'] = self.currentTime
+        with open(self.configFileName,'w') as f:
+            f.write(self.configHeader+startMarker)
+            yaml.safe_dump(self.config,f)
+
+class newProject(currentProject):
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.close()
+        # self.pathCheck(siteID='Template')
+        # for c in (self.__class__.__mro__[:-1]):
+        #     print(c.__name__)
+        #     print(c.__annotations__)
+        # print(self.__class__.__name__)
+
