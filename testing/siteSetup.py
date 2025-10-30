@@ -2,9 +2,11 @@ import os
 import yaml
 import context
 import shutil
-from src.dbFunctions.project import newProject
-from src.dbFunctions import siteAttributes
+from src.dbFunctions.project import project,projectConfiguration
+from src.dbFunctions.site import site
+from src.dbFunctions.measurement import measurement
 from ruamel.yaml import YAML
+import time
 
 yaml = YAML()
 
@@ -12,25 +14,31 @@ yaml = YAML()
 data = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
 
 projectPath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'outputs','testProject'))
-
 shutil.rmtree(projectPath, ignore_errors=True)
 
-# siteAttributes.siteAttributes(
-#     projectPath=projectPath,
-# )
+# pC = projectConfiguration(projectPath=projectPath)#,siteIDs=['SCL','FIL','ILL'])
+# project(projectPath=projectPath)
 
-newProject(projectPath=projectPath)
+s = measurement(projectPath=projectPath,siteID='SCL',measurementID='highFrequency')
+# s = measurement(projectPath=projectPath,siteID='SCL',measurementID='fluxes')
+# s = measurement(projectPath=projectPath,siteID='SCL',measurementID='bioMet')
+
+print(s.config.description)
+# print(site())
 
 # print('Test creation of new site')
 
-# with open(os.path.join(data,'SCL_siteAttributes.yml')) as f:
+# with open(os.path.join(data,'SCL_siteConfiguration.yml')) as f:
 #     kwargs = yaml.load(f)
 # print(kwargs)
-# siteAttributes.siteAttributes(
+# siteConfiguration.siteConfiguration(projectPath=projectPath,siteID='SCL')
+# siteConfiguration.siteConfiguration(projectPath=projectPath,siteID='SCL')
+
+# siteConfiguration.siteConfiguration(
 #     projectPath=projectPath,
 #     **kwargs
 #     )
-# testRead = siteAttributes.siteAttributes(
+# testRead = siteConfiguration.siteConfiguration(
 #     projectPath=projectPath,
 #     siteID='SCL'
 # )
