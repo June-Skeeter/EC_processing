@@ -76,7 +76,7 @@ metadata:
     separator: 
     header_rows: 
     data_label: 
-    col_n_variable: 
+    col_n_variable: self.variables[n]['variableName']
     col_n_instrument: 
     col_n_measure_type: 
     col_n_unit_in: 

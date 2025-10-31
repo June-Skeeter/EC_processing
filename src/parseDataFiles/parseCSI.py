@@ -4,6 +4,9 @@ from dataclasses import dataclass,field
 from collections import defaultdict
 from ..helperFunctions.log import log
 from ..helperFunctions.parseFrequency import parseFrequency
+from ..helperFunctions.dictFuncs import dcToDict
+from ..dbFunctions.measurement import trace
+from ..helperFunctions.baseFunctions import baseFunctions
 import pandas as pd
 import os
 from datetime import datetime
@@ -13,7 +16,7 @@ import sys
 import re
 
 @dataclass(kw_only=True)
-class csiTrace:
+class csiTrace(trace):
     defaultTypes = defaultdict(lambda: '<f4',RECORD ='<i8',TIMESTAMP = 'string') # Does not apply to TOB3 which have type specified in header
     csiTypeMap = {
         'FP2':{'struct':'H','output':'<f4'},
@@ -24,9 +27,6 @@ class csiTrace:
         'ASCII':{'struct':'s','output':'string'},
     }
     # Parsed from data file
-    variableName: str
-    units: str = None
-    dtype: str = None
     operation: str = None
     byteMap: str = field(default=None,repr=False)
 
@@ -48,7 +48,7 @@ class csiTrace:
 
 
 @dataclass(kw_only=True)
-class csiFile:
+class csiFile(baseFunctions):
     # Some files may contain multiple tables
     # Attributes common to a given file
     fileObject: object = field(default=None,repr=False)
@@ -72,6 +72,7 @@ class csiTable(csiFile):
     extractData: bool = field(default=True,repr=False)
     timestampName: str = 'TIMESTAMP'
     samplingInterval: float = None  # in seconds
+    samplingFrequency: str = None # in Hz
     gpsDriftCorrection: bool = field(default=False,repr=False,metadata={'description':'Consider using for high frequency data if GPS clock resets were enabled.  This is clock correction is useful to ensure long-term stability of the data logger clock but causes problems when splitting high-frequency data files.  Assuming the file does not span more than a day, the drift should be minimal, so we can "remove" the offset within a file to ensure timestamps are sequential'})
 
     def readAsciiHeader(self,nLines):
@@ -98,7 +99,10 @@ class csiTable(csiFile):
                 log(f"Total GPS induced offset in {self.sourceFileName} is {Offset.iloc[-1]}s",verbose=False)
         if self.samplingInterval is None:
             self.samplingInterval = self.dataTable.TIMESTAMP.diff().median().total_seconds()
-            
+        self.samplingFrequency = (1.0 / self.samplingInterval)
+        for key,value in self.dataColumns.items():
+            self.dataColumns[key] = dcToDict(value,repr=True)
+            print(self.dataColumns)
         
         # fileTime = np.ceil(self.dataTable[self.timestampName]/self.databaseInterval)
         # if self.samplingInterval<self.databaseInterval:

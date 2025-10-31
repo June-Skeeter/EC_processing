@@ -23,7 +23,7 @@ s = measurement(projectPath=projectPath,siteID='SCL',measurementID='highFrequenc
 # s = measurement(projectPath=projectPath,siteID='SCL',measurementID='fluxes')
 # s = measurement(projectPath=projectPath,siteID='SCL',measurementID='bioMet')
 
-print(s.config.description)
+# print(s.config.description)
 # print(site())
 
 # print('Test creation of new site')

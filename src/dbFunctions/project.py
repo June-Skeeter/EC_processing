@@ -1,7 +1,7 @@
 import os
 import sys
 import yaml
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 
 from dataclasses import dataclass, field
 from ..helperFunctions.baseFunctions import baseFunctions
@@ -9,7 +9,7 @@ from ..helperFunctions.baseFunctions import baseFunctions
 
 default_comment = f'''
 Database project configuration file
-Created: {datetime.now(UTC).strftime('%Y-%m-%dT%H:%M:%SZ')}
+Created: {datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}
 '''
 
 # 
@@ -18,7 +18,7 @@ class projectConfiguration(baseFunctions):
     header: str = field(default=default_comment,repr=False) # YAML header, must be treated differently
     projectPath: str = None
     dateCreated: str = None
-    dateModified: str = field(default_factory=lambda: datetime.now(UTC).strftime('%Y-%m-%dT%H:%M:%SZ'))
+    dateModified: str = field(default_factory=lambda: datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'))
     siteIDs: list = field(default_factory=lambda:['__TEMPLATE__'])
 
     def __post_init__(self):
@@ -27,18 +27,6 @@ class projectConfiguration(baseFunctions):
         super().__post_init__()
         self.saveToYaml()
 
-    # def save(self):
-    #     saveDict(
-    #         dcToDict(self,repr=True,inheritance=False),
-    #         fileName=self.fileName,
-    #         header=self.header
-    #     )
-
-        # os.makedirs(self.projectPath,exist_ok=True)
-        # fn = os.path.join(self.projectPath,type(self).__name__+'.yml')
-        # print(dcToDict(self,onlyChild=True))
-        # with open(fn,'w') as f:
-        #     yaml.safe_dump({key:self.__dict__[key] for key in self.__annotations__},f)
 
 @dataclass(kw_only=True)
 class project(baseFunctions):

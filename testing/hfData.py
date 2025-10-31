@@ -15,14 +15,14 @@ shutil.rmtree(projectPath, ignore_errors=True)
 
 
 sourceFileName = os.path.join(data,'TOA5_BBS.FLUX_2023_08_01_1530.dat')
-epf32.test(projectPath=projectPath)
-# hf = epf32.epf32(
-#     projectPath=projectPath,
-#     sourceFileName=sourceFileName,
-#     siteID='SCL',
-#     sourceFileType='TOA5',
-#     sonicAnemometer= 'IRGASON',
-#     )
+# epf32.test(projectPath=projectPath)
+hf = epf32.epf32(
+    projectPath=projectPath,
+    sourceFileName=sourceFileName,
+    siteID='SCL',
+    sourceFileType='TOA5',
+    sonicAnemometer= 'IRGASON',
+    )
 
 
 # sourceFileName = os.path.join(data,'57840_Time_Series_40.dat')
