@@ -102,8 +102,8 @@ class csiTable(csiFile):
         self.samplingFrequency = (1.0 / self.samplingInterval)
         for key,value in self.dataColumns.items():
             self.dataColumns[key] = dcToDict(value,repr=True)
-            print(self.dataColumns)
         
+    # def resample(self):
         # fileTime = np.ceil(self.dataTable[self.timestampName]/self.databaseInterval)
         # if self.samplingInterval<self.databaseInterval:
         #     for ft in fileTime.unique():
