@@ -9,7 +9,6 @@ FL = os.listdir(data)
 for f in FL:
     if f.endswith('.zip'):
         if f.replace('.zip', '.dat') not in FL:
-            print('!')
             import zipfile
             with zipfile.ZipFile(os.path.join(data, f), 'r') as zip_ref:
                 zip_ref.extractall(data)

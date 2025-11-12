@@ -23,14 +23,9 @@ s = measurement(projectPath=projectPath,siteID='SCL',measurementID='highFrequenc
 # s = measurement(projectPath=projectPath,siteID='SCL',measurementID='fluxes')
 # s = measurement(projectPath=projectPath,siteID='SCL',measurementID='bioMet')
 
-# print(s.config.description)
-# print(site())
-
-# print('Test creation of new site')
 
 # with open(os.path.join(data,'SCL_siteConfiguration.yml')) as f:
 #     kwargs = yaml.load(f)
-# print(kwargs)
 # siteConfiguration.siteConfiguration(projectPath=projectPath,siteID='SCL')
 # siteConfiguration.siteConfiguration(projectPath=projectPath,siteID='SCL')
 
@@ -42,6 +37,6 @@ s = measurement(projectPath=projectPath,siteID='SCL',measurementID='highFrequenc
 #     projectPath=projectPath,
 #     siteID='SCL'
 # )
-# print('clear old',os.path.join(data,'projectTemplate'))
+
 # shutil.rmtree(os.path.join(data,'projectTemplate'),ignore_errors=True)
 # shutil.copytree(projectPath,os.path.join(data,'projectTemplate'))
