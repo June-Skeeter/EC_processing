@@ -3,8 +3,8 @@ import yaml
 import context
 import shutil
 from src.dbFunctions.project import project,projectConfiguration
-from src.dbFunctions.site import site
-from src.dbFunctions.measurement import measurement
+from src.dbFunctions.site import site,siteConfiguration
+# from src.dbFunctions.measurement import measurement
 from ruamel.yaml import YAML
 import time
 
@@ -19,14 +19,18 @@ shutil.rmtree(projectPath, ignore_errors=True)
 # pC = projectConfiguration(projectPath=projectPath)#,siteIDs=['SCL','FIL','ILL'])
 # project(projectPath=projectPath)
 
-s = measurement(projectPath=projectPath,siteID='SCL',measurementID='highFrequency')
+# s = measurement(projectPath=projectPath,siteID='SCL',measurementID='highFrequency')
 # s = measurement(projectPath=projectPath,siteID='SCL',measurementID='fluxes')
 # s = measurement(projectPath=projectPath,siteID='SCL',measurementID='bioMet')
 
 
 # with open(os.path.join(data,'SCL_siteConfiguration.yml')) as f:
 #     kwargs = yaml.load(f)
-# siteConfiguration.siteConfiguration(projectPath=projectPath,siteID='SCL')
+siteConfiguration(
+    projectPath=projectPath,
+    siteID='SCL',
+    dateEstablished='2024-07-10'
+    )
 # siteConfiguration.siteConfiguration(projectPath=projectPath,siteID='SCL')
 
 # siteConfiguration.siteConfiguration(

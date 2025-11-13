@@ -6,8 +6,8 @@ from dataclasses import dataclass, field
 # from ruamel.yaml import YAML
 from datetime import datetime, timezone
 from ..helperFunctions.baseFunctions import baseFunctions
-
-# yaml = YAML()
+from ..helperFunctions.dictFuncs import dcToDict
+from .instruments import instrumentSet#, sonicAnemometer, gasAnalyzer, metInstrument
 
 
 default_comment = f'''
@@ -27,23 +27,32 @@ class siteConfiguration(project):
     altitude: float = None
     PI: str = None
     description: str = None
-
+    dateEstablished: datetime = None
+    instrumentInventory: dict = field(default_factory=dict)
+    
     def __post_init__(self):
         # baseFunctions will load configuration from this path if it exists
         self.yamlConfigFile = os.path.join(self.projectPath,'Sites',self.siteID,type(self).__name__+'.yml')
         super().__post_init__()
+        # # Default setup, to be edited manually
+        # self.instrumentInventory = {
+        #     self.dateEstablished:dcToDict(sonicAnemometer(model='IRGASON'),repr=True,inheritance=False)}
+        # print(self.instrumentInventory)
+        iSet = instrumentSet(startDate=self.dateEstablished)
+        self.instrumentInventory[iSet.startDate] = dcToDict(iSet,repr=True,inheritance=False)
+        # breakpoint()
         self.saveToYaml()
 
 @dataclass(kw_only=True)
 class site(baseFunctions):
     projectPath: str
     siteID: str
-    config: siteConfiguration = None
+    siteConfig: siteConfiguration = None
 
     def __post_init__(self):
-        self.config = siteConfiguration(projectPath=self.projectPath,siteID=self.siteID)
+        self.siteConfig = siteConfiguration(projectPath=self.projectPath,siteID=self.siteID)
+        self.syncAttributes(self.siteConfig,overwrite=True)
         super().__post_init__()
-        type(self)
         
 # # Template for multiple inheritance post init calls
 # @dataclass(kw_only=True)

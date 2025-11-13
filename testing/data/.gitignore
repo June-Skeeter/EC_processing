@@ -1,1 +1,4 @@
 *.dat
+*.data
+*.metadata
+*.status

@@ -44,8 +44,6 @@ class csiTrace(trace):
             self.dtypeOut = '<f8'
         if type(self.dtype) != str:
             self.dtype = self.dtype.str
-            
-
 
 @dataclass(kw_only=True)
 class csiFile(baseFunctions):
@@ -57,6 +55,7 @@ class csiFile(baseFunctions):
     SerialNo: str = None
     program: str = None
     dataTable: pd.DataFrame = None
+    fileTimestamp: datetime = None
     campbellBaseTime: float = field(default=631152000.0,repr=False,metadata={'description':'Start of CSI epoch in POSIX epoch: pd.to_datetime("1990-01-01").timestamp()'})
     sourceFileName: str = field(metadata={'descriptions': 'Name of the raw data file'})
     sourceFileType: str = field(metadata={
@@ -71,6 +70,7 @@ class csiTable(csiFile):
     dataColumns: str = None
     extractData: bool = field(default=True,repr=False)
     timestampName: str = 'TIMESTAMP'
+    recordName: str = 'RECORD'
     samplingInterval: float = None  # in seconds
     samplingFrequency: str = None # in Hz
     gpsDriftCorrection: bool = field(default=False,repr=False,metadata={'description':'Consider using for high frequency data if GPS clock resets were enabled.  This is clock correction is useful to ensure long-term stability of the data logger clock but causes problems when splitting high-frequency data files.  Assuming the file does not span more than a day, the drift should be minimal, so we can "remove" the offset within a file to ensure timestamps are sequential'})
@@ -117,10 +117,10 @@ class csiTable(csiFile):
 
         # self.dataTable = self.dataTable.set_index(pd.to_datetime(self.dataTable.TIMESTAMP,unit='s'))
         # if self.samplingInterval<self.databaseInterval:
-        #     c = self.dataTable['RECORD'].resample(f'{self.databaseInterval}s').count()
+        #     c = self.dataTable[self.recordName].resample(f'{self.databaseInterval}s').count()
         #     self.dataTable = self.dataTable.resample(f'{self.databaseInterval}s').mean()
-        #     self.dataTable['RECORD'] = c.astype('int32')
-        #     self.dataColumns['RECORD']['dtypeOut'] = '<i4'
+        #     self.dataTable[self.recordName] = c.astype('int32')
+        #     self.dataColumns[self.recordName]['dtypeOut'] = '<i4'
         # elif self.samplingInterval>self.databaseInterval:
         #     self.dataTable = self.dataTable.resample(f'{self.databaseInterval}s').nearest()
         # else:
@@ -188,11 +188,11 @@ class TOB3(csiTable):
         frames = [f for i in range(nframes) for f in 
                 self.decodeFrame(bindata[i*self.frameSize:(i+1)*self.frameSize])]
         self.dataTable = pd.DataFrame(frames,
-            columns=[self.timestampName,'RECORD']+[col for col in self.dataColumns])
+            columns=[self.timestampName,self.recordName]+[col for col in self.dataColumns])
         self.dataColumns = {
             columnName:csiTrace(variableName=columnName,units = units, operation = operation,dtype=dtype)
                     for columnName,units,operation,dtype in 
-                    zip([self.timestampName,'RECORD'],['s',None],[None,None],['<f8','<i8'])
+                    zip([self.timestampName,self.recordName],['s',None],[None,None],['<f8','<i8'])
                     } | self.dataColumns
         self.typeMap = {key:val.dtype for key,val in self.dataColumns.items()}
         self.dataTable = self.dataTable.astype(self.typeMap)  

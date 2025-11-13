@@ -12,7 +12,6 @@ Database project configuration file
 Created: {datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}
 '''
 
-# 
 @dataclass(kw_only=True)
 class projectConfiguration(baseFunctions):
     header: str = field(default=default_comment,repr=False) # YAML header, must be treated differently
@@ -20,6 +19,7 @@ class projectConfiguration(baseFunctions):
     dateCreated: str = None
     dateModified: str = field(default_factory=lambda: datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'))
     siteIDs: list = field(default_factory=lambda:['__TEMPLATE__'])
+    defaultInterval: int = 1800 # Default averaging interval of the database in seconds
 
     def __post_init__(self):
         # baseFunctions will load configuration from this path if it exists

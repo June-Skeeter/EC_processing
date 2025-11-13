@@ -1,6 +1,6 @@
 # YAML mapping file for .eddypro and .metadata data files
 # Dynamic fields can reference class attributes using 'self.attributeName'
-metadata:
+METADATA:
   Project:
     title: 
     id: 
@@ -37,7 +37,7 @@ metadata:
 
   Timing:
     acquisition_frequency: self.samplingFrequency
-    file_duration: self.databaseInterval
+    file_duration: int(self.defaultInterval/60)
     pc_time_settings: 
 
   Instruments:
@@ -55,7 +55,6 @@ metadata:
     instr_1_vpath_length: 
     instr_1_hpath_length: 
     instr_1_tau: 
-
     instr_n+1_manufacturer: 
     instr_n+1_model: 
     instr_n+1_sw_version: 
@@ -76,12 +75,12 @@ metadata:
     separator: 
     header_rows: 
     data_label: 
-    col_n_variable: self.variables[n]['variableName']
-    col_n_instrument: 
-    col_n_measure_type: 
-    col_n_unit_in: 
-    col_n_min_value: 
-    col_n_max_value: 
+    col_n_variable: self.f32Variables[n]['variableName']
+    col_n_instrument: self.f32Variables[n]['instrument']
+    col_n_measure_type: #self.logChoice('Choose a measurement type')
+    col_n_unit_in: self.f32Variables[n]['units']
+    col_n_min_value: 0
+    col_n_max_value: 0
     col_n_conversion: 
     col_n_unit_out: 
     col_n_a_value: 
@@ -90,7 +89,7 @@ metadata:
     col_n_min_timelag: 
     col_n_max_timelag: 
 
-eddypro:
+EDDYPRO:
   Project:
     creation_date:
     last_change_date:

@@ -17,7 +17,8 @@ class trace(baseFunctions):
     variableName: str
     units: str = None
     dtype: str = None
-    insturment: str = None
+    instrument: str = None
+    ignore: bool = False
     minMax: list = field(default_factory=list)
 
     def __post_init__(self):
@@ -47,35 +48,6 @@ class measurementConfiguration(site):
         self.variables = varFormat
         self.saveToYaml()
 
-
-@dataclass(kw_only=True)
-class eddyCovarianceMeasurement(baseFunctions):
-    projectPath: str
-    siteID: str
-    measurementID: str = 'highFrequency'
-    sonicNorthOffset: float = None
-    sonicAnemometer: str = field(default=None,metadata={
-    'description': 'Indicates the type of file (see options)',
-    'options':['IRGASON','CSAT3','CSAT3B']})
-
-    def __post_init__(self):
-        config = measurementConfiguration(
-                projectPath=self.projectPath,
-                siteID=self.siteID,
-                measurementID=self.measurementID,
-                variables=self.dataColumns
-                )
-        self.snycAttributes(config,overwrite=True)
-        super().__post_init__()
-        # fn = os.path.join(os.path.dirname(os.path.abspath(__file__)),'config','metadata_eddypro_map.yml')    
-        # with open(fn, 'r') as file:
-        #     self.metadataEddyProMap = yaml.load(file)
-        # for subset in ['metadata','eddypro']:
-        #     for key,value in self.metadataEddyProMap[subset].items():
-        #         if type(value) is str and value.startswith('self.'):
-        #             self.metadataEddyProMap[subset][key] = eval(value)
-            
-
 @dataclass(kw_only=True)
 class genericMeasurement(baseFunctions):
     projectPath: str
@@ -91,5 +63,29 @@ class genericMeasurement(baseFunctions):
                 measurementID=self.measurementID,
                 variables=self.variables
                 )
-        self.snycAttributes(config,overwrite=True)
+        self.syncAttributes(config,overwrite=False,inheritance=True)
         super().__post_init__()
+
+@dataclass(kw_only=True)
+class eddyCovarianceMeasurement(baseFunctions):
+    projectPath: str
+    siteID: str
+    measurementID: str = 'highFrequency'
+    # sonic: sonicAnemometer = None
+    sonicNorthOffset: float = None
+    sonicAnemometer: str = field(default=None,metadata={
+    'description': 'Indicates the type of file (see options)',
+    'options':['IRGASON','CSAT3','CSAT3B']})
+    # IRGA
+
+
+    def __post_init__(self):
+        config = measurementConfiguration(
+                projectPath=self.projectPath,
+                siteID=self.siteID,
+                measurementID=self.measurementID,
+                variables=self.dataColumns
+                )
+        self.syncAttributes(config,overwrite=False,inheritance=True)
+        super().__post_init__()
+            
