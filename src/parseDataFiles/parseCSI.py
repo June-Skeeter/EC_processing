@@ -78,7 +78,7 @@ class csiTable(csiFile):
     def readAsciiHeader(self,nLines):
         Header = [self.readAsciiLine(self.fileObject.readline()) for l in range(nLines)]
         if self.sourceFileType != Header[0][0]:
-            log(f"{self.sourceFileName} is not in {self.sourceFileType} format",ln=False,kill=True)
+            log(f"{self.sourceFileName} is not in {self.sourceFileType} format",traceback=False,kill=True)
         self.StationName=Header[0][1]
         self.LoggerModel=Header[0][2]
         self.SerialNo=Header[0][3]

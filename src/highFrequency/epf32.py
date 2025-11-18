@@ -48,7 +48,7 @@ class epf32(eddyCovarianceMeasurement):
         
         excludeNames = [self.timestampName,self.recordName]
         keepNames = []
-        self.logAction(f'Dropping columns: {" ".join(excludeNames)}')
+        self.logMessage(f'Dropping columns: {" ".join(excludeNames)}')
         for n,var in self.dataColumns.items():
             if var['dtype'] != '<f4' and var['variableName'] not in excludeNames:
                 self.logError(f'Develop coercion process, see {var["variableName"]} of type {var["dtype"]}')

@@ -4,6 +4,7 @@ import context
 import shutil
 from src.dbFunctions.project import project,projectConfiguration
 from src.dbFunctions.site import site,siteConfiguration
+from src.dbFunctions.instruments import IRGASON_sonic,IRGASON_irga,LI7700#Inventory
 # from src.dbFunctions.measurement import measurement
 from ruamel.yaml import YAML
 import time
@@ -26,12 +27,42 @@ shutil.rmtree(projectPath, ignore_errors=True)
 
 # with open(os.path.join(data,'SCL_siteConfiguration.yml')) as f:
 #     kwargs = yaml.load(f)
-siteConfiguration(
-    projectPath=projectPath,
-    siteID='SCL',
-    dateEstablished='2024-07-10'
-    )
-# siteConfiguration.siteConfiguration(projectPath=projectPath,siteID='SCL')
+
+print(IRGASON_sonic(measurementHeight=3.0,northOffset=38))
+# print(irga_open(model='IRGASON'))
+print(IRGASON_irga())
+print(LI7700(northwardSeparation=5,eastwardSeparation=5,verticalSeparation=0))
+# instrumentInventory(
+#     projectPath=projectPath,
+#     siteID='SCL',
+#     # _instruments=1
+# )
+# breakpoint()
+# iI = instrumentInventory(
+#     projectPath=projectPath,
+#     siteID='SCL',
+#     # _instruments=1
+# )
+
+
+# breakpoint()
+
+# siteConfiguration(
+#     projectPath = projectPath,
+#     siteID = 'SCL',
+#     dateEstablished = '2024-07-10',
+#     siteName = 'Swiss Cheese Lake',
+#     latitude = 69.2264167,
+#     longitude = -135.2519067,
+#     altitude = 1.0,
+#     PI = 'June Skeeter & Peter Morse',
+#     description = 'Wet sedge meadow, continuous permafrost',
+#     )
+
+
+# breakpoint()
+
+# sc = siteConfiguration(projectPath=projectPath,siteID='SCL')
 
 # siteConfiguration.siteConfiguration(
 #     projectPath=projectPath,
