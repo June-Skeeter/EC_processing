@@ -5,7 +5,7 @@ from collections import defaultdict
 from ..helperFunctions.log import log
 from ..helperFunctions.parseFrequency import parseFrequency
 from ..helperFunctions.dictFuncs import dcToDict
-from ..dbFunctions.measurement import trace
+from ..dbFunctions.measurement_old import trace
 from ..helperFunctions.baseFunctions import baseFunctions
 import pandas as pd
 import os

@@ -1,13 +1,12 @@
 import os
 import sys
 from .project import project
-# from ..helperFunctions.parseCoordinates import parseCoordinates
 from dataclasses import dataclass, field
-# from ruamel.yaml import YAML
+from typing import Iterable
 from datetime import datetime, timezone
 from ..helperFunctions.baseFunctions import baseFunctions
 from ..helperFunctions.dictFuncs import dcToDict
-from .instruments import instrument#Inventory#, sonicAnemometer, gasAnalyzer, metInstrument
+from .dataset import callDataset
 
 
 default_comment = f'''
@@ -15,53 +14,71 @@ Site configuration file
 Created: {datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}
 '''
 
-@dataclass(kw_only=True)
-class testDC:
-    a: int = 1
-    b: str = 'a'
-    c: str = None
-
-    def __post_init__(self):
-        self.c = self.b
 
 @dataclass(kw_only=True)
 class siteConfiguration(project):
-    dependencies = {'ba':1}
     header: str = field(default=default_comment,repr=False) # YAML header, must be treated differently
     siteID: str
-    siteName: str = None
     siteName: str = None
     latitude: float = None
     longitude: float = None
     altitude: float = None
     PI: str = None
     description: str = None
-    dateEstablished: datetime = None
-    instrumentation: dict = field(default_factory=lambda:{'example':instrument()})
+    startDate: datetime = None
+    # sensorInventory: Iterable = field(default_factory=dict)
+    dataSources: Iterable = field(default_factory=dict)
     
     def __post_init__(self):
         # baseFunctions will load configuration from this path if it exists
         self.yamlConfigFile = os.path.join(self.projectPath,'Sites',self.siteID,type(self).__name__+'.yml')
         super().__post_init__()
-        self.instruemntCheck()
-        # # Default setup, to be edited manually
-        # self.instrumentInventory = {
-        #     self.dateEstablished:dcToDict(sonicAnemometer(model='IRGASON'),repr=True,inheritance=False)}
-        # print(self.instrumentInventory)
-        # iSet = instrumentInventory(startDate=self.dateEstablished)
-
-        # self.instrumentation[iSet.version] = iSet.configuration
-        # # self.instrumentInventory[iSet.startDate] = dcToDict(iSet,repr=True,inheritance=False)
-        
+        if self.typeCheck:
+            self.measurementCheck()     
 
         self.saveToYaml()
 
-    def instruemntCheck(self):
-        for key,value in self.instrumentation.items():
-            if type(value)!=instrument:
-                value = instrument(**value)
-            self.instrumentation[key] = dcToDict(value,repr=True,inheritance=False)
-        breakpoint()
+    def measurementCheck(self):
+        # All measurements are associated with a logger (even if the logger is a human :D)
+        if type(self.dataSources) is dict:
+            self.dataSources = list(self.dataSources.values())
+        Inventory = {}
+        for measurement in self.dataSources:
+            # print('Date')
+            # breakpoint()
+            if type(measurement) is dict:
+                measurement = callDataset(measurement['sourceID'])(**measurement)
+            i = 2
+            while measurement.sourceID in Inventory.keys():
+                measurement.UID(i)
+                i+=1
+            if measurement.startDate is None:
+                self.logWarning(f'No start date provided for {measurement.sourceID}')
+                measurement.startDate = self.startDate
+            Inventory[measurement.sourceID] = dcToDict(measurement,inheritance=True,repr=True)
+        self.dataSources = Inventory
+
+    # # def sensorCheck(self):
+    # #     if type(self.sensorInventory) is dict:
+    # #         self.sensorInventory = list(self.sensorInventory.values())
+    # #     Inventory = {}
+    #     for sensorData in self.sensorInventory:
+    #         if type(sensorData) is dict:
+    #             # if sensorData['model'] == 'BIRGASON':
+                # #     breakpoint()
+        #         # sensorData = callSensor(sensorData['sensorID'])(**sensorData)
+        #         # print(sensorData.model)
+        #     i = 2
+        #     while sensorData.sensorID in Inventory.keys():
+        #         sensorData.UID(i)
+        #         i+=1
+                
+        #     if sensorData.startDate is None:
+        #         self.logWarning(f'No installation date provided for {sensorData.sensorID}')
+        #         self.logChoice(f'Default to startDate ({self.startDate}) or provide alternate date')
+        #         sensorData.startDate = self.startDate
+        #     Inventory[sensorData.sensorID] = dcToDict(sensorData,inheritance=True,repr=True)
+        # self.sensorInventory = Inventory
 
 
 @dataclass(kw_only=True)
@@ -69,10 +86,11 @@ class site(baseFunctions):
     projectPath: str
     siteID: str
     siteConfig: siteConfiguration = None
+    # safeMode: bool = True
 
     def __post_init__(self):
-        self.siteConfig = siteConfiguration(projectPath=self.projectPath,siteID=self.siteID)
-        self.syncAttributes(self.siteConfig,overwrite=True)
+        self.siteConfig = siteConfiguration(projectPath=self.projectPath,siteID=self.siteID,safeMode=self.safeMode)
+        # self.syncAttributes(self.siteConfig,overwrite=True)
         super().__post_init__()
         
 # # Template for multiple inheritance post init calls

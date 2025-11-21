@@ -4,9 +4,8 @@ import yaml
 import context
 import shutil
 from src.highFrequency import epf32
-from src.dbFunctions import site
-from src.dbFunctions import measurement
-from src.dbFunctions import instruments
+from src.dbFunctions.site import siteConfiguration
+from src.dbFunctions.sensor import *
 
 
 data = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
@@ -14,17 +13,50 @@ data = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
 projectPath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'outputs','testProject'))
 
 shutil.rmtree(projectPath, ignore_errors=True)
-# shutil.copytree(os.path.join(data,'projectTemplate'),projectPath)
 
-# instruments.instrumentInventory(
-#     projectPath=projectPath,
-#     siteID='SCL',
-#     startDate='2024-07-10')
 
-# sonic = measurement.sonicAnemometer(model='CSAT3',measurementHeight=4.75,northOffset=138)
+siteConfiguration(
+    projectPath = projectPath,
+    siteID = 'SCL',
+    dateEstablished = '2024-07-10',
+    siteName = 'Swiss Cheese Lake',
+    latitude = 69.2264167,
+    longitude = -135.2519067,
+    altitude = 1.0,
+    PI = 'June Skeeter & Peter Morse',
+    description = 'Wet sedge meadow, continuous permafrost',
+    sensorInventory=[
+        CSAT3(
+            measurementHeight=3.0,
+            northOffset=38,
+            startDate='2024-07-10',
+            endDate='2024-09-15'
+            ),
+        LI7500(
+            northwardSeparation=5,
+            eastwardSeparation=5,
+            verticalSeparation=0,
+            startDate='2024-07-10',
+            endDate='2024-09-15'
+            ),
+        IRGASON_sonic(
+            measurementHeight=3.0,
+            northOffset=38,
+            startDate='2025-08-02'
+            ),
+        IRGASON_irga(
+            startDate='2025-08-02'
+            ),
+        LI7700(
+            startDate='2024-07-10',
+            northwardSeparation=5,
+            eastwardSeparation=5,
+            verticalSeparation=0
+            ),
+    ]
+    )
 
-# breakpoint()
-# sys.exit()
+breakpoint()
 
 sourceFileName = os.path.join(data,'TOA5_BBS.FLUX_2023_08_01_1530.dat')
 # epf32.test(projectPath=projectPath)
