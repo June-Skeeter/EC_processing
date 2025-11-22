@@ -7,7 +7,12 @@ from datetime import datetime, timezone
 from ..helperFunctions.baseFunctions import baseFunctions
 from ..helperFunctions.dictFuncs import dcToDict
 from .project import project
+from .pointObjects import sensor
 
+
+@dataclass(kw_only=True)
+class testSensor(sensor):
+    name = 'test'
 
 supportedSensors = [
     'genericSensor',
