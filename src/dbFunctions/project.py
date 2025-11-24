@@ -4,7 +4,7 @@ import yaml
 from datetime import datetime, timezone
 
 from dataclasses import dataclass, field
-from ..helperFunctions.baseFunctions import baseFunctions
+from ..helperFunctions.baseClass import baseClass
 # from ..helperFunctions.dictFuncs import dcToDict,loadDict,saveDict
 
 default_comment = f'''
@@ -19,7 +19,7 @@ class spatiotemporalDefaults:
     altitude: float = None
 
 @dataclass(kw_only=True)
-class projectConfiguration(baseFunctions):
+class projectConfiguration(baseClass):
     header: str = field(default=default_comment,repr=False) # YAML header, must be treated differently
     projectPath: str = None
     dateCreated: str = None
@@ -29,14 +29,14 @@ class projectConfiguration(baseFunctions):
     safeMode: bool 
 
     def __post_init__(self):
-        # baseFunctions will load configuration from this path if it exists
-        self.yamlConfigFile = os.path.join(self.projectPath,type(self).__name__+'.yml')
+        # baseClass will load configuration from this path if it exists
+        self.configFile = os.path.join(self.projectPath,type(self).__name__+'.yml')
         super().__post_init__()
         self.saveToYaml()
 
 
 @dataclass(kw_only=True)
-class project(baseFunctions):
+class project(baseClass):
     projectPath: str
     config: projectConfiguration = None
     safeMode: bool = True

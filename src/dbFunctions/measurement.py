@@ -2,7 +2,7 @@
 # from .site import site
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from ..helperFunctions.baseFunctions import baseFunctions
+from ..helperFunctions.baseClass import baseClass
 from ..helperFunctions.dictFuncs import dcToDict
 
 default_comment = f'''
@@ -11,7 +11,7 @@ Created: {datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}
 '''
 
 @dataclass(kw_only=True)
-class dataSet(baseFunctions):
+class dataSet(baseClass):
     dataSetType: str = field(
         metadata={
             'description': 'Type of raw data',
@@ -94,7 +94,7 @@ callMeasurement()
 # supportedLoggers = ['CR1000','CR1000x','Smart-Flux','Hobo']
 
 # @dataclass(kw_only=True)
-# class dataLogger(baseFunctions):
+# class dataLogger(baseClass):
 #     def __post_init__(self):
 #         super().__post_init__()
 

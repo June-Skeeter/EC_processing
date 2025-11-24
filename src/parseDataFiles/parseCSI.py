@@ -6,7 +6,7 @@ from ..helperFunctions.log import log
 from ..helperFunctions.parseFrequency import parseFrequency
 from ..helperFunctions.dictFuncs import dcToDict
 from ..dbFunctions.measurement_old import trace
-from ..helperFunctions.baseFunctions import baseFunctions
+from ..helperFunctions.baseClass import baseClass
 import pandas as pd
 import os
 from datetime import datetime
@@ -46,7 +46,7 @@ class csiTrace(trace):
             self.dtype = self.dtype.str
 
 @dataclass(kw_only=True)
-class csiFile(baseFunctions):
+class csiFile(baseClass):
     # Some files may contain multiple tables
     # Attributes common to a given file
     fileObject: object = field(default=None,repr=False)

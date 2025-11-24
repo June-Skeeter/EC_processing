@@ -4,7 +4,7 @@ from .project import project
 from dataclasses import dataclass, field
 from typing import Iterable
 from datetime import datetime, timezone
-from ..helperFunctions.baseFunctions import baseFunctions
+from ..helperFunctions.baseClass import baseClass
 from ..helperFunctions.dictFuncs import dcToDict
 from .dataset import callDataset
 
@@ -30,8 +30,8 @@ class siteConfiguration(project):
     dataSources: Iterable = field(default_factory=dict)
     
     def __post_init__(self):
-        # baseFunctions will load configuration from this path if it exists
-        self.yamlConfigFile = os.path.join(self.projectPath,'Sites',self.siteID,type(self).__name__+'.yml')
+        # baseClass will load configuration from this path if it exists
+        self.configFile = os.path.join(self.projectPath,'Sites',self.siteID,type(self).__name__+'.yml')
         super().__post_init__()
         if self.typeCheck:
             self.measurementCheck()     
@@ -82,7 +82,7 @@ class siteConfiguration(project):
 
 
 @dataclass(kw_only=True)
-class site(baseFunctions):
+class site(baseClass):
     projectPath: str
     siteID: str
     siteConfig: siteConfiguration = None

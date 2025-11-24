@@ -2,7 +2,7 @@ import os
 from .site import site
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from ..helperFunctions.baseFunctions import baseFunctions
+from ..helperFunctions.baseClass import baseClass
 from ..helperFunctions.dictFuncs import dcToDict
 
 
@@ -12,7 +12,7 @@ Created: {datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}
 '''
 
 @dataclass(kw_only=True)
-class trace(baseFunctions):
+class trace(baseClass):
     variableNumber: int = field(default=1,repr=False) # Counter variable to represent position (in source file or processing order)
     variableName: str
     units: str = None
@@ -38,8 +38,8 @@ class measurementConfiguration(site):
     variables: dict = field(default_factory=dict)
 
     def __post_init__(self):
-        # baseFunctions will load configuration from this path if it exists
-        self.yamlConfigFile = os.path.join(self.projectPath,'Sites',self.siteID,'Measurements',self.measurementID+'.yml')
+        # baseClass will load configuration from this path if it exists
+        self.configFile = os.path.join(self.projectPath,'Sites',self.siteID,'Measurements',self.measurementID+'.yml')
         super().__post_init__()
         varFormat = {}
         for i, (key,values) in enumerate(self.variables.items()):
@@ -50,7 +50,7 @@ class measurementConfiguration(site):
         self.saveToYaml()
 
 @dataclass(kw_only=True)
-class genericMeasurement(baseFunctions):
+class genericMeasurement(baseClass):
     projectPath: str
     siteID: str
     measurementID: str
@@ -68,7 +68,7 @@ class genericMeasurement(baseFunctions):
         super().__post_init__()
 
 @dataclass(kw_only=True)
-class eddyCovarianceMeasurement(baseFunctions):
+class eddyCovarianceMeasurement(baseClass):
     projectPath: str
     siteID: str
     measurementID: str = 'highFrequency'
