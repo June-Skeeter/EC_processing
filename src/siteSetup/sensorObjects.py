@@ -56,8 +56,11 @@ class fluxSensor(genericSensor):
         metadata = {
             'description':'Northward separation from reference sonic (in cm) required for irgas, and any secondary sonics.',
     })
-
+@dataclass(kw_only=True)
 class sonicAnemometer(fluxSensor):
+    northwardSeparation: float = 0.0
+    eastwardSeparation: float = 0.0
+    verticalSeparation: float = 0.0
     windFormat: str = field(
         default='uvw',
         metadata = {
@@ -72,6 +75,15 @@ class sonicAnemometer(fluxSensor):
         metadata = {
             'description': 'Offset from North in degrees (clockwise)',
     })
+
+
+@dataclass(kw_only=True)
+class IRGASON_sonic(sonicAnemometer):
+    manufacturer: str = 'CSI'
+
+@dataclass(kw_only=True)
+class CSAT3(sonicAnemometer):
+    manufacturer: str = 'CSI'
 
 class infraredGasAnalyzer(fluxSensor):
     tubeLength: float = field(

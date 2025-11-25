@@ -28,13 +28,18 @@ class genericSource(defaultObject):
         init=False,
         repr=False
     )
+    # traces: dict = field(
+    #     default_factory=dict,
+    #     metadata={
+    #         'description': 'Dictionary linking traces to sensors/instrumentation',
+    #     }
+    # )
 
     def __post_init__(self):
         if not hasattr(self,'UID'):
             self.UID = type(self).__name__
             self.sourceType = None
         super().__post_init__()
-        breakpoint()
 
 @dataclass(kw_only=True)
 class manualMeasurement(genericSource):

@@ -3,10 +3,13 @@ import yaml
 import shutil
 
 import context
+from src.dbFunctions.project import project
 from src.siteSetup.siteObjects import *
 # from src.siteSetup.loggerObjects import *
 from src.siteSetup.sensorObjects import *
 from src.siteSetup.dataSource import *
+
+from src.dataFiles.trace import trace
 
 
 data = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
@@ -14,8 +17,13 @@ data = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
 projectPath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'outputs','testProject'))
 shutil.rmtree(projectPath, ignore_errors=True)
 
+# tr = trace(variableName='Ux')
+# print(tr)
+
+# project(projectPath=projectPath)
+
 sM = siteMetadata(
-    configFile=os.path.join(projectPath,'SCL','siteMetadata.yml'),
+    projectPath=projectPath,
     siteID = 'SCL',
     latitude = 'N69 13.5850',
     longitude = 'W135 15.1144',
@@ -25,13 +33,46 @@ sM = siteMetadata(
     PI = 'June Skeeter & Peter Morse',
     description = 'Wet sedge meadow, continuous permafrost',
     dataSources = [
-        CR1000x(),
-        {'model':'CR1000x'},
-        HOBO(),
-        manualMeasurement()
-        ]
+        CR1000x(
+            sensorInventory=[
+                sonicAnemometer(
+                    northOffset=38,
+                    measurementHeight=2.78)]
+        ),
+        # HOBO(),
+        # manualMeasurement()
+        ],
+    verbose=False
     )
 
+
+
+# sM = siteMetadata(
+#     projectPath=projectPath,
+#     siteID = 'SCL',
+#     latitude = 'N69 13.5850',
+#     longitude = 'W135 15.1144',
+#     startDate = '2024-07-10',
+#     altitude = 1.0,
+#     siteName = 'Swiss Cheese Lake',
+#     PI = 'June Skeeter & Peter Morse',
+#     description = 'Wet sedge meadow, continuous permafrost',
+#     dataSources = [
+#         # CR1000x(),
+#         {'model':'CR1000x'},
+#         # HOBO(),
+#         # manualMeasurement()
+#         ],
+#     verbose=False
+#     )
+
+# print(sM.logFile)
+# sM = siteMetadata(
+#     validate=False,
+#     configFile=os.path.join(projectPath,'SCL','siteMetadata.yml'),
+#     siteID = 'SCL',
+
+# ).config()
 # print(sM)
 
 # sM = siteMetadata()

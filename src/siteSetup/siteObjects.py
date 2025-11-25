@@ -20,11 +20,13 @@ import src.siteSetup.sensorObjects as sensorObjects
 sensorObjects = getClasses(sensorObjects)
 sensorObjects = {cl.__name__:cl for cl in sensorObjects[::-1]}
 
-
-
-
 @dataclass(kw_only=True)
 class siteMetadata(defaultObject):
+    projectPath: str = field(default=None,repr=False)
+    validate: bool = field(
+        repr=False,
+        default=True
+    )
     siteID: str = field(
         default = 'siteID',
         metadata = {'description': 'Unique Site Identifier'} 
@@ -52,23 +54,27 @@ class siteMetadata(defaultObject):
 
     def __post_init__(self):
         self.UID = self.siteID
+        if self.projectPath:
+            self.configFile = os.path.join(self.projectPath,self.siteID,type(self).__name__+'.yml')
         super().__post_init__()
-        self.dataSources = self.parseNestedObjects(
-            objectsToParse=self.dataSources,
-            objectOptions = dataSource,
-            objectID = 'model')
-        if self.configFile:
-            self.saveToYaml(inheritance=True)
-            self.logWarning('Rename saveToYaml')
+        if self.validate:
+            self.dataSources = self.parseNestedObjects(
+                objectsToParse=self.dataSources,
+                objectOptions = dataSource,
+                objectID = 'model')
+            if self.configFile:
+                self.saveConfigFile(inheritance=True)
+    
+    def config(self):
+        return dcToDict(self,repr=True,inheritance=True)
 
 
-# @dataclass(kw_only=True)
-# class siteSetup(project):
-#     siteID: str
-#     siteMetadata: dict = field(init=False)
+@dataclass(kw_only=True)
+class getSite(project):
+    siteID: str
+    siteMetadata: dict = field(init=False)
 
-#     def __post_init__(self):
-#         cfg = os.path.join(self.projectPath,self.siteID,'siteMetadata.yml')
-#         sM = siteMetadata(configFile=cfg,siteID=self.siteID)
-#         self.siteMetadata = dcToDict(sM,inheritance=False)
+    def __post_init__(self):
+        cfg = os.path.join(self.projectPath,self.siteID,'siteMetadata.yml')
+        self.siteMetadata = siteMetadata(configFile=cfg,siteID=self.siteID,validate=False).config()
         

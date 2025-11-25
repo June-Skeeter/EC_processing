@@ -47,7 +47,7 @@ class measurementConfiguration(site):
             traceFormat = trace(variableNumber=i+1,**values)
             varFormat[traceFormat.variableNumber] = dcToDict(traceFormat,repr=True,inheritance=False)
         self.variables = varFormat
-        self.saveToYaml()
+        self.saveConfigFile()
 
 @dataclass(kw_only=True)
 class genericMeasurement(baseClass):

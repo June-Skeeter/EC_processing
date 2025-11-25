@@ -6,15 +6,13 @@ from dataclasses import dataclass, field, MISSING
 from ..dbFunctions.project import project
 
 from ..helperFunctions.dictFuncs import dcToDict
-from ..helperFunctions.baseClass import baseClass
+# from ..helperFunctions.baseClass import baseClass
 from ..helperFunctions.parseCoordinates import parseCoordinates
-
-# from src.siteSetup.sensorList import *
-# from src.siteSetup.loggerList import *
 
 
 @dataclass(kw_only=True)
-class defaultObject(baseClass):
+class defaultObject(project):
+    projectPath: str = field(default=None,init=False,repr=False)
     objectType: str = field(default='point',repr=False,init=False)
     index: int = field(default=0,repr=False,init=False)
     UID: str = field(repr=False,init=False)
