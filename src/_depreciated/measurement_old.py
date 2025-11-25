@@ -2,8 +2,8 @@ import os
 from .site import site
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from ..helperFunctions.baseClass import baseClass
-from ..helperFunctions.dictFuncs import dcToDict
+from modules.helperFunctions.baseClass import baseClass
+from modules.helperFunctions.dictFuncs import dcToDict
 
 
 default_comment = f'''

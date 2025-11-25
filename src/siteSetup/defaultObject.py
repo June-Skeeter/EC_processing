@@ -3,11 +3,11 @@ from typing import Iterable
 from datetime import datetime, timezone
 from dataclasses import dataclass, field, MISSING
 
-from ..dbFunctions.project import project
+from src.databaseObjects.project import project
 
-from ..helperFunctions.dictFuncs import dcToDict
-# from ..helperFunctions.baseClass import baseClass
-from ..helperFunctions.parseCoordinates import parseCoordinates
+from modules.helperFunctions.dictFuncs import dcToDict
+# from modules.helperFunctions.baseClass import baseClass
+from modules.helperFunctions.parseCoordinates import parseCoordinates
 
 
 @dataclass(kw_only=True)

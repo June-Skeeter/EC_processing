@@ -1,9 +1,9 @@
 # Writes high-frequency data file in the custom "EPF32" format.
-from ..dbFunctions.measurement_old import eddyCovarianceMeasurement
-from ..dbFunctions.project import project
-from ..parseDataFiles.parseCSI import TOA5,TOB3
-from ..helperFunctions.log import log
-from ..helperFunctions.dictFuncs import loadDict
+from src._depreciated.measurement_old import eddyCovarianceMeasurement
+from src.databaseObjects.project import project
+from src.readData.parseCSI import TOA5,TOB3
+from modules.helperFunctions.log import log
+from modules.helperFunctions.dictFuncs import loadDict
 
 from dataclasses import dataclass, field
 from ruamel.yaml import YAML

@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
-from src.helperFunctions.baseClass import baseClass
-
+# from src.helperFunctions.baseClass import baseClass
+from modules.helperFunctions.baseClass import baseClass
 
 @dataclass(kw_only=True)
 class trace(baseClass):
