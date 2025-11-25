@@ -35,7 +35,8 @@ sM = siteMetadata(
     siteName = 'Swiss Cheese Lake',
     PI = 'June Skeeter & Peter Morse',
     description = 'Wet sedge meadow, continuous permafrost',
-    measruementInventory= [testLogger(
+    measruementInventory= [
+        testLogger(
         model='CR1000x',
         # sensorInventory=[
         #     testSensor(

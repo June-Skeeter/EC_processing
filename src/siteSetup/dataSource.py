@@ -57,10 +57,10 @@ class externalMeasurement(genericSource):
 @dataclass(kw_only=True)
 class dataLogger(genericSource):
     sourceType: str = 'dataLogger'
-    model: str = field(
+    loggerModel: str = field(
         init=False,
         metadata = {
-            'description': 'The sensor model, auto-filled from class name',
+            'description': 'The model of data logger, auto-filled from class name',
     })
     manufacturer: str = field(
         default = None,
@@ -81,19 +81,20 @@ class dataLogger(genericSource):
             })
 
     def __post_init__(self):
-        self.model = type(self).__name__
-        self.UID = self.model
+        if not hasattr(self,'loggerModel'):
+            self.loggerModel = type(self).__name__
+        self.UID = self.loggerModel
         self.nestedClasses = sensorObjects
         self.sensorInventory = self.parseNestedObjects(
             objectsToParse = self.sensorInventory,
             objectOptions = sensorObjects,
-            objectID = 'model')
+            objectID = 'loggerModel')
         super().__post_init__()
 
-@dataclass(kw_only=True)
-class CR1000x(dataLogger):
-    manufacturer: str = 'CSI'
-    fileType: str = 'TOB3'
+# @dataclass(kw_only=True)
+# class CR1000x(dataLogger):
+#     manufacturer: str = 'CSI'
+#     fileType: str = 'TOB3'
 
 @dataclass
 class HOBO(dataLogger):

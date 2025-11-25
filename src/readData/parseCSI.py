@@ -5,7 +5,7 @@ from collections import defaultdict
 from ..helperFunctions.log import log
 from ..helperFunctions.parseFrequency import parseFrequency
 from ..helperFunctions.dictFuncs import dcToDict
-from ..dbFunctions.measurement_old import trace
+from .trace import trace
 from ..helperFunctions.baseClass import baseClass
 import pandas as pd
 import os
@@ -14,6 +14,8 @@ import numpy as np
 import struct
 import sys
 import re
+
+from src.siteSetup.dataSource import dataLogger
 
 @dataclass(kw_only=True)
 class csiTrace(trace):
@@ -46,43 +48,75 @@ class csiTrace(trace):
             self.dtype = self.dtype.str
 
 @dataclass(kw_only=True)
-class csiFile(baseClass):
+class csiLogger(dataLogger):
+    manufacturer: str = 'CSI'
+
+@dataclass(kw_only=True)
+class csiFile(csiLogger):
     # Some files may contain multiple tables
     # Attributes common to a given file
-    fileObject: object = field(default=None,repr=False)
+    fileObject: object = field(default=None,repr=False,init=False)
     StationName: str = None
-    LoggerModel: str = None
-    SerialNo: str = None
+    loggerModel: str = None
+    serialNumber: str = None
     program: str = None
     dataTable: pd.DataFrame = None
     fileTimestamp: datetime = None
-    campbellBaseTime: float = field(default=631152000.0,repr=False,metadata={'description':'Start of CSI epoch in POSIX epoch: pd.to_datetime("1990-01-01").timestamp()'})
-    sourceFileName: str = field(metadata={'descriptions': 'Name of the raw data file'})
-    sourceFileType: str = field(metadata={
-        'description': 'Indicates the type of file (see options)',
-        'options':['TOB3','TOA5']})
+    campbellBaseTime: float = field(
+        default=631152000.0,
+        repr=False,
+        init=False,
+        metadata={
+            'description':'Start of CSI epoch in POSIX epoch: pd.to_datetime("1990-01-01").timestamp()'
+            })
+    sourceFileName: str = field(
+        metadata={
+            'descriptions': 'Name of the raw data file'
+            })
+    fileType: str = field(
+        init=False,
+        metadata={
+            'description': 'Indicates the type of file (see options)',
+            'options':['TOB3','TOA5']
+            })
+    extractData: bool = field(
+        default=False,
+        metadata={
+            'description':'True (all data) / False (preview header)'
+            })
+    
+    def __post_init__(self, debug=False):
+        
+        super().__post_init__()
     
     
 @dataclass(kw_only=True)
 class csiTable(csiFile):
     # Attributes common to a CSI format datable
+    asciiHeader: list = field(init=False)
+    nLinesAsciiHeader: int
     tableName: str = None
     dataColumns: str = None
-    extractData: bool = field(default=True,repr=False)
     timestampName: str = 'TIMESTAMP'
     recordName: str = 'RECORD'
     samplingInterval: float = None  # in seconds
     samplingFrequency: str = None # in Hz
     gpsDriftCorrection: bool = field(default=False,repr=False,metadata={'description':'Consider using for high frequency data if GPS clock resets were enabled.  This is clock correction is useful to ensure long-term stability of the data logger clock but causes problems when splitting high-frequency data files.  Assuming the file does not span more than a day, the drift should be minimal, so we can "remove" the offset within a file to ensure timestamps are sequential'})
 
-    def readAsciiHeader(self,nLines):
-        Header = [self.readAsciiLine(self.fileObject.readline()) for l in range(nLines)]
-        if self.sourceFileType != Header[0][0]:
-            log(f"{self.sourceFileName} is not in {self.sourceFileType} format",traceback=False,kill=True)
-        self.StationName=Header[0][1]
-        self.LoggerModel=Header[0][2]
-        self.SerialNo=Header[0][3]
-        return(Header)
+    def __post_init__(self):
+        # Read the ascii header
+        self.fileType: str = type(self).__name__
+        if self.fileType in ['TOB3','TOA5']:
+            self.readAsciiHeader()
+        super().__post_init__()
+
+    def readAsciiHeader(self):
+        self.asciiHeader = [self.readAsciiLine(self.fileObject.readline()) for l in range(self.nLinesAsciiHeader)]
+        if self.fileType != self.asciiHeader[0][0]:
+            log(f"{self.sourceFileName} is not in {self.fileType} format",traceback=False,kill=True)
+        self.StationName=self.asciiHeader[0][1]
+        self.loggerModel=self.asciiHeader[0][2]
+        self.serialNumber=self.asciiHeader[0][3]
     
     def readAsciiLine(self,line):
         if type(line) == str:
@@ -103,38 +137,18 @@ class csiTable(csiFile):
         for key,value in self.dataColumns.items():
             self.dataColumns[key] = dcToDict(value,repr=True)
         
-    # def resample(self):
-        # fileTime = np.ceil(self.dataTable[self.timestampName]/self.databaseInterval)
-        # if self.samplingInterval<self.databaseInterval:
-        #     for ft in fileTime.unique():
-        #         dfColumns = {k:asdict_repr(v) for k,v in self.dataColumns.items() if v.dtype == '<f4'}
-        #         df = self.dataTable.loc[fileTime[fileTime==ft].index,list(dfColumns.keys())]
-        #         # Output as 1d binary array for processing in eddypro 
-        #         # self.ecf32(ft*self.databaseInterval,df,dfColumns,self.databaseInterval)
-        #         sys.exit("High frequency data resampling not yet implemented for binary output")
-        # else:
-        #     sys.exit("Low frequency data resampling not yet implemented for binary output")
-
-        # self.dataTable = self.dataTable.set_index(pd.to_datetime(self.dataTable.TIMESTAMP,unit='s'))
-        # if self.samplingInterval<self.databaseInterval:
-        #     c = self.dataTable[self.recordName].resample(f'{self.databaseInterval}s').count()
-        #     self.dataTable = self.dataTable.resample(f'{self.databaseInterval}s').mean()
-        #     self.dataTable[self.recordName] = c.astype('int32')
-        #     self.dataColumns[self.recordName]['dtypeOut'] = '<i4'
-        # elif self.samplingInterval>self.databaseInterval:
-        #     self.dataTable = self.dataTable.resample(f'{self.databaseInterval}s').nearest()
-        # else:
-        #     self.dataTable = self.dataTable.resample(f'{self.databaseInterval}s').asfreq()
-            
 @dataclass(kw_only=True)
 class TOA5(csiTable):
+    nLinesAsciiHeader: int = 4
+    fileType: str = 'TOA5'
 
     def __post_init__(self):
+        super().__post_init__()
         #First read metadata from files header
         self.fileTimestamp = datetime.strptime(re.search(r'([0-9]{4}\_[0-9]{2}\_[0-9]{2}\_[0-9]{4})', self.sourceFileName.rsplit('.',1)[0]).group(0),'%Y_%m_%d_%H%M')
         with open(self.sourceFileName) as self.fileObject:
-            Header = self.readAsciiHeader(nLines=4)
-            self.tableName = Header[0][-1]
+            super().__post_init__()
+            self.tableName = self.asciiHeader[0][-1]
     
         self.dataTable = pd.read_csv(self.sourceFileName,skiprows=[0,2,3],header=[0],parse_dates=[self.timestampName],date_format='ISO8601',dtype=csiTrace.defaultTypes)
         
@@ -142,34 +156,36 @@ class TOA5(csiTable):
         self.dataColumns =  {
             columnName:csiTrace(variableName=columnName,units=units,operation=operation,dtype=dtype)#.__dict__
                 for columnName,units,operation,dtype in 
-                zip(Header[1],Header[2],Header[3],list(self.dataTable.dtypes))}
+                zip(self.asciiHeader[1],self.asciiHeader[2],self.asciiHeader[3],list(self.dataTable.dtypes))}
         self.finishTable()
 
 
 @dataclass(kw_only=True)
 class TOB3(csiTable):
+    nLinesAsciiHeader: int = 6
     headerSize = 12
     footerSize = 4
     byteMap: str = None
+    fileType: str = 'TOB3'
 
     def __post_init__(self):
         #First read metadata from files header
         self.fileSize = os.path.getsize(self.sourceFileName)
         with open(self.sourceFileName,'rb') as self.fileObject:
-            Header = self.readAsciiHeader(nLines=6)
-            self.fileTimestamp = pd.to_datetime(Header[0][-1])
-            self.tableName = Header[1][0]
-            self.samplingInterval = pd.to_timedelta(parseFrequency(Header[1][1])).total_seconds()
-            self.frameSize = int(Header[1][2])
-            self.tableSize = int(Header[1][3])
-            self.validationStamp = int(Header[1][4])
+            super().__post_init__()
+            self.fileTimestamp = pd.to_datetime(self.asciiHeader[0][-1])
+            self.tableName = self.asciiHeader[1][0]
+            self.samplingInterval = pd.to_timedelta(parseFrequency(self.asciiHeader[1][1])).total_seconds()
+            self.frameSize = int(self.asciiHeader[1][2])
+            self.tableSize = int(self.asciiHeader[1][3])
+            self.validationStamp = int(self.asciiHeader[1][4])
             self.compValidationStamp=(0xFFFF^self.validationStamp)
-            self.frameResolution = pd.to_timedelta(parseFrequency(Header[1][5])).total_seconds()
+            self.frameResolution = pd.to_timedelta(parseFrequency(self.asciiHeader[1][5])).total_seconds()
             # Extract metadata for each variable
             self.dataColumns = {
                 columnName:csiTrace(variableName=columnName,units = units, operation = operation,dtype=dtype)
                     for i,(columnName,units,operation,dtype) in 
-                    enumerate(zip(Header[2],Header[3],Header[4],Header[5]))
+                    enumerate(zip(self.asciiHeader[2],self.asciiHeader[3],self.asciiHeader[4],self.asciiHeader[5]))
                     }
             if self.extractData:
                 self.readFrames()
@@ -247,3 +263,29 @@ class TOB3(csiTable):
         for ix in FP2_ix:
             Body[ix] = FP2_map(Body[ix])
         return(Body)
+
+
+
+    # def resample(self):
+        # fileTime = np.ceil(self.dataTable[self.timestampName]/self.databaseInterval)
+        # if self.samplingInterval<self.databaseInterval:
+        #     for ft in fileTime.unique():
+        #         dfColumns = {k:asdict_repr(v) for k,v in self.dataColumns.items() if v.dtype == '<f4'}
+        #         df = self.dataTable.loc[fileTime[fileTime==ft].index,list(dfColumns.keys())]
+        #         # Output as 1d binary array for processing in eddypro 
+        #         # self.ecf32(ft*self.databaseInterval,df,dfColumns,self.databaseInterval)
+        #         sys.exit("High frequency data resampling not yet implemented for binary output")
+        # else:
+        #     sys.exit("Low frequency data resampling not yet implemented for binary output")
+
+        # self.dataTable = self.dataTable.set_index(pd.to_datetime(self.dataTable.TIMESTAMP,unit='s'))
+        # if self.samplingInterval<self.databaseInterval:
+        #     c = self.dataTable[self.recordName].resample(f'{self.databaseInterval}s').count()
+        #     self.dataTable = self.dataTable.resample(f'{self.databaseInterval}s').mean()
+        #     self.dataTable[self.recordName] = c.astype('int32')
+        #     self.dataColumns[self.recordName]['dtypeOut'] = '<i4'
+        # elif self.samplingInterval>self.databaseInterval:
+        #     self.dataTable = self.dataTable.resample(f'{self.databaseInterval}s').nearest()
+        # else:
+        #     self.dataTable = self.dataTable.resample(f'{self.databaseInterval}s').asfreq()
+            
