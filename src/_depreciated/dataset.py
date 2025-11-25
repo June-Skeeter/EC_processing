@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Iterable
-from ..helperFunctions.baseClass import baseClass
-from ..helperFunctions.dictFuncs import dcToDict
+from modules.helperFunctions.baseClass import baseClass
+from modules.helperFunctions.dictFuncs import dcToDict
 from .sensor import callSensor
 
 supportedFileFormats = ['TOB3','TOA5','CSV']

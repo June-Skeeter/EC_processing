@@ -4,7 +4,7 @@ import yaml
 from datetime import datetime, timezone
 
 from dataclasses import dataclass, field
-from ..helperFunctions.baseClass import baseClass
+from modules.helperFunctions.baseClass import baseClass
 
 default_comment = f'''
 Database project configuration file

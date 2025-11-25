@@ -2,10 +2,10 @@
 
 from dataclasses import dataclass,field
 from collections import defaultdict
-from ..helperFunctions.log import log
-from ..helperFunctions.parseFrequency import parseFrequency
-from ..helperFunctions.dictFuncs import dcToDict
-from ..helperFunctions.baseClass import baseClass
+from modules.helperFunctions.log import log
+from modules.helperFunctions.parseFrequency import parseFrequency
+from modules.helperFunctions.dictFuncs import dcToDict
+from modules.helperFunctions.baseClass import baseClass
 from .traceObject import trace
 import pandas as pd
 import os

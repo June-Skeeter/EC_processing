@@ -3,10 +3,10 @@ from typing import Iterable
 from datetime import datetime, timezone
 from dataclasses import dataclass, field, make_dataclass
 
-from ..dbFunctions.project import project
+from src.databaseObjects.project import project
 
-from ..helperFunctions.dictFuncs import dcToDict
-from ..helperFunctions.getClasses import getClasses
+from modules.helperFunctions.dictFuncs import dcToDict
+from modules.helperFunctions.getClasses import getClasses
 
 from src.siteSetup.defaultObject import defaultObject
 

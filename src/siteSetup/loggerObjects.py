@@ -1,7 +1,7 @@
 from typing import Iterable
 from dataclasses import dataclass, field, MISSING
 
-from ..helperFunctions.getClasses import getClasses
+from modules.helperFunctions.getClasses import getClasses
 
 from src.siteSetup.dataSource import dataSource
 
