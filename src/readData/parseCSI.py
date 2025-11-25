@@ -5,8 +5,8 @@ from collections import defaultdict
 from ..helperFunctions.log import log
 from ..helperFunctions.parseFrequency import parseFrequency
 from ..helperFunctions.dictFuncs import dcToDict
-from .trace import trace
 from ..helperFunctions.baseClass import baseClass
+from .traceObject import trace
 import pandas as pd
 import os
 from datetime import datetime

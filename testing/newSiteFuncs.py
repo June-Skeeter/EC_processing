@@ -9,9 +9,8 @@ from src.siteSetup.siteObjects import *
 from src.siteSetup.sensorObjects import *
 from src.siteSetup.dataSource import *
 
-from src.readData.trace import trace
-
-from src.readData.parseCSI import TOB3, TOA5
+# from src.readData.parseCSI import TOB3, TOA5
+import src.readData as readData
 
 
 data = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
@@ -20,7 +19,7 @@ projectPath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'outputs',
 shutil.rmtree(projectPath, ignore_errors=True)
 
 sourceFileName = os.path.join(data,'57840_Time_Series_40.dat')
-df = TOB3(sourceFileName=sourceFileName,extractData=False)
+df = readData.parseCSI.TOB3(sourceFileName=sourceFileName,extractData=False)
 df
 breakpoint()
 
