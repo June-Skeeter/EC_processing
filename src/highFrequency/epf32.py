@@ -1,7 +1,7 @@
 # Writes high-frequency data file in the custom "EPF32" format.
-from src.databaseObjects.measurement_old import eddyCovarianceMeasurement
+from src._depreciated.measurement_old import eddyCovarianceMeasurement
 from src.databaseObjects.project import project
-from ..parseDataFiles.parseCSI import TOA5,TOB3
+from src.readData.parseCSI import TOA5,TOB3
 from modules.helperFunctions.log import log
 from modules.helperFunctions.dictFuncs import loadDict
 
