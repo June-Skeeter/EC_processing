@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field, MISSING
-from src.siteSetup.defaultObject import defaultObject
+from src.databaseObjects.spatialObject import spatialObject
 
 @dataclass(kw_only=True)
-class genericSensor(defaultObject):
+class genericSensor(spatialObject):
     model: str = field(
         init=False,
         metadata = {

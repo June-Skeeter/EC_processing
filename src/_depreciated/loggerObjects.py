@@ -3,7 +3,7 @@ from dataclasses import dataclass, field, MISSING
 
 from modules.helperFunctions.getClasses import getClasses
 
-from src.siteSetup.dataSource import dataSource
+from src.readData.dataSource import dataSource
 
 # Get all defined sensors
 import src.siteSetup.sensorObjects as sensorObjects

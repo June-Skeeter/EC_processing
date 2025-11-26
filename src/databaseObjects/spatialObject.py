@@ -11,7 +11,8 @@ from modules.helperFunctions.parseCoordinates import parseCoordinates
 
 
 @dataclass(kw_only=True)
-class defaultObject(project):
+class spatialObject(project):
+    # A default class for spatially referenced objects
     projectPath: str = field(default=None,init=False,repr=False)
     objectType: str = field(default='point',repr=False,init=False)
     index: int = field(default=0,repr=False,init=False)
@@ -68,6 +69,7 @@ class defaultObject(project):
         for obj in objectsToParse:
             if type(obj) is dict:
                 kwargs = obj.copy()
+                print(obj)
                 classObject = objectOptions[obj[objectID]]
                 obj = classObject.from_dict(kwargs)
             else:

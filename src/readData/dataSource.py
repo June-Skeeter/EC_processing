@@ -3,7 +3,7 @@ from dataclasses import dataclass, field, MISSING
 
 from modules.helperFunctions.getClasses import getClasses
 
-from src.siteSetup.defaultObject import defaultObject
+from src.databaseObjects.spatialObject import spatialObject
 
 # Get all defined sensors
 import src.siteSetup.sensorObjects as sensorObjects
@@ -11,7 +11,7 @@ sensorObjects = getClasses(sensorObjects)
 sensorObjects = {cl.__name__:cl for cl in sensorObjects[::-1]}
 
 @dataclass(kw_only=True)
-class genericSource(defaultObject):
+class dataSource(spatialObject):
     sourceType: str = field(
         init = False,
         metadata={
@@ -42,20 +42,20 @@ class genericSource(defaultObject):
         super().__post_init__()
 
 @dataclass(kw_only=True)
-class manualMeasurement(genericSource):
+class manualMeasurement(dataSource):
     sourceType: str = 'manualMeasurement'
     description: str = None
     fileType: str = 'csv'
 
 @dataclass(kw_only=True)
-class externalMeasurement(genericSource):
+class externalMeasurement(dataSource):
     sourceType: str = 'externalMeasurement'
     description: str = None
     fileType: str = 'csv'
 
     
 @dataclass(kw_only=True)
-class dataLogger(genericSource):
+class dataLogger(dataSource):
     sourceType: str = 'dataLogger'
     loggerModel: str = field(
         init=False,
@@ -91,12 +91,7 @@ class dataLogger(genericSource):
             objectID = 'loggerModel')
         super().__post_init__()
 
-# @dataclass(kw_only=True)
-# class CR1000x(dataLogger):
-#     manufacturer: str = 'CSI'
-#     fileType: str = 'TOB3'
-
-@dataclass
-class HOBO(dataLogger):
-    manufacturer: str = 'Onset'
-    fileType: str = 'csv'
+# @dataclass
+# class HOBO(dataLogger):
+#     manufacturer: str = 'Onset'
+#     fileType: str = 'csv'

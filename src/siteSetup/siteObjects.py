@@ -8,10 +8,10 @@ from src.databaseObjects.project import project
 from modules.helperFunctions.dictFuncs import dcToDict
 from modules.helperFunctions.getClasses import getClasses
 
-from src.siteSetup.defaultObject import defaultObject
+from src.databaseObjects.spatialObject import spatialObject
 
 # Get all defined loggers
-import src.siteSetup.dataSource as dataSource
+import src.readData.dataSource as dataSource
 dataSource = getClasses(dataSource)
 dataSource = {cl.__name__:cl for cl in dataSource[::-1]}
 
@@ -21,7 +21,7 @@ sensorObjects = getClasses(sensorObjects)
 sensorObjects = {cl.__name__:cl for cl in sensorObjects[::-1]}
 
 @dataclass(kw_only=True)
-class siteMetadata(defaultObject):
+class siteMetadata(spatialObject):
     projectPath: str = field(default=None,repr=False)
     validate: bool = field(
         repr=False,
@@ -63,6 +63,8 @@ class siteMetadata(defaultObject):
                 objectOptions = dataSource,
                 objectID = 'model')
             if self.configFile:
+                print('>?')
+                breakpoint()
                 self.saveConfigFile(inheritance=True)
     
     def config(self):

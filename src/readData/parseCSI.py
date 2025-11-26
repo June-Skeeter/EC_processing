@@ -15,7 +15,7 @@ import struct
 import sys
 import re
 
-from src.siteSetup.dataSource import dataLogger
+from src.readData.dataSource import dataLogger
 
 @dataclass(kw_only=True)
 class csiTrace(trace):
@@ -29,8 +29,8 @@ class csiTrace(trace):
         'ASCII':{'struct':'s','output':'string'},
     }
     # Parsed from data file
-    operation: str = None
-    byteMap: str = field(default=None,repr=False)
+    operation: str
+    byteMap: str = field(init=False,repr=False)
 
     def __post_init__(self):
         if self.dtype is None:
@@ -60,8 +60,8 @@ class csiFile(csiLogger):
     loggerModel: str = None
     serialNumber: str = None
     program: str = None
-    dataTable: pd.DataFrame = None
-    fileTimestamp: datetime = None
+    dataTable: pd.DataFrame = field(repr=False,init=False)
+    fileTimestamp: datetime = field(repr=False,init=False)
     campbellBaseTime: float = field(
         default=631152000.0,
         repr=False,
@@ -78,11 +78,6 @@ class csiFile(csiLogger):
         metadata={
             'description': 'Indicates the type of file (see options)',
             'options':['TOB3','TOA5']
-            })
-    extractData: bool = field(
-        default=False,
-        metadata={
-            'description':'True (all data) / False (preview header)'
             })
     
     def __post_init__(self, debug=False):
@@ -134,16 +129,13 @@ class csiTable(csiFile):
         if self.samplingInterval is None:
             self.samplingInterval = self.dataTable.TIMESTAMP.diff().median().total_seconds()
         self.samplingFrequency = (1.0 / self.samplingInterval)
-        for key,value in self.dataColumns.items():
-            self.dataColumns[key] = dcToDict(value,repr=True)
         
 @dataclass(kw_only=True)
 class TOA5(csiTable):
-    nLinesAsciiHeader: int = 4
+    nLinesAsciiHeader: int = field(default=4,repr=False,init=False)
     fileType: str = 'TOA5'
 
     def __post_init__(self):
-        super().__post_init__()
         #First read metadata from files header
         self.fileTimestamp = datetime.strptime(re.search(r'([0-9]{4}\_[0-9]{2}\_[0-9]{2}\_[0-9]{4})', self.sourceFileName.rsplit('.',1)[0]).group(0),'%Y_%m_%d_%H%M')
         with open(self.sourceFileName) as self.fileObject:
@@ -154,19 +146,28 @@ class TOA5(csiTable):
         
         # Extract metadata for each variable
         self.dataColumns =  {
-            columnName:csiTrace(variableName=columnName,units=units,operation=operation,dtype=dtype)#.__dict__
+            columnName:dcToDict(
+                    csiTrace(variableName=columnName,units=units,operation=operation,dtype=dtype),repr=True
+                )
                 for columnName,units,operation,dtype in 
                 zip(self.asciiHeader[1],self.asciiHeader[2],self.asciiHeader[3],list(self.dataTable.dtypes))}
+                
         self.finishTable()
 
 
 @dataclass(kw_only=True)
 class TOB3(csiTable):
-    nLinesAsciiHeader: int = 6
-    headerSize = 12
-    footerSize = 4
-    byteMap: str = None
+    nLinesAsciiHeader: int = field(default=6,repr=False,init=False)
+    headerSize: int = field(default=12,repr=False,init=False)
+    footerSize: int = field(default=4,repr=False,init=False)
+    byteMap: str = field(repr=False,init=False)
     fileType: str = 'TOB3'
+    extractData: bool = field(
+        default=True,
+        repr=False,
+        metadata={
+            'description':'True (all data) / False (preview header)'
+            })
 
     def __post_init__(self):
         #First read metadata from files header
@@ -181,19 +182,27 @@ class TOB3(csiTable):
             self.validationStamp = int(self.asciiHeader[1][4])
             self.compValidationStamp=(0xFFFF^self.validationStamp)
             self.frameResolution = pd.to_timedelta(parseFrequency(self.asciiHeader[1][5])).total_seconds()
-            # Extract metadata for each variable
+            # Extract metadata for each variable.  Add the metadata for timestamp and record which are parsed from the data frames and not in the header
+            self.implicitColumns = [self.timestampName,self.recordName]
             self.dataColumns = {
                 columnName:csiTrace(variableName=columnName,units = units, operation = operation,dtype=dtype)
-                    for i,(columnName,units,operation,dtype) in 
-                    enumerate(zip(self.asciiHeader[2],self.asciiHeader[3],self.asciiHeader[4],self.asciiHeader[5]))
+                    for columnName,units,operation,dtype in 
+                    zip(
+                        self.implicitColumns+self.asciiHeader[2],
+                        ['s',None]+self.asciiHeader[3],
+                        [None,None]+self.asciiHeader[4],
+                        ['<f8','<i8']+self.asciiHeader[5]
+                        )
                     }
             if self.extractData:
                 self.readFrames()
                 self.finishTable()
+        for key,value in self.dataColumns.items():
+            self.dataColumns[key] = dcToDict(value,repr=True)
     
     def readFrames(self):
         # Parameters dictating extraction
-        self.byteMap = ''.join([var.byteMap for var in self.dataColumns.values()])     
+        self.byteMap = ''.join([var.byteMap for key,var in self.dataColumns.items() if key not in self.implicitColumns])     
         self.recordSize = struct.calcsize('>'+self.byteMap)
         self.recordsPerFrame = int((self.frameSize-self.headerSize-self.footerSize)/self.recordSize)
         nframes = int((self.fileSize-self.fileObject.tell())/self.frameSize)
@@ -204,12 +213,12 @@ class TOB3(csiTable):
         frames = [f for i in range(nframes) for f in 
                 self.decodeFrame(bindata[i*self.frameSize:(i+1)*self.frameSize])]
         self.dataTable = pd.DataFrame(frames,
-            columns=[self.timestampName,self.recordName]+[col for col in self.dataColumns])
-        self.dataColumns = {
-            columnName:csiTrace(variableName=columnName,units = units, operation = operation,dtype=dtype)
-                    for columnName,units,operation,dtype in 
-                    zip([self.timestampName,self.recordName],['s',None],[None,None],['<f8','<i8'])
-                    } | self.dataColumns
+            columns=[self.timestampName,self.recordName]+[col for col in self.dataColumns if col not in self.implicitColumns])
+        # self.dataColumns = {
+        #     columnName:csiTrace(variableName=columnName,units = units, operation = operation,dtype=dtype)
+        #             for columnName,units,operation,dtype in 
+        #             zip([self.timestampName,self.recordName],['s',None],[None,None],['<f8','<i8'])
+        #             } | self.dataColumns
         self.typeMap = {key:val.dtype for key,val in self.dataColumns.items()}
         self.dataTable = self.dataTable.astype(self.typeMap)  
 

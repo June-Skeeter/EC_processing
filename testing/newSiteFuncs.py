@@ -3,11 +3,11 @@ import yaml
 import shutil
 
 import context
-from src.dbFunctions.project import project
+from src.databaseObjects.project import project
 from src.siteSetup.siteObjects import *
 # from src.siteSetup.loggerObjects import *
 from src.siteSetup.sensorObjects import *
-from src.siteSetup.dataSource import *
+from src.readData.dataSource import *
 
 # from src.readData.parseCSI import TOB3, TOA5
 import src.readData as readData
@@ -19,9 +19,12 @@ projectPath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'outputs',
 shutil.rmtree(projectPath, ignore_errors=True)
 
 sourceFileName = os.path.join(data,'57840_Time_Series_40.dat')
-df = readData.parseCSI.TOB3(sourceFileName=sourceFileName,extractData=False)
-df
-breakpoint()
+df = readData.parseCSI.TOB3(sourceFileName=sourceFileName)#.saveConfigFile()
+# sourceFileName = os.path.join(data,'TOA5_BBS.FLUX_2023_08_01_1530.dat')
+# df = readData.parseCSI.TOA5(sourceFileName=sourceFileName,extractData=False).saveConfigFile()
+print(df.dataTable.head())
+print(yaml.dump(df.saveConfigFile(),sort_keys=False))
+# breakpoint()
 
 # sM = siteMetadata(
 #     projectPath=projectPath,
@@ -34,13 +37,14 @@ breakpoint()
 #     PI = 'June Skeeter & Peter Morse',
 #     description = 'Wet sedge meadow, continuous permafrost',
 #     dataSources = [
-#         CR1000x(
-#             sensorInventory=[
-#                 sonicAnemometer(
-#                     northOffset=38,
-#                     measurementHeight=2.78)]
-#         ),
-#         # HOBO(),
+#         readData.parseCSI.TOB3(sourceFileName=sourceFileName,extractData=False),
+#         # CR1000x(
+#         #     sensorInventory=[
+#         #         sonicAnemometer(
+#         #             northOffset=38,
+#         #             measurementHeight=2.78)]
+#         # ),
+#         HOBO(),
 #         # manualMeasurement()
 #         ],
 #     verbose=False
