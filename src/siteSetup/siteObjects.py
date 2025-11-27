@@ -1,24 +1,28 @@
 import os
 from typing import Iterable
 from datetime import datetime, timezone
+import dataclasses
 from dataclasses import dataclass, field, make_dataclass
 
 from src.databaseObjects.project import project
 
 from modules.helperFunctions.dictFuncs import dcToDict
-from modules.helperFunctions.getClasses import getClasses
+# from modules.helperFunctions.getClasses import getClasses
 
 from src.databaseObjects.spatialObject import spatialObject
 
-# Get all defined loggers
-import src.readData.dataSource as dataSource
-dataSource = getClasses(dataSource)
-dataSource = {cl.__name__:cl for cl in dataSource[::-1]}
+import src.siteSetup.loggerObjects as loggerObjects
 
-# Get all defined sensors
-import src.siteSetup.sensorObjects as sensorObjects
-sensorObjects = getClasses(sensorObjects)
-sensorObjects = {cl.__name__:cl for cl in sensorObjects[::-1]}
+# # Get all defined loggers
+# import src.readData.dataSource as dataSource
+# dataSource = getClasses(dataSource)
+# dataSource = {cl.__name__:cl for cl in dataSource[::-1]}
+
+# # Get all defined sensors
+# import src.siteSetup.sensorObjects as sensorObjects
+# sensorObjects = getClasses(sensorObjects)
+# sensorObjects = {cl.__name__:cl for cl in sensorObjects[::-1]}
+
 
 @dataclass(kw_only=True)
 class siteMetadata(spatialObject):
@@ -43,14 +47,18 @@ class siteMetadata(spatialObject):
         default = None,
         metadata = {'description': 'Principal Investigator(s)'} 
     )
-    dataSources: Iterable = field(
-        default_factory = lambda:[
-            dataSource['dataLogger']
-            ],
+    dataLoggers: Iterable = field(
+        default_factory=dict,
         metadata = {
             'description': 'Inventory of data sources for site',
-            'options':{name:value.template() for name,value in dataSource.items()}
+            # 'options':{name:value.template() for name,value in dataSource.items()}
     })
+    # dataSources: Iterable = field(
+    #     default_factory = dict,
+    #     metadata = {
+    #         'description': 'Inventory of data sources for site',
+    #         'options':{name:value.template() for name,value in dataSource.items()}
+    # })
 
     def __post_init__(self):
         self.UID = self.siteID
@@ -58,17 +66,27 @@ class siteMetadata(spatialObject):
             self.configFile = os.path.join(self.projectPath,self.siteID,type(self).__name__+'.yml')
         super().__post_init__()
         if self.validate:
-            self.dataSources = self.parseNestedObjects(
-                objectsToParse=self.dataSources,
-                objectOptions = dataSource,
-                objectID = 'model')
-            if self.configFile:
-                print('>?')
-                breakpoint()
-                self.saveConfigFile(inheritance=True)
+            self.dataLoggers = self.parseLoggers()
+            self.saveConfigFile(inheritance=True)
     
-    def config(self):
-        return dcToDict(self,repr=True,inheritance=True)
+    def parseLoggers(self):
+        cleanLoggers = {}
+        if type(self.dataLoggers) is dict:
+            self.dataLoggers = list(self.dataLoggers.values())
+        for obj in self.dataLoggers:
+            if dataclasses.is_dataclass(obj):
+                obj = dcToDict(obj,repr=True,inheritance=True)
+            if 'loggerModel' not in obj or not hasattr(loggerObjects,obj['loggerModel']):
+                self.logError(f'Not a valid loggerObject: {obj}')
+            else:
+                kwargs = obj
+                logger = getattr(loggerObjects,obj['loggerModel'])
+                logger = logger.from_dict(kwargs)
+                while logger.loggerID in cleanLoggers.keys():
+                    logger.updateUID()
+                cleanLoggers[logger.loggerID] = dcToDict(logger,inheritance=False)|dcToDict(logger,keepNull=False)
+        return(cleanLoggers)
+
 
 
 @dataclass(kw_only=True)

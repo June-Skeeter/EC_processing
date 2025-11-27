@@ -12,6 +12,7 @@ sensorObjects = {cl.__name__:cl for cl in sensorObjects[::-1]}
 
 @dataclass(kw_only=True)
 class dataSource(spatialObject):
+    sourceID: str = field(default=None,init=False)
     sourceType: str = field(
         init = False,
         metadata={
@@ -28,17 +29,10 @@ class dataSource(spatialObject):
         init=False,
         repr=False
     )
-    # traces: dict = field(
-    #     default_factory=dict,
-    #     metadata={
-    #         'description': 'Dictionary linking traces to sensors/instrumentation',
-    #     }
-    # )
 
     def __post_init__(self):
-        if not hasattr(self,'UID'):
-            self.UID = type(self).__name__
-            self.sourceType = None
+        if not hasattr(self,'sourceID'):
+            self.sourceID = type(self).__name__
         super().__post_init__()
 
 @dataclass(kw_only=True)
@@ -52,6 +46,7 @@ class externalMeasurement(dataSource):
     sourceType: str = 'externalMeasurement'
     description: str = None
     fileType: str = 'csv'
+
 
     
 @dataclass(kw_only=True)
@@ -83,7 +78,12 @@ class dataLogger(dataSource):
     def __post_init__(self):
         if not hasattr(self,'loggerModel'):
             self.loggerModel = type(self).__name__
+        if not hasattr(self,'sourceID'):
+            self.sourceID = self.loggerModel
+        if self.serialNumber:
+            self.sourceID = f"{self.sourceID}_{self.serialNumber}"
         self.UID = self.loggerModel
+        breakpoint()
         self.nestedClasses = sensorObjects
         self.sensorInventory = self.parseNestedObjects(
             objectsToParse = self.sensorInventory,

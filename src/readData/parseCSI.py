@@ -88,15 +88,15 @@ class csiFile(csiLogger):
 @dataclass(kw_only=True)
 class csiTable(csiFile):
     # Attributes common to a CSI format datable
-    asciiHeader: list = field(init=False)
-    nLinesAsciiHeader: int
+    asciiHeader: list = field(init=False,repr=False)
+    nLinesAsciiHeader: int = field(repr=False)
     tableName: str = None
-    dataColumns: str = None
-    timestampName: str = 'TIMESTAMP'
-    recordName: str = 'RECORD'
-    samplingInterval: float = None  # in seconds
-    samplingFrequency: str = None # in Hz
-    gpsDriftCorrection: bool = field(default=False,repr=False,metadata={'description':'Consider using for high frequency data if GPS clock resets were enabled.  This is clock correction is useful to ensure long-term stability of the data logger clock but causes problems when splitting high-frequency data files.  Assuming the file does not span more than a day, the drift should be minimal, so we can "remove" the offset within a file to ensure timestamps are sequential'})
+    dataColumns: dict = field(default_factory=dict)
+    timestampName: str = field(default='TIMESTAMP',init=False,repr=False)
+    recordName: str = field(default='RECORD',init=False,repr=False)
+    samplingInterval: float = field(default=None,init=None)  # in seconds
+    samplingFrequency: str = field(default=None,init=None) # in Hz
+    gpsDriftCorrection: bool = field(default=False,repr=False,metadata={'description':'Consider using for high frequency data if GPS clock resets were enabled.  This clock correction is useful to ensure long-term stability of the data logger clock but causes problems when splitting high-frequency data files.  Assuming the file does not span more than a day, the drift should be minimal, so we can "remove" the offset within a file to ensure timestamps are sequential'})
 
     def __post_init__(self):
         # Read the ascii header

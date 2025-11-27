@@ -3,10 +3,16 @@ from src.databaseObjects.spatialObject import spatialObject
 
 @dataclass(kw_only=True)
 class genericSensor(spatialObject):
-    model: str = field(
+    sensorID: str = field(default=None,init=False)
+    sensorModel: str = field(
         init=False,
         metadata = {
             'description': 'The sensor model, auto-filled from class name',
+    })
+    name: str = field(
+        default = None,
+        metadata = {
+            'description': 'Custom descriptor variable',
     })
     manufacturer: str = field(
         default = None,
@@ -19,16 +25,25 @@ class genericSensor(spatialObject):
         metadata = {
             'description': 'Serial# (if known)',
     })
-    sensorType: str = field(
+    measurementType: str = field(
         default='general',
         metadata = {
-            'description': 'The type of sensor',
-            'options':['flux','general']
+            'description': 'The type of measurement obtained by the sensor'
     })
     
     def __post_init__(self):
-        self.model = type(self).__name__
-        self.UID = self.model
+        self.sensorModel = type(self).__name__
+        if self.serialNumber:
+            self.sensorID = f"{self.sensorModel}_{self.serialNumber}"
+        elif self.name:
+            self.sensorID = f"{self.sensorModel}_{self.name.replace(' ','_')}"
+        else:
+            self.sensorID = f"{self.sensorModel}_{self.index}"
+        super().__post_init__()
+
+@dataclass(kw_only=True)
+class thermcouple(genericSensor):
+    pass
 
 
 ######################################## Flux Sensors ########################################
@@ -38,7 +53,7 @@ class genericSensor(spatialObject):
 
 @dataclass(kw_only=True)
 class fluxSensor(genericSensor):
-    sensorType: str = 'flux'
+    measurementType: str = 'flux'
     softwareVersion: str =  field(
         default = None,
         metadata = {

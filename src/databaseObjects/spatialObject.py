@@ -15,8 +15,9 @@ class spatialObject(project):
     # A default class for spatially referenced objects
     projectPath: str = field(default=None,init=False,repr=False)
     objectType: str = field(default='point',repr=False,init=False)
-    index: int = field(default=0,repr=False,init=False)
+    index: int = field(default=1,repr=False,init=False)
     UID: str = field(repr=False,init=False)
+    linkedID: str = field(repr=False,default=None,init=False)
 
     startDate: datetime = field(
         default = None,
@@ -50,34 +51,36 @@ class spatialObject(project):
     })
 
     def __post_init__(self):
-        if hasattr(self, '__pre_init__'):
-            self.__pre_init__()
+        if not hasattr(self, 'UID'):
+            self.linkedID = [k for k in self.__dataclass_fields__.keys() if k.endswith('ID')][-1]
+            self.UID = self.__dict__[self.linkedID]
         if type(self.latitude) is not self.__dataclass_fields__['latitude'].type or type(self.longitude) is not self.__dataclass_fields__['longitude'].type:
             pC = parseCoordinates(UID=self.UID,latitude=self.latitude, longitude=self.longitude)
             self.latitude, self.longitude = pC.latitude, pC.longitude
         super().__post_init__()
-        self.updateUID()
+        # self.updateUID()
 
     def updateUID(self):
         self.index += 1
-        self.UID = f"{type(self).__name__}_{self.index}"
+        self.UID = f"{self.UID.rsplit('_',1)[0]}_{self.index}"
+        self.__dict__[self.linkedID] = self.UID
 
-    def parseNestedObjects(self, objectsToParse, objectOptions, objectID):
-        nest = {}
-        if type(objectsToParse) is dict:
-            objectsToParse = list(objectsToParse.values())
-        for obj in objectsToParse:
-            if type(obj) is dict:
-                kwargs = obj.copy()
-                print(obj)
-                classObject = objectOptions[obj[objectID]]
-                obj = classObject.from_dict(kwargs)
-            else:
-                pass
-            while obj.UID in nest.keys():
-                obj.updateUID()
-            nest[obj.UID] = dcToDict(obj,repr=True,keepNull=False)
-        return (nest)
+    # def parseNestedObjects(self, objectsToParse, objectOptions, objectID):
+    #     nest = {}
+    #     if type(objectsToParse) is dict:
+    #         objectsToParse = list(objectsToParse.values())
+    #     for obj in objectsToParse:
+    #         if type(obj) is dict:
+    #             kwargs = obj.copy()
+    #             print(obj)
+    #             classObject = objectOptions[obj[objectID]]
+    #             obj = classObject.from_dict(kwargs)
+    #         else:
+    #             pass
+    #         while obj.UID in nest.keys():
+    #             obj.updateUID()
+    #         nest[obj.UID] = dcToDict(obj,repr=True,keepNull=False)
+    #     return (nest)
            
 
     @classmethod
