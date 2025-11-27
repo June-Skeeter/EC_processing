@@ -42,7 +42,7 @@ class genericSensor(spatialObject):
         super().__post_init__()
 
 @dataclass(kw_only=True)
-class thermcouple(genericSensor):
+class thermocouple(genericSensor):
     pass
 
 
@@ -52,7 +52,7 @@ class thermcouple(genericSensor):
 # Some are specific to Sonics or IRGAs, some are common to all
 
 @dataclass(kw_only=True)
-class fluxSensor(genericSensor):
+class ecSystem(spatialObject):
     measurementType: str = 'flux'
     softwareVersion: str =  field(
         default = None,
@@ -61,79 +61,91 @@ class fluxSensor(genericSensor):
     })
     northwardSeparation: float = field(
         metadata = {
-            'description':'Northward separation from reference sonic (in cm) required for irgas, and any secondary sonics.',
+            'description':'Northward separation from reference sonic (in m) required for irgas, and any secondary sonics.  Calculated from x&y separation if not provided.',
     })
     eastwardSeparation: float = field(
         metadata = {
-            'description':'Northward separation from reference sonic (in cm) required for irgas, and any secondary sonics.',
+            'description':'Northward separation from reference sonic (in m) required for irgas, and any secondary sonics.  Calculated from x&y separation if not provided.',
     })
     verticalSeparation: float = field(
         metadata = {
-            'description':'Northward separation from reference sonic (in cm) required for irgas, and any secondary sonics.',
+            'description':'Northward separation from reference sonic (in m) required for irgas, and any secondary sonics.',
     })
-@dataclass(kw_only=True)
-class sonicAnemometer(fluxSensor):
-    northwardSeparation: float = 0.0
-    eastwardSeparation: float = 0.0
-    verticalSeparation: float = 0.0
-    windFormat: str = field(
-        default='uvw',
+
+    xSeparation: float = field(
         metadata = {
-            'description': 'Format of wind data (only supports uvw for now).  Required for EddyPro',
-            'options':['uvw']
+            'description':'Lateral separation from reference sonic (in m) parallel to the main axis of the sonic.  See Fig D2 in (https://s.campbellsci.com/documents/us/manuals/easyflux-dl-cr6op.pdf) for example.  Required for irgas, and any secondary sonics.',
     })
-    measurementHeight: float = field(
+    ySeparation: float = field(
         metadata = {
-            'description': 'Measurement height (Zm) in meters, required for Sonics, optional otherwise',
-    })
-    northOffset: float = field(
-        metadata = {
-            'description': 'Offset from North in degrees (clockwise)',
+            'description':'Northward separation from reference sonic (in m) required for irgas, and any secondary sonics.',
     })
 
 
-@dataclass(kw_only=True)
-class IRGASON_sonic(sonicAnemometer):
-    manufacturer: str = 'CSI'
+# @dataclass(kw_only=True)
+# class sonicAnemometer(fluxSensor):
+#     northwardSeparation: float = 0.0
+#     eastwardSeparation: float = 0.0
+#     verticalSeparation: float = 0.0
+#     windFormat: str = field(
+#         default='uvw',
+#         metadata = {
+#             'description': 'Format of wind data (only supports uvw for now).  Required for EddyPro',
+#             'options':['uvw']
+#     })
+#     measurementHeight: float = field(
+#         metadata = {
+#             'description': 'Measurement height (Zm) in meters, required for Sonics, optional otherwise',
+#     })
+#     northOffset: float = field(
+#         metadata = {
+#             'description': 'Offset from North in degrees (clockwise)',
+#     })
 
-@dataclass(kw_only=True)
-class CSAT3(sonicAnemometer):
-    manufacturer: str = 'CSI'
 
-class infraredGasAnalyzer(fluxSensor):
-    tubeLength: float = field(
-        default = '',
-        metadata = {
-            'description':'Length of intake tube (only for closed path irgas)',
-    })
-    tubeDiameter: float = field(
-        default = '',
-        metadata = {
-            'description':'Diameter of intake tube (only for closed path irgas)',
-    })
+# @dataclass(kw_only=True)
+# class IRGASON_sonic(sonicAnemometer):
+#     manufacturer: str = 'CSI'
 
-@dataclass(kw_only=True)
-class IRGASON_irga(infraredGasAnalyzer):
-    manufacturer: str = 'CSI'
-    tubeLength: float = 0.0
-    tubeDiameter: float = 0.0
-    northwardSeparation: float = 0.0
-    eastwardSeparation: float = 0.0
-    verticalSeparation: float = 0.0
+# @dataclass(kw_only=True)
+# class CSAT3(sonicAnemometer):
+#     manufacturer: str = 'CSI'
 
-@dataclass(kw_only=True)
-class LI7700(infraredGasAnalyzer):
-    manufacturer: str = 'LICOR'
-    tubeLength: float = 0.0
-    tubeDiameter: float = 0.0
+# @dataclass
+# class infraredGasAnalyzer(fluxSensor):
+#     tubeLength: float = field(
+#         default = 0.0,
+#         metadata = {
+#             'description':'Length of intake tube (only for closed path irgas)',
+#     })
+#     tubeDiameter: float = field(
+#         default = 0.0,
+#         metadata = {
+#             'description':'Diameter of intake tube (only for closed path irgas)',
+#     })
 
-@dataclass(kw_only=True)
-class LI7500(infraredGasAnalyzer):
-    manufacturer: str = 'LICOR'
-    tubeLength: float = 0.0
-    tubeDiameter: float = 0.0
+# @dataclass(kw_only=True)
+# class IRGASON_irga(infraredGasAnalyzer):
+#     manufacturer: str = 'CSI'
+#     tubeLength: float = 0.0
+#     tubeDiameter: float = 0.0
+#     northwardSeparation: float = 0.0
+#     eastwardSeparation: float = 0.0
+#     verticalSeparation: float = 0.0
 
-@dataclass(kw_only=True)
-class LI7200(infraredGasAnalyzer):
-    manufacturer: str = 'LICOR'
-    tubeDiameter: float = 5.33
+# @dataclass(kw_only=True)
+# class LI7700(infraredGasAnalyzer):
+#     manufacturer: str = 'LICOR'
+#     tubeLength: float = 0.0
+#     tubeDiameter: float = 0.0
+
+# @dataclass(kw_only=True)
+# class LI7500(infraredGasAnalyzer):
+#     manufacturer: str = 'LICOR'
+#     tubeLength: float = 0.0
+#     tubeDiameter: float = 0.0
+
+# @dataclass(kw_only=True)
+# class LI7200(infraredGasAnalyzer):
+#     manufacturer: str = 'LICOR'
+#     tubeDiameter: float = 5.33
