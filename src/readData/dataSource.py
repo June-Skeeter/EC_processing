@@ -3,7 +3,7 @@ from dataclasses import dataclass, field, MISSING
 
 from modules.helperFunctions.getClasses import getClasses
 
-from src.databaseObjects.spatialObject import spatialObject
+from src.databaseObjects.defaultObjects import spatialObject
 
 # Get all defined sensors
 import src.siteSetup.sensorObjects as sensorObjects

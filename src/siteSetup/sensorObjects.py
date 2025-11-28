@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field, MISSING
-from src.databaseObjects.spatialObject import spatialObject
+from src.databaseObjects.defaultObjects import spatialObject
 
 @dataclass(kw_only=True)
 class genericSensor(spatialObject):

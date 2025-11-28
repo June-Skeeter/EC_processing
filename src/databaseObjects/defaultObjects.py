@@ -11,16 +11,26 @@ from modules.helperFunctions.parseCoordinates import parseCoordinates
 
 @dataclass(kw_only=True)
 class defaultObject(project):
+    startDate: datetime = field(
+        default = None,
+        metadata = {
+            'description': 'Date of installation. For nested values, assumed to be same as parent object.  Optionally to provide if different from parent value.',
+    })
+    endDate: datetime = field(
+        default = None,
+        metadata = {
+            'description': 'Date of removal (or None). For nested values, assumed to be same as parent object.  Optionally to provide if different from parent value.'
+    })
     projectPath: str = field(default=None,init=False,repr=False)
     index: int = field(default=1,repr=False)
     UID: str = field(repr=False,init=False)
     linkedID: str = field(repr=False,default=None,init=False)
     
     def __post_init__(self):
-        super().__post_init__()
         if not hasattr(self, 'UID'):
             self.linkedID = [k for k in self.__dataclass_fields__.keys() if k.endswith('ID')][-1]
             self.UID = self.__dict__[self.linkedID]
+        super().__post_init__()
             
     def updateUID(self):
         self.index += 1
@@ -32,16 +42,6 @@ class spatialObject(defaultObject):
     # A default class for spatially referenced objects
     # objectType: str = field(default='point',repr=False,init=False)
 
-    startDate: datetime = field(
-        default = None,
-        metadata = {
-            'description': 'Date of installation. For nested values, assumed to be same as parent object.  Optionally to provide if different from parent value.',
-    })
-    endDate: datetime = field(
-        default = None,
-        metadata = {
-            'description': 'Date of removal (or None). For nested values, assumed to be same as parent object.  Optionally to provide if different from parent value.'
-    })
     latitude: float = field(
         default = None,
         metadata = {
@@ -68,24 +68,42 @@ class spatialObject(defaultObject):
             pC = parseCoordinates(UID=None,latitude=self.latitude, longitude=self.longitude)
             self.latitude, self.longitude = pC.latitude, pC.longitude
         super().__post_init__()
-        # self.updateUID()
 
-
-    # def parseNestedObjects(self, objectsToParse, objectOptions, objectID):
-    #     nest = {}
-    #     if type(objectsToParse) is dict:
-    #         objectsToParse = list(objectsToParse.values())
-    #     for obj in objectsToParse:
-    #         if type(obj) is dict:
-    #             kwargs = obj.copy()
-    #             print(obj)
-    #             classObject = objectOptions[obj[objectID]]
-    #             obj = classObject.from_dict(kwargs)
-    #         else:
-    #             pass
-    #         while obj.UID in nest.keys():
-    #             obj.updateUID()
-    #         nest[obj.UID] = dcToDict(obj,repr=True,keepNull=False)
-    #     return (nest)
-           
-
+@dataclass(kw_only=True)
+class sensorObject(spatialObject):
+    keepNull: bool = False
+    
+    sensorID: str = field(default=None)
+    sensorModel: str = field(
+        default = None,
+        metadata = {
+            'description': 'The sensor model, auto-filled from class name',
+    })
+    name: str = field(
+        default = None,
+        metadata = {
+            'description': 'Custom descriptor variable',
+    })
+    manufacturer: str = field(
+        default = None,
+        init=False,
+        metadata = {
+            'description': 'Indicates manufacturer of sensor, auto from class name',
+    })
+    serialNumber: str = field(
+        default = None,
+        metadata = {
+            'description': 'Serial# (if known)',
+    })
+    sensorType: str
+    
+    def __post_init__(self):
+        if self.sensorModel is None:
+            self.sensorModel = type(self).__name__
+        if self.serialNumber:
+            self.sensorID = f"{self.sensorModel}_{self.serialNumber}"
+        elif self.name:
+            self.sensorID = f"{self.sensorModel}_{self.name.replace(' ','_')}"
+        else:
+            self.sensorID = f"{self.sensorModel}_{self.index}"
+        super().__post_init__()

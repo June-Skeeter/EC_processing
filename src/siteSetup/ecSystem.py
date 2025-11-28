@@ -2,15 +2,15 @@ import dataclasses
 import numpy as np
 from typing import Iterable
 from dataclasses import dataclass, field, MISSING
-from src.databaseObjects.spatialObject import spatialObject,defaultObject
+from src.databaseObjects.defaultObjects import spatialObject,sensorObject
 
 @dataclass(kw_only=True)
-class ecSensor(defaultObject):
-    sensorModel: str = field(
-        init=False,
-        metadata = {
-            'description': 'The sensor model, auto-filled from class name',
-    })
+class ecSensor(sensorObject):
+    # sensorModel: str = field(
+    #     default = None,
+    #     metadata = {
+    #         'description': 'The sensor model, auto-filled from class name',
+    # })
     sensorType: str = field(
         metadata={
             'description': 'type of sensor',
@@ -84,26 +84,26 @@ class ecSensor(defaultObject):
     })
 
     def __post_init__(self):
-        if self.pathType == 'open':
-            self.tubeDiameter = 0.0
-            self.tubeLength = 0.0
+        if self.pathType != 'closed':
+            self.tubeDiameter = None
+            self.tubeLength = None
         elif self.tubeDiameter is None or self.tubeLength is None:
             self.logError('Must provide tube length & diameter for closed path sensors')
         
-        if self.zSeparation and not self.verticalSeparation:
+        if not self.zSeparation is None and self.verticalSeparation is None:
             self.verticalSeparation = self.zSeparation
         if self.xSeparation == 0.0 and self.ySeparation == 0.0:
             self.northwardSeparation,self.eastwardSeparation = 0.0, 0.0
-        if not self.verticalSeparation is None and not ( (self.xSeparation is None and self.ySeparation is None) or ( (self.eastwardSeparation is None and self.northwardSeparation is None))):
-            self.logError("Must provide separation parameters, in either sonic coordinates (x, y, z) or geographic coordinates (northward, eastward, vertical)")
+        if self.verticalSeparation is None and not ( (self.xSeparation is None and self.ySeparation is None) or ( (self.eastwardSeparation is None and self.northwardSeparation is None))):
+            self.logError("Must provide separation parameters, in either sonic coordinates (xSeparation, ySeparation, zSeparation) or geographic coordinates (northwardSeparation, eastwardSeparation, verticalSeparation)")
         if (self.northwardSeparation is None or self.eastwardSeparation is None) and self.northOffset is not None:
-            self.getGeographicCoordinates()
-
-        self.sensorModel = type(self).__name__
+            self.geographicSeparation()
+        if self.sensorModel is None:
+            self.sensorModel = type(self).__name__
 
         super().__post_init__()
 
-    def getGeographicCoordinates(self):
+    def geographicSeparation(self):
         if self.northwardSeparation is None and self.eastwardSeparation is None:
             # Convert to radians
             # **Note**: north offset is relative to geographic (meteorologic) north, while x,y offsets are in cartesian coordinates.  To perform the coordinate rotation properly theta must be converted to cartesian coordinate (positive is counter-clockwise from the x axis)
@@ -114,14 +114,14 @@ class ecSensor(defaultObject):
             v = np.array([[self.xSeparation,self.ySeparation]])
             Rv = (R*v)
             Rv = Rv.sum(axis=1).round(3)
-            self.northwardSeparation = Rv[1]
-            self.eastwardSeparation = Rv[0]
+            self.northwardSeparation = float(Rv[1])
+            self.eastwardSeparation = float(Rv[0])
         pass
 
 
 @dataclass(kw_only=True)
 class ecSystem(spatialObject):
-    siteID: str
+    systemID: str
     measurementHeight: float = field(
         metadata = {
             'description': 'Measurement height (Zm) in meters, required for Sonics, optional otherwise',
@@ -136,7 +136,7 @@ class ecSystem(spatialObject):
         )
 
     def __post_init__(self):
-        self.siteID = f"{self.siteID}_EC_{self.index}"
+        self.systemID = f"{self.systemID}_EC_{self.index}"
         # Format sensor objects
         if dataclasses.is_dataclass(self.ecSensors):
             self.ecSensors = [self.ecSensors.toConfig()]
@@ -150,20 +150,29 @@ class ecSystem(spatialObject):
 
         sensorDict = {}
         for sensor in self.ecSensors:
-            if sensor['measurementHeight'] is None:
+            if 'measurementHeight' not in sensor or sensor['measurementHeight'] is None:
                 sensor['measurementHeight'] = self.measurementHeight
-            if sensor['northOffset'] is None:
+            if 'northOffset' not in sensor or sensor['northOffset'] is None:
                 sensor['northOffset'] = self.northOffset
             sensor = ecSensor.from_dict(sensor)
             while sensor.UID in sensorDict.keys():
                 sensor.updateUID()
-            sensorDict[sensor.UID] = sensor.toConfig()
+            sensorDict[sensor.UID] = sensor.toConfig(keepNull=False)
+        self.ecSensors = sensorDict
             
 @dataclass(kw_only=True)
 class IRGASON(ecSensor):
     manufacturer: str = 'CSI'
     sensorType: str = 'soinc+irga'
     pathType: str = 'open'
+    xSeparation: float = 0.0
+    ySeparation: float = 0.0
+    zSeparation: float = 0.0
+    
+@dataclass(kw_only=True)
+class CSAT3(ecSensor):
+    manufacturer: str = 'CSI'
+    sensorType: str = 'sonic'
     xSeparation: float = 0.0
     ySeparation: float = 0.0
     zSeparation: float = 0.0
@@ -177,10 +186,19 @@ class LI7700(ecSensor):
 @dataclass(kw_only=True)
 class LI7500(ecSensor):
     manufacturer: str = 'LICOR'
+    sensorType: str = 'irga'
     tubeLength: float = 0.0
     tubeDiameter: float = 0.0
+    pathType: str = 'open'
+
 
 @dataclass(kw_only=True)
 class LI7200(ecSensor):
     manufacturer: str = 'LICOR'
+    sensorType: str = 'irga'
     tubeDiameter: float = 5.33
+    pathType: str = 'closed'
+
+@dataclass(kw_only=True)
+class fwThermocouple(ecSensor):
+    sensorType: str = 'thermocouple'

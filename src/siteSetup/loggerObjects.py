@@ -2,7 +2,7 @@ from typing import Iterable
 import dataclasses
 from dataclasses import dataclass, field
 
-from src.databaseObjects.spatialObject import spatialObject
+from src.databaseObjects.defaultObjects import spatialObject
 
 from modules.helperFunctions.dictFuncs import dcToDict
 

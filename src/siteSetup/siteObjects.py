@@ -9,7 +9,7 @@ from src.databaseObjects.project import project
 from modules.helperFunctions.dictFuncs import dcToDict
 # from modules.helperFunctions.getClasses import getClasses
 
-from src.databaseObjects.spatialObject import spatialObject
+from src.databaseObjects.defaultObjects import spatialObject
 
 import src.siteSetup.loggerObjects as loggerObjects
 

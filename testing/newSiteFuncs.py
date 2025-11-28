@@ -27,12 +27,12 @@ shutil.rmtree(projectPath, ignore_errors=True)
 #     northOffset=33.0
 #     )
 EC = ecSystem.ecSystem(
-    siteID = 'SCL',
+    systemID = 'SCL',
     measurementHeight=3.38,
     northOffset=33.0,
     ecSensors = [
         ecSystem.IRGASON(),
-        ecSystem.LI7700(xSeparation=0.41,ySeparation=0.16)],
+        ecSystem.LI7700(xSeparation=0.41,ySeparation=0.16,zSeparation=0.0)],
     )
 
 print(yaml.dump(EC.toConfig(),sort_keys=False))
