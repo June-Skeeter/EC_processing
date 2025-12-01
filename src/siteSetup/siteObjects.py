@@ -47,12 +47,15 @@ class siteMetadata(spatialObject):
         default = None,
         metadata = {'description': 'Principal Investigator(s)'} 
     )
-    dataLoggers: Iterable = field(
-        default_factory=dict,
-        metadata = {
-            'description': 'Inventory of data sources for site',
-            # 'options':{name:value.template() for name,value in dataSource.items()}
-    })
+    systems: Iterable = field(
+        default_factory=list,
+    )
+    # dataLoggers: Iterable = field(
+    #     default_factory=dict,
+    #     metadata = {
+    #         'description': 'Inventory of data sources for site',
+    #         # 'options':{name:value.template() for name,value in dataSource.items()}
+    # })
     # dataSources: Iterable = field(
     #     default_factory = dict,
     #     metadata = {

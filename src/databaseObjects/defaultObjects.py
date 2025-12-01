@@ -1,4 +1,5 @@
 import os
+import dataclasses
 from typing import Iterable
 from datetime import datetime, timezone
 from dataclasses import dataclass, field, MISSING
@@ -11,6 +12,10 @@ from modules.helperFunctions.parseCoordinates import parseCoordinates
 
 @dataclass(kw_only=True)
 class defaultObject(project):
+    projectPath: str = field(default=None,init=False,repr=False)
+    index: int = field(default=1,repr=False)
+    UID: str = field(repr=False,init=False)
+    linkedID: str = field(repr=False,default=None,init=False)
     startDate: datetime = field(
         default = None,
         metadata = {
@@ -21,10 +26,6 @@ class defaultObject(project):
         metadata = {
             'description': 'Date of removal (or None). For nested values, assumed to be same as parent object.  Optionally to provide if different from parent value.'
     })
-    projectPath: str = field(default=None,init=False,repr=False)
-    index: int = field(default=1,repr=False)
-    UID: str = field(repr=False,init=False)
-    linkedID: str = field(repr=False,default=None,init=False)
     
     def __post_init__(self):
         if not hasattr(self, 'UID'):
@@ -36,6 +37,19 @@ class defaultObject(project):
         self.index += 1
         self.UID = f"{self.UID.rsplit('_',1)[0]}_{self.index}"
         self.__dict__[self.linkedID] = self.UID
+
+    def formatIterables(self,iterables):
+        
+        # Convert sensors to generic list for later processing
+        if dataclasses.is_dataclass(iterables):
+            iterables = [iterables.toConfig()]
+        elif type(iterables) is dict:
+            iterables = list(iterables.values())
+        for i,iter in enumerate(self.sensors):
+            if dataclasses.is_dataclass(iter):
+                # get dict if initialized as dataclass
+                iterables[i] = iter.toConfig()
+        return(iterables)
         
 @dataclass(kw_only=True)
 class spatialObject(defaultObject):
@@ -70,9 +84,60 @@ class spatialObject(defaultObject):
         super().__post_init__()
 
 @dataclass(kw_only=True)
+class siteObject(spatialObject):
+    validate: bool = field(
+        repr=False,
+        default=True
+    )
+    siteID: str = field(
+        default = 'siteID',
+        metadata = {'description': 'Unique Site Identifier'} 
+    )
+    siteName: str = field(
+        default = None,
+        metadata = {'description': 'Name of the Site'} 
+    )
+    description: str = field(
+        default = None,
+        metadata = {'description': 'self explanatory'} 
+    )
+    PI: str = field(
+        default = None,
+        metadata = {'description': 'Principal Investigator(s)'} 
+    )
+    systems: Iterable = field(
+        default_factory=dict,
+    )
+
+
+@dataclass(kw_only=True)
+class systemObject(spatialObject):
+    keepNull: bool = field(default = False, repr = False)    
+    siteID: str
+    systemID: str = field(init=False)
+    sensors: Iterable = field(
+        default_factory = list
+        )
+
+    def __post_init__(self):
+        self.systemID = f"{self.siteID}_{type(self).__name__}_{self.index}"
+        
+        # # Convert sensors to generic list for later processing
+        # if dataclasses.is_dataclass(self.sensors):
+        #     self.sensors = [self.sensors.toConfig()]
+        # elif type(self.sensors) is dict:
+        #     self.sensors = list(self.sensors.values())
+        # for i,sensor in enumerate(self.sensors):
+        #     if dataclasses.is_dataclass(sensor):
+        #         # get dict if initialized as dataclass
+        #         self.sensors[i] = sensor.toConfig()
+        self.sensors = self.formatIterables(self.sensors)
+        super().__post_init__()
+
+
+@dataclass(kw_only=True)
 class sensorObject(spatialObject):
-    keepNull: bool = False
-    
+    keepNull: bool = field(default = False, repr = False)    
     sensorID: str = field(default=None)
     sensorModel: str = field(
         default = None,
@@ -86,7 +151,6 @@ class sensorObject(spatialObject):
     })
     manufacturer: str = field(
         default = None,
-        init=False,
         metadata = {
             'description': 'Indicates manufacturer of sensor, auto from class name',
     })
@@ -95,7 +159,7 @@ class sensorObject(spatialObject):
         metadata = {
             'description': 'Serial# (if known)',
     })
-    sensorType: str
+    sensorType: str = field(default=None,repr=False)
     
     def __post_init__(self):
         if self.sensorModel is None:

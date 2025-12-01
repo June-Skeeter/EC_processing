@@ -2,20 +2,15 @@ import dataclasses
 import numpy as np
 from typing import Iterable
 from dataclasses import dataclass, field, MISSING
-from src.databaseObjects.defaultObjects import spatialObject,sensorObject
+from src.databaseObjects.defaultObjects import systemObject,sensorObject
 
 @dataclass(kw_only=True)
 class ecSensor(sensorObject):
-    # sensorModel: str = field(
-    #     default = None,
-    #     metadata = {
-    #         'description': 'The sensor model, auto-filled from class name',
-    # })
-    sensorType: str = field(
-        metadata={
-            'description': 'type of sensor',
-            'options': ['sonic','irga','soinc+irga','thermocouple']
-    })    
+    # sensorType: str = field(
+    #     metadata={
+    #         'description': 'type of sensor',
+    #         'options': ['sonic','irga','soinc+irga','thermocouple']
+    # })    
     measurementHeight: float = field(
         default = None,
         metadata = {
@@ -25,12 +20,6 @@ class ecSensor(sensorObject):
         default = None,
         metadata = {
             'description': 'Offset from North in degrees (clockwise)',
-    })
-    pathType: str = field(
-        default = None,
-        metadata={
-            'description':['Closed or open path'],
-            'options':['closed','open']
     })
     northwardSeparation: float = field(
         default = None,
@@ -61,6 +50,7 @@ class ecSensor(sensorObject):
     })
     zSeparation: float = field(
         default = None,
+        repr = False,
         metadata = {
             'description':'Synonymous with Vertical separation from reference sonic (in m) required for irgas, and any secondary sonics.',
     })
@@ -84,10 +74,7 @@ class ecSensor(sensorObject):
     })
 
     def __post_init__(self):
-        if self.pathType != 'closed':
-            self.tubeDiameter = None
-            self.tubeLength = None
-        elif self.tubeDiameter is None or self.tubeLength is None:
+        if self.sensorType == 'closed-path-irga' and (self.tubeDiameter is None or self.tubeLength is None):
             self.logError('Must provide tube length & diameter for closed path sensors')
         
         if not self.zSeparation is None and self.verticalSeparation is None:
@@ -120,8 +107,7 @@ class ecSensor(sensorObject):
 
 
 @dataclass(kw_only=True)
-class ecSystem(spatialObject):
-    systemID: str
+class ecSystem(systemObject):
     measurementHeight: float = field(
         metadata = {
             'description': 'Measurement height (Zm) in meters, required for Sonics, optional otherwise',
@@ -131,25 +117,11 @@ class ecSystem(spatialObject):
             'description': 'Offset from North in degrees (clockwise) of the reference sonic',
     })
 
-    ecSensors: Iterable = field(
-        default_factory = list
-        )
-
     def __post_init__(self):
-        self.systemID = f"{self.systemID}_EC_{self.index}"
-        # Format sensor objects
-        if dataclasses.is_dataclass(self.ecSensors):
-            self.ecSensors = [self.ecSensors.toConfig()]
-        elif type(self.ecSensors) is dict:
-            self.ecSensors = list(self.ecSensors.values())
-        for i,sonic in enumerate(self.ecSensors):
-            if dataclasses.is_dataclass(sonic):
-                self.ecSensors[i] = sonic.toConfig()
-
         super().__post_init__()
 
         sensorDict = {}
-        for sensor in self.ecSensors:
+        for sensor in self.sensors:
             if 'measurementHeight' not in sensor or sensor['measurementHeight'] is None:
                 sensor['measurementHeight'] = self.measurementHeight
             if 'northOffset' not in sensor or sensor['northOffset'] is None:
@@ -158,13 +130,12 @@ class ecSystem(spatialObject):
             while sensor.UID in sensorDict.keys():
                 sensor.updateUID()
             sensorDict[sensor.UID] = sensor.toConfig(keepNull=False)
-        self.ecSensors = sensorDict
+        self.sensors = sensorDict
             
 @dataclass(kw_only=True)
 class IRGASON(ecSensor):
     manufacturer: str = 'CSI'
-    sensorType: str = 'soinc+irga'
-    pathType: str = 'open'
+    sensorType: str = 'soinc-open-path-irga'
     xSeparation: float = 0.0
     ySeparation: float = 0.0
     zSeparation: float = 0.0
@@ -180,24 +151,19 @@ class CSAT3(ecSensor):
 @dataclass(kw_only=True)
 class LI7700(ecSensor):
     manufacturer: str = 'LICOR'
-    sensorType: str = 'irga'
-    pathType: str = 'open'
+    sensorType: str = 'open-path-irga'
 
 @dataclass(kw_only=True)
 class LI7500(ecSensor):
     manufacturer: str = 'LICOR'
-    sensorType: str = 'irga'
-    tubeLength: float = 0.0
-    tubeDiameter: float = 0.0
-    pathType: str = 'open'
+    sensorType: str = 'open-path-irga'
 
 
 @dataclass(kw_only=True)
 class LI7200(ecSensor):
     manufacturer: str = 'LICOR'
-    sensorType: str = 'irga'
+    sensorType: str = 'closed-path-irga'
     tubeDiameter: float = 5.33
-    pathType: str = 'closed'
 
 @dataclass(kw_only=True)
 class fwThermocouple(ecSensor):
