@@ -10,12 +10,13 @@ from .traceObject import trace
 import pandas as pd
 import os
 from datetime import datetime
+from typing import Iterable
 import numpy as np
 import struct
 import sys
 import re
 
-from src.readData.dataSource import dataLogger
+from src.siteSetup.siteObjects import siteObject
 
 @dataclass(kw_only=True)
 class csiTrace(trace):
@@ -47,15 +48,22 @@ class csiTrace(trace):
         if type(self.dtype) != str:
             self.dtype = self.dtype.str
 
-@dataclass(kw_only=True)
-class csiLogger(dataLogger):
-    manufacturer: str = 'CSI'
+# @dataclass(kw_only=True)
+# class csiLogger(dataLogger):
+#     manufacturer: str = 'CSI'
 
 @dataclass(kw_only=True)
-class csiFile(csiLogger):
+class csiFile(baseClass):
     # Some files may contain multiple tables
     # Attributes common to a given file
     fileObject: object = field(default=None,repr=False,init=False)
+    siteID: str = None
+    site: Iterable = field(
+        default=None,
+        repr=False,
+        init=False
+    )
+    projectPath: str = None
     StationName: str = None
     loggerModel: str = None
     serialNumber: str = None
@@ -81,7 +89,12 @@ class csiFile(csiLogger):
             })
     
     def __post_init__(self, debug=False):
-        
+        if self.siteID:
+            self.site = siteObject(
+                projectPath=self.projectPath,
+                siteID=self.siteID
+                )
+        breakpoint()
         super().__post_init__()
     
     

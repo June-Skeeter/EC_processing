@@ -13,7 +13,7 @@ from modules.helperFunctions.parseCoordinates import parseCoordinates
 @dataclass(kw_only=True)
 class defaultObject(project):
     projectPath: str = field(default=None,init=False,repr=False)
-    index: int = field(default=1,repr=False)
+    index: str = field(default='1',repr=False)
     UID: str = field(repr=False,init=False)
     linkedID: str = field(repr=False,default=None,init=False)
     startDate: datetime = field(
@@ -29,27 +29,48 @@ class defaultObject(project):
     
     def __post_init__(self):
         if not hasattr(self, 'UID'):
-            self.linkedID = [k for k in self.__dataclass_fields__.keys() if k.endswith('ID')][-1]
+            self.linkedID = [k for k,v in self.__dataclass_fields__.items() if k.endswith('ID') and v.repr][0]
             self.UID = self.__dict__[self.linkedID]
         super().__post_init__()
             
     def updateUID(self):
-        self.index += 1
+        if int(self.int):
+            self.index = str(int(self.index)+1)
+        else:
+            if len(self.index.split('_'))>1:
+                self.index = self.index.split('_')
+                self.index[1] = int(self.index)+1
+                self.index = f"{self.index[0]}_{self.index[1]}"
+            else:
+                self.index = f"{self.index[0]}_1"
+    
         self.UID = f"{self.UID.rsplit('_',1)[0]}_{self.index}"
         self.__dict__[self.linkedID] = self.UID
 
-    def formatIterables(self,iterables):
-        
-        # Convert sensors to generic list for later processing
-        if dataclasses.is_dataclass(iterables):
-            iterables = [iterables.toConfig()]
-        elif type(iterables) is dict:
+    def formatClassIterables(self,iterables):
+        # If dict convert to list for processing
+        if type(iterables) is dict:
             iterables = list(iterables.values())
-        for i,iter in enumerate(self.sensors):
+        # If list contains any project-specific dataclass objects, convert to dicts for processing
+        for i,iter in enumerate(iterables):
             if dataclasses.is_dataclass(iter):
                 # get dict if initialized as dataclass
                 iterables[i] = iter.toConfig()
         return(iterables)
+    
+    def processClassIterable(self,iterables,classMethod,keepNull = False):
+        dictOut = {}
+        iterables = self.formatClassIterables(iterables=iterables)
+        for iter in iterables:
+            for key in self.__annotations__:
+                if key not in iter or iter[key] is None:
+                    iter[key] = getattr(self,key)
+            iter = classMethod.from_dict(iter)
+            while iter.UID in dictOut.keys():
+                iter.updateUID()
+            dictOut[iter.UID] = iter.toConfig(keepNull=keepNull)
+        return (dictOut)
+                
         
 @dataclass(kw_only=True)
 class spatialObject(defaultObject):
@@ -83,55 +104,31 @@ class spatialObject(defaultObject):
             self.latitude, self.longitude = pC.latitude, pC.longitude
         super().__post_init__()
 
-@dataclass(kw_only=True)
-class siteObject(spatialObject):
-    validate: bool = field(
-        repr=False,
-        default=True
-    )
-    siteID: str = field(
-        default = 'siteID',
-        metadata = {'description': 'Unique Site Identifier'} 
-    )
-    siteName: str = field(
-        default = None,
-        metadata = {'description': 'Name of the Site'} 
-    )
-    description: str = field(
-        default = None,
-        metadata = {'description': 'self explanatory'} 
-    )
-    PI: str = field(
-        default = None,
-        metadata = {'description': 'Principal Investigator(s)'} 
-    )
-    systems: Iterable = field(
-        default_factory=dict,
-    )
-
 
 @dataclass(kw_only=True)
 class systemObject(spatialObject):
-    keepNull: bool = field(default = False, repr = False)    
-    siteID: str
-    systemID: str = field(init=False)
+    keepNull: bool = field(default = False, repr = False)   
+    systemID: str = field(default=None) 
+    siteID: str = field(default=None)
+    systemType: str = field(default=None)
+    dataLogger: Iterable
     sensors: Iterable = field(
         default_factory = list
         )
 
     def __post_init__(self):
-        self.systemID = f"{self.siteID}_{type(self).__name__}_{self.index}"
-        
-        # # Convert sensors to generic list for later processing
-        # if dataclasses.is_dataclass(self.sensors):
-        #     self.sensors = [self.sensors.toConfig()]
-        # elif type(self.sensors) is dict:
-        #     self.sensors = list(self.sensors.values())
-        # for i,sensor in enumerate(self.sensors):
-        #     if dataclasses.is_dataclass(sensor):
-        #         # get dict if initialized as dataclass
-        #         self.sensors[i] = sensor.toConfig()
-        self.sensors = self.formatIterables(self.sensors)
+        if self.systemID is not None:
+            sysID = self.systemID.split('_')
+            self.siteID = sysID[0]
+            self.index = sysID[1]
+        else:
+            self.index = f"{self.systemType}_{self.index}"
+            self.systemID = f"{self.siteID}_{self.index}"
+
+        if self.systemType is None:
+            self.systemType = type(self).__name__
+        self.index = self.systemType
+        # self.sensors = self.formatClassIterables(self.sensors)
         super().__post_init__()
 
 

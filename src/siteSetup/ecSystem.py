@@ -6,20 +6,17 @@ from src.databaseObjects.defaultObjects import systemObject,sensorObject
 
 @dataclass(kw_only=True)
 class ecSensor(sensorObject):
-    # sensorType: str = field(
-    #     metadata={
-    #         'description': 'type of sensor',
-    #         'options': ['sonic','irga','soinc+irga','thermocouple']
-    # })    
     measurementHeight: float = field(
         default = None,
+        repr = False,
         metadata = {
             'description': 'Measurement height (Zm) in meters, required for Sonics, optional otherwise',
     })
     northOffset: float = field(
         default = None,
+        repr = False,
         metadata = {
-            'description': 'Offset from North in degrees (clockwise)',
+            'description': 'Offset from North in degrees (clockwise) of main sonic',
     })
     northwardSeparation: float = field(
         default = None,
@@ -79,8 +76,13 @@ class ecSensor(sensorObject):
         
         if not self.zSeparation is None and self.verticalSeparation is None:
             self.verticalSeparation = self.zSeparation
-        if self.xSeparation == 0.0 and self.ySeparation == 0.0:
-            self.northwardSeparation,self.eastwardSeparation = 0.0, 0.0
+        if ((self.xSeparation == 0.0 and self.ySeparation == 0.0) or
+            (self.northwardSeparation == 0.0 and self.eastwardSeparation == 0.0)):
+            self.northwardSeparation, self.eastwardSeparation = 0.0, 0.0
+            self.xSeparation,self.ySeparation = None, None
+        elif self.northwardSeparation == 0.0 and self.eastwardSeparation == 0.0:
+            self.xSeparation, self.ySeparation = 0,0, 0.0
+        
         if self.verticalSeparation is None and not ( (self.xSeparation is None and self.ySeparation is None) or ( (self.eastwardSeparation is None and self.northwardSeparation is None))):
             self.logError("Must provide separation parameters, in either sonic coordinates (xSeparation, ySeparation, zSeparation) or geographic coordinates (northwardSeparation, eastwardSeparation, verticalSeparation)")
         if (self.northwardSeparation is None or self.eastwardSeparation is None) and self.northOffset is not None:
@@ -108,6 +110,7 @@ class ecSensor(sensorObject):
 
 @dataclass(kw_only=True)
 class ecSystem(systemObject):
+    systemType: str = 'EC'
     measurementHeight: float = field(
         metadata = {
             'description': 'Measurement height (Zm) in meters, required for Sonics, optional otherwise',
@@ -119,34 +122,23 @@ class ecSystem(systemObject):
 
     def __post_init__(self):
         super().__post_init__()
-
-        sensorDict = {}
-        for sensor in self.sensors:
-            if 'measurementHeight' not in sensor or sensor['measurementHeight'] is None:
-                sensor['measurementHeight'] = self.measurementHeight
-            if 'northOffset' not in sensor or sensor['northOffset'] is None:
-                sensor['northOffset'] = self.northOffset
-            sensor = ecSensor.from_dict(sensor)
-            while sensor.UID in sensorDict.keys():
-                sensor.updateUID()
-            sensorDict[sensor.UID] = sensor.toConfig(keepNull=False)
-        self.sensors = sensorDict
+        self.sensors = self.processClassIterable(self.sensors,ecSensor)
             
 @dataclass(kw_only=True)
 class IRGASON(ecSensor):
-    manufacturer: str = 'CSI'
+    manufacturer: str = 'Campbell Scientific'
     sensorType: str = 'soinc-open-path-irga'
     xSeparation: float = 0.0
     ySeparation: float = 0.0
-    zSeparation: float = 0.0
+    verticalSeparation: float = 0.0
     
 @dataclass(kw_only=True)
 class CSAT3(ecSensor):
-    manufacturer: str = 'CSI'
+    manufacturer: str = 'Campbell Scientific'
     sensorType: str = 'sonic'
     xSeparation: float = 0.0
     ySeparation: float = 0.0
-    zSeparation: float = 0.0
+    verticalSeparation: float = 0.0
 
 @dataclass(kw_only=True)
 class LI7700(ecSensor):

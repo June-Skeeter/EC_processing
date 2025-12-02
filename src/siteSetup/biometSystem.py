@@ -15,19 +15,19 @@ class biometSensor(sensorObject):
 
 @dataclass(kw_only=True)
 class biometSystem(systemObject):
-    # placeholder: str = None
+    systemType: str = 'BIOMET'
 
     def __post_init__(self):
 
         super().__post_init__()
-
-        sensorDict = {}
-        for sensor in self.sensors:
-            sensor = biometSensor.from_dict(sensor)
-            while sensor.UID in sensorDict.keys():
-                sensor.updateUID()
-            sensorDict[sensor.UID] = sensor.toConfig(keepNull=False)
-        self.sensors = sensorDict
+        self.sensors = self.processClassIterable(self.sensors,biometSensor)
+        # sensorDict = {}
+        # for sensor in self.sensors:
+        #     sensor = biometSensor.from_dict(sensor)
+        #     while sensor.UID in sensorDict.keys():
+        #         sensor.updateUID()
+        #     sensorDict[sensor.UID] = sensor.toConfig(keepNull=False)
+        # self.sensors = sensorDict
 
 @dataclass(kw_only=True)
 class thermocouple(biometSensor):

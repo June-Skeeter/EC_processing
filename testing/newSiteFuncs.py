@@ -4,16 +4,14 @@ import shutil
 
 import context
 from src.databaseObjects.project import project
-# from src.siteSetup.siteObjects import *
-# from src.siteSetup.loggerObjects import *
-# from src.siteSetup.sensorObjects import *
-# from src.readData.dataSource import *
-# import src.siteSetup.loggerObjects as loggerObjects
-# import src.siteSetup.sensorObjects as sensorObjects
 import src.siteSetup.ecSystem as ecSystem
 import src.siteSetup.biometSystem as biometSystem
-# from src.readData.parseCSI import TOB3, TOA5
-# import src.readData as readData
+import src.databaseObjects.defaultObjects as defaultObjects
+import src.siteSetup.loggerObjects as loggerObjects
+import src.siteSetup.siteObjects as siteObjects
+import src.readData.parseCSI as parseCSI
+
+
 
 
 
@@ -24,25 +22,67 @@ projectPath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'outputs',
 shutil.rmtree(projectPath, ignore_errors=True)
 
 
-EC = ecSystem.ecSystem(
+Flux = ecSystem.ecSystem(
     siteID = 'SCL',
     measurementHeight=3.38,
     northOffset=33.0,
+    dataLogger=loggerObjects.CR1000x(),
     sensors = [
         ecSystem.IRGASON(),
         ecSystem.LI7700(xSeparation=0.41,ySeparation=0.16,zSeparation=0.0)],
     )
 
-print(yaml.dump(EC.toConfig(),sort_keys=False))
-
-
 BIOMET = biometSystem.biometSystem(
     siteID = 'SCL',
+    dataLogger=loggerObjects.CR1000x(),
     sensors = [
         biometSystem.SN500(),
     ]
     )
 
+
+EC = siteObjects.siteObject(
+    siteID='SCL',
+    projectPath=projectPath,
+    latitude = 'N69 13.5850',
+    longitude = 'W135 15.1144',
+    startDate = '2024-07-10',
+    altitude = 1.0,
+    siteName = 'Swiss Cheese Lake',
+    PI = 'June Skeeter & Peter Morse',
+    description = 'Wet sedge meadow, continuous permafrost',
+    ecSystems=[
+        Flux
+    ],
+    biometSystems=[
+        BIOMET
+    ]
+)
+
+EC = siteObjects.siteObject(
+    siteID='SCL',
+    projectPath=projectPath,
+)
+
+
+# sourceFileName = os.path.join(data,'57840_Time_Series_40.dat')
+# df = parseCSI.TOB3(
+#     siteID='SCL',
+#     projectPath=projectPath,
+#     sourceFileName=sourceFileName,
+#     extractData=False)
+# print(yaml.dump(df.toConfig(),sort_keys=False))
+# breakpoint()
+
+# EC = siteObjects.EC(
+#     siteID='SCL',
+#     projectPath=projectPath,
+#     systems=[
+#         Flux,BIOMET
+#     ]
+# )
+
+# print(EC)
 # sM = siteMetadata(
 #     projectPath=projectPath,
 #     siteID = 'SCL',
@@ -126,8 +166,6 @@ BIOMET = biometSystem.biometSystem(
 #     verbose=False
 #     )
 
-# sourceFileName = os.path.join(data,'57840_Time_Series_40.dat')
-# df = readData.parseCSI.TOB3(sourceFileName=sourceFileName,extractData=False)#.saveConfigFile()
 
 # breakpoint()
 # sM = siteMetadata(
