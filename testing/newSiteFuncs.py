@@ -10,60 +10,63 @@ import src.databaseObjects.defaultObjects as defaultObjects
 import src.siteSetup.loggerObjects as loggerObjects
 import src.siteSetup.siteObjects as siteObjects
 import src.readData.parseCSI as parseCSI
+import src.readData.dataSource as dataSource
 
 
-
-
+setup = False
 
 
 data = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
 
 projectPath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'outputs','testProject'))
-shutil.rmtree(projectPath, ignore_errors=True)
+if setup:
+    shutil.rmtree(projectPath, ignore_errors=True)
+
+    Flux = ecSystem.ecSystem(
+        siteID = 'SCL',
+        measurementHeight=3.38,
+        northOffset=33.0,
+        dataLogger=loggerObjects.CR1000x(),
+        sensors = [
+            ecSystem.IRGASON(),
+            ecSystem.LI7700(xSeparation=0.41,ySeparation=0.16,zSeparation=0.0)
+            ],
+        )
+
+    BIOMET = biometSystem.biometSystem(
+        siteID = 'SCL',
+        dataLogger=loggerObjects.CR1000x(),
+        sensors = [
+            biometSystem.SN500(),
+        ]
+        )
 
 
-Flux = ecSystem.ecSystem(
-    siteID = 'SCL',
-    measurementHeight=3.38,
-    northOffset=33.0,
-    dataLogger=loggerObjects.CR1000x(),
-    sensors = [
-        ecSystem.IRGASON(),
-        ecSystem.LI7700(xSeparation=0.41,ySeparation=0.16,zSeparation=0.0)],
+    EC = siteObjects.siteObject(
+        siteID='SCL',
+        projectPath=projectPath,
+        latitude = 'N69 13.5850',
+        longitude = 'W135 15.1144',
+        startDate = '2024-07-10',
+        altitude = 1.0,
+        siteName = 'Swiss Cheese Lake',
+        PI = 'June Skeeter & Peter Morse',
+        description = 'Wet sedge meadow, continuous permafrost',
+        dataSystems=[
+            Flux,
+            BIOMET
+        ]
     )
 
-BIOMET = biometSystem.biometSystem(
-    siteID = 'SCL',
-    dataLogger=loggerObjects.CR1000x(),
-    sensors = [
-        biometSystem.SN500(),
-    ]
-    )
+dataSource.dataSource(projectPath=projectPath,siteID = 'SCL')
 
+# EC = siteObjects.siteObject(
+#     siteID='SCL',
+#     projectPath=projectPath,
+#     validate=False
+# )
 
-EC = siteObjects.siteObject(
-    siteID='SCL',
-    projectPath=projectPath,
-    latitude = 'N69 13.5850',
-    longitude = 'W135 15.1144',
-    startDate = '2024-07-10',
-    altitude = 1.0,
-    siteName = 'Swiss Cheese Lake',
-    PI = 'June Skeeter & Peter Morse',
-    description = 'Wet sedge meadow, continuous permafrost',
-    ecSystems=[
-        Flux
-    ],
-    biometSystems=[
-        BIOMET
-    ]
-)
-
-EC = siteObjects.siteObject(
-    siteID='SCL',
-    projectPath=projectPath,
-)
-
+# print(EC.toConfig())
 
 # sourceFileName = os.path.join(data,'57840_Time_Series_40.dat')
 # df = parseCSI.TOB3(

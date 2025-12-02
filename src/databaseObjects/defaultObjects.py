@@ -58,14 +58,21 @@ class defaultObject(project):
                 iterables[i] = iter.toConfig()
         return(iterables)
     
-    def processClassIterable(self,iterables,classMethod,keepNull = False):
+    def processClassIterable(self,iterables,classMethod,classKey = None,keepNull = False):
+        #Given an iterable of dataclasses, format as list dicts, then re-process and output as dict of dicts
         dictOut = {}
         iterables = self.formatClassIterables(iterables=iterables)
         for iter in iterables:
             for key in self.__annotations__:
                 if key not in iter or iter[key] is None:
                     iter[key] = getattr(self,key)
-            iter = classMethod.from_dict(iter)
+            if dataclasses.is_dataclass(classMethod):
+                iter = classMethod.from_dict(iter)
+            elif dataclasses.is_dataclass(classMethod) and classKey is None:
+                self.logError('missing classKey for processing when classMethod is list')
+            else:
+                clM = classMethod[[i for i,c in  enumerate(classMethod) if  c.__dataclass_fields__[classKey].default == iter[classKey]][0]]
+                iter = clM.from_dict(iter)
             while iter.UID in dictOut.keys():
                 iter.updateUID()
             dictOut[iter.UID] = iter.toConfig(keepNull=keepNull)

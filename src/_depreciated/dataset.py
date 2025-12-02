@@ -102,7 +102,6 @@ class loggerMeasurement(dataset):
         for sensorData in self.sensorInventory:
             if type(sensorData) is dict:
                 sensorData = callSensor(sensorData['sensorID'])(**sensorData)
-                print(sensorData.model)
             i = 2
             while sensorData.sensorID in Inventory.keys():
                 sensorData.UID(i)
@@ -134,6 +133,5 @@ supportedDataSets = ['CR1000x','HOBO']
 
 def callDataset(UID):
     allSensors = {s:eval(s) for s in supportedDataSets}
-    print(UID)
     ID = UID.rsplit('_',1)[0]
     return(allSensors[ID])

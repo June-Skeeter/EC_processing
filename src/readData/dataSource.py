@@ -1,7 +1,24 @@
 # from typing import Iterable
-# from dataclasses import dataclass, field, MISSING
+from dataclasses import dataclass, field, MISSING
 
 # from modules.helperFunctions.getClasses import getClasses
+from src.databaseObjects.project import project
+from src.siteSetup.siteObjects import siteObject
+
+@dataclass(kw_only=True)
+class dataSource(project):
+    siteID: str
+    siteConfig: dict = field(init=False)
+    sourceType: str = None
+    
+    def __post_init__(self):
+        super().__post_init__()
+        self.siteConfig = siteObject(
+            projectPath = self.projectPath,
+            projectConfig = self.projectConfig,
+            siteID = self.siteID,
+            safeMode = True
+            )
 
 # from src.databaseObjects.defaultObjects import spatialObject
 
