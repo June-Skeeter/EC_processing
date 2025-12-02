@@ -35,6 +35,7 @@ class projectConfiguration(baseClass):
 @dataclass(kw_only=True)
 class project(baseClass):
     projectPath: str
+    relativeConfigPath: str = field(default=None) # relative path to configFile (if exists)
     projectConfig: projectConfiguration = field(
         default=None,
         repr=False
@@ -51,5 +52,7 @@ class project(baseClass):
                 verbose=self.verbose,
                 safeMode=self.safeMode
                 )
+        if self.configFile and self.projectPath:
+            self.relativeConfigPath = self.configFile.replace(self.projectPath,'')
         super().__post_init__()
         

@@ -17,6 +17,7 @@ import sys
 import re
 
 from src.siteSetup.siteObjects import siteObject
+from src.readData.dataSource import dataSource
 
 @dataclass(kw_only=True)
 class csiTrace(trace):
@@ -53,21 +54,21 @@ class csiTrace(trace):
 #     manufacturer: str = 'CSI'
 
 @dataclass(kw_only=True)
-class csiFile(baseClass):
+class csiFile(dataSource):
     # Some files may contain multiple tables
     # Attributes common to a given file
     fileObject: object = field(default=None,repr=False,init=False)
-    siteID: str = None
-    site: Iterable = field(
-        default=None,
-        repr=False,
-        init=False
-    )
-    projectPath: str = None
-    StationName: str = None
-    loggerModel: str = None
-    serialNumber: str = None
-    program: str = None
+    # siteID: str = None
+    # site: Iterable = field(
+    #     default=None,
+    #     repr=False,
+    #     init=False
+    # )
+    # projectPath: str = None
+    # stationName: str = None
+    # loggerModel: str = None
+    # serialNumber: str = None
+    # program: str = None
     dataTable: pd.DataFrame = field(repr=False,init=False)
     fileTimestamp: datetime = field(repr=False,init=False)
     campbellBaseTime: float = field(
@@ -89,12 +90,6 @@ class csiFile(baseClass):
             })
     
     def __post_init__(self, debug=False):
-        if self.siteID:
-            self.site = siteObject(
-                projectPath=self.projectPath,
-                siteID=self.siteID
-                )
-        breakpoint()
         super().__post_init__()
     
     
@@ -122,7 +117,7 @@ class csiTable(csiFile):
         self.asciiHeader = [self.readAsciiLine(self.fileObject.readline()) for l in range(self.nLinesAsciiHeader)]
         if self.fileType != self.asciiHeader[0][0]:
             log(f"{self.sourceFileName} is not in {self.fileType} format",traceback=False,kill=True)
-        self.StationName=self.asciiHeader[0][1]
+        self.stationName=self.asciiHeader[0][1]
         self.loggerModel=self.asciiHeader[0][2]
         self.serialNumber=self.asciiHeader[0][3]
     

@@ -13,7 +13,7 @@ import src.readData.parseCSI as parseCSI
 import src.readData.dataSource as dataSource
 
 
-setup = False
+setup = True
 
 
 data = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
@@ -26,7 +26,7 @@ if setup:
         siteID = 'SCL',
         measurementHeight=3.38,
         northOffset=33.0,
-        dataLogger=loggerObjects.CR1000x(),
+        dataLogger=loggerObjects.CR1000X(),
         sensors = [
             ecSystem.IRGASON(),
             ecSystem.LI7700(xSeparation=0.41,ySeparation=0.16,zSeparation=0.0)
@@ -35,7 +35,7 @@ if setup:
 
     BIOMET = biometSystem.biometSystem(
         siteID = 'SCL',
-        dataLogger=loggerObjects.CR1000x(),
+        dataLogger=loggerObjects.CR1000X(),
         sensors = [
             biometSystem.SN500(),
         ]
@@ -58,7 +58,20 @@ if setup:
         ]
     )
 
-dataSource.dataSource(projectPath=projectPath,siteID = 'SCL')
+# dataSource.dataSource(
+#     projectPath = projectPath,
+#     siteID = 'SCL',
+#     systemID = 'SCL_EC_1'
+#     )
+
+
+sourceFileName = os.path.join(data,'57840_Time_Series_40.dat')
+df = parseCSI.TOB3(
+    siteID='SCL',
+    systemID='SCL_EC_1',
+    projectPath=projectPath,
+    sourceFileName=sourceFileName,
+    extractData=False)
 
 # EC = siteObjects.siteObject(
 #     siteID='SCL',

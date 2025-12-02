@@ -4,12 +4,17 @@ from dataclasses import dataclass, field, MISSING
 # from modules.helperFunctions.getClasses import getClasses
 from src.databaseObjects.project import project
 from src.siteSetup.siteObjects import siteObject
+import src.siteSetup.loggerObjects as loggerObjects
 
 @dataclass(kw_only=True)
 class dataSource(project):
     siteID: str
+    systemID: str = None
+    stationName: str = None
+    loggerModel: str = None
+    serialNumber: str = None
+    program: str = None
     siteConfig: dict = field(init=False)
-    sourceType: str = None
     
     def __post_init__(self):
         super().__post_init__()
@@ -19,7 +24,22 @@ class dataSource(project):
             siteID = self.siteID,
             safeMode = True
             )
-
+        if 'dataLogger' in self.siteConfig.dataSystems[self.systemID]:
+            loggerDict = self.siteConfig.dataSystems[self.systemID]['dataLogger']
+            if hasattr(loggerObjects,self.loggerModel):
+                loggerClass = getattr(loggerObjects,self.loggerModel)
+            else:
+                loggerClass = loggerObjects.dataLogger
+            for key,value in loggerDict.items():
+                if key in self.__dict__.keys() and value != self.__dict__[key]:
+                    if value == loggerClass.__dataclass_fields__[key].default:
+                        loggerDict[key] = self.__dict__[key]
+                        self.logMessage(f'Updating {key} in {self.siteConfig.relativeConfigPath}')
+                        self.siteConfig.saveConfigFile(verbose=False)
+                    else:
+                        self.logWarning('Issue in logger variable')
+                        self.logChoice('Proceed with interactive debug session')
+        # breakpoint()
 # from src.databaseObjects.defaultObjects import spatialObject
 
 # # Get all defined sensors
