@@ -8,21 +8,18 @@ A work in progress.
 
 ## Raw Data
 
-1. project.py
+1. project
 
 * Sets up overarching structure of the project
 
-2. site.py
+2. site
 
-* Defines site-by-site parameters
+    1. Defines site-by-site parameters
+    2. Detail systems at site
+        1. Defines system-specific parameters
+        2. List all insturments associated with system
 
-3. measurement.py
+3. Data sources
 
-* Defines measurements
-
-4. sensor.py
-
-* Defines sensor-by-sensor parameters
-
-4. 
+* All sources linked to system
 

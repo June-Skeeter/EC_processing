@@ -13,7 +13,7 @@ import src.readData.parseCSI as parseCSI
 import src.readData.dataSource as dataSource
 
 
-setup = True
+setup = False
 
 
 data = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
@@ -58,67 +58,104 @@ if setup:
         ]
     )
 
-# dataSource.dataSource(
-#     projectPath = projectPath,
-#     siteID = 'SCL',
-#     systemID = 'SCL_EC_1'
-#     )
-
-
-sourceFileName = os.path.join(data,'57840_Time_Series_40.dat')
-df = parseCSI.TOB3(
-    siteID='SCL',
-    systemID='SCL_EC_1',
-    projectPath=projectPath,
-    sourceFileName=sourceFileName,
-    extractData=False)
-
-# EC = siteObjects.siteObject(
-#     siteID='SCL',
-#     projectPath=projectPath,
-#     validate=False
-# )
-
-# print(EC.toConfig())
-
 # sourceFileName = os.path.join(data,'57840_Time_Series_40.dat')
 # df = parseCSI.TOB3(
 #     siteID='SCL',
+#     systemID='SCL_EC_1',
 #     projectPath=projectPath,
 #     sourceFileName=sourceFileName,
 #     extractData=False)
-# print(yaml.dump(df.toConfig(),sort_keys=False))
-# breakpoint()
 
-# EC = siteObjects.EC(
-#     siteID='SCL',
-#     projectPath=projectPath,
-#     systems=[
-#         Flux,BIOMET
-#     ]
-# )
 
-# print(EC)
-# sM = siteMetadata(
-#     projectPath=projectPath,
-#     siteID = 'SCL',
-#     latitude = 'N69 13.5850',
-#     longitude = 'W135 15.1144',
-#     startDate = '2024-07-10',
-#     altitude = 1.0,
-#     siteName = 'Swiss Cheese Lake',
-#     PI = 'June Skeeter & Peter Morse',
-#     description = 'Wet sedge meadow, continuous permafrost',
-#     systems=[
-#         EC,
-#         BIOMET
-#     ]
-# )
+    Flux = ecSystem.ecSystem(
+        siteID = 'BBS',
+        measurementHeight=4.25,
+        northOffset=135,
+        dataLogger=loggerObjects.CR1000(),
+        sensors = [
+            ecSystem.CSAT3(),
+            ecSystem.LI7500(xSeparation=0.41,ySeparation=0.16,zSeparation=0.0)
+            ],
+        )
 
-# print(yaml.dump(BIOMET.toConfig(),sort_keys=False))
+    BIOMET = biometSystem.biometSystem(
+        siteID = 'BBS',
+        dataLogger=loggerObjects.CR1000X(),
+        sensors = [
+            biometSystem.SN500(),
+        ]
+        )
 
-# # sourceFileName = os.path.join(data,'TOA5_BBS.FLUX_2023_08_01_1530.dat')
-# # df = readData.parseCSI.TOA5(sourceFileName=sourceFileName,extractData=False).saveConfigFile()
+
+    EC = siteObjects.siteObject(
+        siteID='BBS',
+        projectPath=projectPath,
+        latitude = 'N49.25',
+        longitude = 'W123',
+        startDate = '2023-06-15',
+        altitude = 2.0,
+        siteName = 'Burns Bog Seedling',
+        PI = 'June Skeeter',
+        description = 'Lodgepole Pine Seedlings',
+        dataSystems=[
+            Flux,
+            BIOMET
+        ]
+    )
+
+
+    sourceFileName = os.path.join(data,'TOA5_BBS.FLUX_2023_08_01_1530.dat')
+    df = parseCSI.TOA5(
+        projectPath=projectPath,
+        siteID='BBS',
+        templateFileName=sourceFileName,
+        systemID='BBS_EC_1',
+        extractData=False
+        )#.saveConfigFile()
+
+sourceFileName = os.path.join(data,'TOA5_BBS.FLUX_2023_08_01_1530.dat')
+df = parseCSI.TOA5(
+    projectPath=projectPath,
+    siteID='BBS',
+    sourceFileName=sourceFileName,
+    systemID='BBS_EC_1',
+    extractData=False
+
+)
+
+breakpoint()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # IRGASON_irga()
 

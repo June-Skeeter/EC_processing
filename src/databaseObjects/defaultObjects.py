@@ -77,6 +77,13 @@ class defaultObject(project):
                 iter.updateUID()
             dictOut[iter.UID] = iter.toConfig(keepNull=keepNull)
         return (dictOut)
+    
+    
+@dataclass(kw_only=True)
+class sourceObject(defaultObject):
+    siteID: str = field(default=None,repr=False)
+    systemID:
+    pass
                 
         
 @dataclass(kw_only=True)

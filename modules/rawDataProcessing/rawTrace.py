@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from modules.helperFunctions.baseClass import baseClass
 
 @dataclass(kw_only=True)
-class trace(baseClass):
+class rawTraceIn(baseClass):
     variableNumber: int = field(default=1,repr=False) # Counter variable to represent position (in source file or processing order)
     variableName: str
     units: str = None

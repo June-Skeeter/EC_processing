@@ -44,6 +44,12 @@ class dataLogger(baseClass):
 class CR1000X(dataLogger):
     manufacturer: str = field(default='Campbell Scientific')
 
+
+@dataclass(kw_only=True)
+class CR1000(dataLogger):
+    manufacturer: str = field(default='Campbell Scientific')
+
+
 @dataclass
 class HOBO(dataLogger):
     manufacturer: str = field(default='Onset')

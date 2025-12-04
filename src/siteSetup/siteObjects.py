@@ -47,6 +47,6 @@ class siteObject(spatialObject):
             self.safeMode = False
         super().__post_init__()
         self.dataSystems = self.processClassIterable(self.dataSystems,[ecSystem,biometSystem],classKey='systemType')
-        if not self.safeMode:
+        if not self.safeMode or not self.configStatus:
             self.saveConfigFile()
         

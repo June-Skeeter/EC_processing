@@ -28,14 +28,14 @@ class projectConfiguration(baseClass):
         if not os.path.isfile(self.configFile) and self.safeMode:
             self.safeMode = False
         super().__post_init__()
-        if not self.safeMode:
+        if not self.safeMode or not self.configStatus:
             self.saveConfigFile()
 
 
 @dataclass(kw_only=True)
 class project(baseClass):
-    projectPath: str
-    relativeConfigPath: str = field(default=None) # relative path to configFile (if exists)
+    projectPath: str = field(repr=False)
+    relativeConfigPath: str = field(default=None,repr=False) # relative path to configFile (if exists)
     projectConfig: projectConfiguration = field(
         default=None,
         repr=False
