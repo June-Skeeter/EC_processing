@@ -1,9 +1,14 @@
 import os
 import shutil
+import dateparser
 import context
 import modules.rawDataProcessing.parseCSI as parseCSI
 import modules.databaseSetup.configurations as configurations
-# from modules.databaseSetup.site import siteConfiguration,site
+import modules.databaseSetup.systemTypes as systemTypes
+import modules.databaseSetup.sensorModels as sensorModels
+from modules.rawDataProcessing.ecf32 import ecf32
+
+# print(sensorModels.IRGASON(measurementHeight=4.25,northOffset=135).toConfig(majorOrder=-1,keepNull=False))
 
 data = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
 
@@ -12,32 +17,88 @@ projectPath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'outputs',
 
 shutil.rmtree(projectPath, ignore_errors=True)
 
-configurations.siteConfiguration(
+configurations.projectConfiguration(
+    projectPath=projectPath,
+    createdBy='JS',
+    verbose=False
+)
+
+sc = configurations.siteConfiguration(
+    verbose=False,
     projectPath=projectPath,
     siteID='SCL',
-    startDate='2024-07-10',
+    startDate=dateparser.parse(
+        '2024-07-10',
+        settings={'DATE_ORDER':'YMD','RETURN_AS_TIMEZONE_AWARE':True}),
     latitude = 'N69 13.5850',
     longitude = 'W135 15.1144',
+    altitude = 1.0,
+    siteName = 'Swiss Cheese Lake',
+    PI = 'June Skeeter & Peter Morse',
+    description = 'Wet sedge meadow, continuous permafrost',
     )
 
-# siteConfiguration(projectPath=projectPath,siteID='SCL')
-# site(projectPath=projectPath,siteID='SCL')
+
+sourceFileName = os.path.join(data,'57840_Time_Series_40.dat')
 
 
-# sourceFileName = os.path.join(data,'57840_Time_Series_40.dat')
-# df = parseCSI.TOB3(
-#     # siteID='SCL',
-#     # systemID='SCL_EC_1',
-#     configFileRoot=projectPath,
-#     sourceFileName=sourceFileName,
-#     extractData=False,
-#     verbose=None)
+configurations.dataSourceConfiguration(
+    projectPath=projectPath,
+    siteID='SCL',
+    dataSourceID ='EC_2025',
+    sourceSystemConfiguration = systemTypes.IRGASON_LI7700(
+        measurementHeight=4.25,
+        northOffset=135.0,
+        xSeparation=0.41,
+        ySeparation=0.16,
+        zSeparation=0.0
+    ),
+    sourceFileConfiguration={'fileName':sourceFileName,'fileFormat':'TOB3'}
+)
+
+ecf32(projectPath=projectPath,siteID='SCL',dataSourceID='EC_2025')
+# dsc = configurations.dataSourceConfiguration(
+#     projectPath=projectPath,
+#     siteID='SCL',
+#     dataSourceID='EC_2025',
+# )
+
 # breakpoint()
 
+# c = configurations.dataSourceConfiguration(
+#     projectPath=projectPath,
+#     siteID='SCL',
+#     dataSourceID='EC_2025',
+#     # sourceSystem=st.toConfig(keepNull=False)
+# )
 
-# sourceFileName = os.path.join(data,'TOA5_BBS.FLUX_2023_08_01_1530.dat')
-# df = parseCSI.TOA5(
-#     configFileRoot=projectPath,
-#     sourceFileName=sourceFileName,
-#     extractData=False,
-#     verbose=None)
+# dc = configurations.dataSourceConfiguration(
+#     # verbose=True,
+#     projectPath=projectPath,
+#     siteID='SCL',
+#     dataSourceID='EC_2025',
+#     dataFormat='TOB3',
+#     systemType='EC',
+#     dataInterval=0.1,
+#     sensorConfigurations=[
+#         sensorModels.IRGASON(measurementHeight=4.25,northOffset=135,verbose=None),
+#         sensorModels.LI7700(
+#             northOffset=33.0,
+#             xSeparation=0.41,
+#             ySeparation=0.16,
+#             zSeparation=0.0
+#             ),
+#             ],
+#     # fileTemplate=sourceFileName
+# )
+
+# print(dc.logFile)
+
+# print(sensors.IRGASON(measurementHeight=4.25,northOffset=135,).toConfig())
+
+# print(sensors.LI7700(
+#     northOffset=33.0,
+#     xSeparation=0.41,
+#     ySeparation=0.16,
+#     zSeparation=0.0
+#     ).toConfig(keepNull=False))

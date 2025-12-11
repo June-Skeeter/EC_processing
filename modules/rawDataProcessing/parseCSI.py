@@ -6,8 +6,8 @@ from modules.helperFunctions.log import log
 from modules.helperFunctions.parseFrequency import parseFrequency
 from modules.helperFunctions.dictFuncs import dcToDict
 from modules.helperFunctions.baseClass import baseClass
+import modules.databaseSetup.dataLoggers as dataLoggers
 from modules.rawDataProcessing.rawTrace import rawTraceIn
-from modules.rawDataProcessing.rawFile import rawFile
 import pandas as pd
 import os
 from datetime import datetime
@@ -32,34 +32,30 @@ class csiTrace(rawTraceIn):
         'INT4':{'struct':'i','output':'<i4'},
         'ASCII':{'struct':'s','output':'string'},
     }
-    # Parsed from data file
-    operation: str
     byteMap: str = field(init=False,repr=False)
 
     def __post_init__(self):
         if self.dtype is None:
-            self.dtype = self.defaultTypes[self.variableName]
+            self.dtype = self.defaultTypes[self.variableNameIn]
         elif self.dtype in self.csiTypeMap:
             self.byteMap = self.csiTypeMap[self.dtype]['struct']
             self.dtype = self.csiTypeMap[self.dtype]['output']
         elif type(self.dtype) is str and self.dtype.startswith('ASCII'):
             self.byteMap = self.dtype.strip('ASCII()') + self.csiTypeMap['ASCII']['struct']
             self.dtype = self.csiTypeMap['ASCII']['output']
-        if self.variableName == 'TIMESTAMP':
+        if self.variableNameIn == 'TIMESTAMP':
             self.units = 'PosixTime'
             self.dtypeOut = '<f8'
         if type(self.dtype) != str:
             self.dtype = self.dtype.str
-
-# @dataclass(kw_only=True)
-# class csiLogger(dataLogger):
-#     manufacturer: str = 'CSI'
+        super().__post_init__()
 
 @dataclass(kw_only=True)
-class csiFile(rawFile):
+class csiFile(baseClass):
     # Some files may contain multiple tables
     # Attributes common to a given file
     fileObject: object = field(default=None,repr=False,init=False)
+    dataLogger: dict = field(default_factory=dict,repr=False,init=False)
     stationName: str = None
     loggerModel: str = None
     serialNumber: str = None
@@ -73,13 +69,13 @@ class csiFile(rawFile):
         metadata={
             'description':'Start of CSI epoch in POSIX epoch: pd.to_datetime("1990-01-01").timestamp()'
             })
-    sourceFormat: str = field(
+    fileFormat: str = field(
         init=False,
         metadata={
             'description': 'Indicates the type of file (see options)',
             'options':['TOB3','TOA5']
             })
-    sourceFileName: str = field(
+    fileName: str = field(
         metadata={
             'descriptions': 'Name of the raw data file'
             })
@@ -89,12 +85,18 @@ class csiFile(rawFile):
         metadata={
             'description':'True (all data) / False (preview header where applicable)'
             })
+    variableSensorMap: dict = field(default=None,repr=False)
     
     def __post_init__(self):
         self.UID = self.program.split(':')[-1].replace('.','-')
         super().__post_init__()
         self.processFile()
-        self.close()
+        if hasattr(dataLoggers,self.loggerModel):
+            logger = getattr(dataLoggers,self.loggerModel)
+            self.dataLogger = logger(
+                stationName=self.stationName,
+                serialNumber=self.serialNumber,
+                ).to_dict(keepNull=False)
         
     
 @dataclass(kw_only=True)
@@ -109,17 +111,17 @@ class csiTable(csiFile):
     samplingInterval: float = field(default=None,init=None)  # in seconds
     samplingFrequency: str = field(default=None,init=None) # in Hz
     gpsDriftCorrection: bool = field(default=False,repr=False,metadata={'description':'Consider using for high frequency data if GPS clock resets were enabled.  This clock correction is useful to ensure long-term stability of the data logger clock but causes problems when splitting high-frequency data files.  Assuming the file does not span more than a day, the drift should be minimal, so we can "remove" the offset within a file to ensure timestamps are sequential'})
-    mode: str = 'r'
+    mode: str = field(default='r',repr=False)
 
     def __post_init__(self):
-        if self.sourceFormat == 'TOB3':
-            with open(self.sourceFileName, 'rb') as self.fileObject:
+        if self.fileFormat == 'TOB3':
+            with open(self.fileName, 'rb') as self.fileObject:
                 self.asciiHeader = [self.readAsciiLine(self.fileObject.readline()) for l in range(self.nLinesAsciiHeader)]
         else:
-            with open(self.sourceFileName, 'rb') as self.fileObject:
+            with open(self.fileName, 'rb') as self.fileObject:
                 self.asciiHeader = [self.readAsciiLine(self.fileObject.readline()) for l in range(self.nLinesAsciiHeader)]
-        if self.sourceFormat != self.asciiHeader[0][0]:
-            self.logError(f"{self.sourceFileName} is not in {self.sourceFormat} format")
+        if self.fileFormat != self.asciiHeader[0][0]:
+            self.logError(f"{self.fileName} is not in {self.fileFormat} format")
         self.stationName=self.asciiHeader[0][1]
         self.loggerModel=self.asciiHeader[0][2]
         self.serialNumber=self.asciiHeader[0][3]
@@ -138,7 +140,7 @@ class csiTable(csiFile):
             Offset = (self.dataTable[self.timestampName].diff().fillna(self.samplingInterval)-self.samplingInterval).cumsum()
             self.dataTable[self.timestampName] -= Offset
             if self.verbose:
-                log(f"Total GPS induced offset in {self.sourceFileName} is {Offset.iloc[-1]}s",verbose=False)
+                log(f"Total GPS induced offset in {self.fileName} is {Offset.iloc[-1]}s",verbose=False)
         if self.samplingInterval is None:
             self.samplingInterval = self.dataTable.TIMESTAMP.diff().median().total_seconds()
         self.samplingFrequency = (1.0 / self.samplingInterval)
@@ -146,12 +148,12 @@ class csiTable(csiFile):
 @dataclass(kw_only=True)
 class TOA5(csiTable):
     nLinesAsciiHeader: int = field(default=4,repr=False,init=False)
-    sourceFormat: str = 'TOA5'
+    fileFormat: str = 'TOA5'
         
     def processFile(self):
         #First read metadata from files header
-        self.fileTimestamp = datetime.strptime(re.search(r'([0-9]{4}\_[0-9]{2}\_[0-9]{2}\_[0-9]{4})', self.sourceFileName.rsplit('.',1)[0]).group(0),'%Y_%m_%d_%H%M')
-        # with open(self.sourceFileName) as self.fileObject:
+        self.fileTimestamp = datetime.strptime(re.search(r'([0-9]{4}\_[0-9]{2}\_[0-9]{2}\_[0-9]{4})', self.fileName.rsplit('.',1)[0]).group(0),'%Y_%m_%d_%H%M')
+        # with open(self.fileName) as self.fileObject:
         #     self.readAsciiHeader()
         self.tableName = self.asciiHeader[0][-1]
     
@@ -161,7 +163,7 @@ class TOA5(csiTable):
         else:
             nrows = 10
         self.dataTable = pd.read_csv(
-            self.sourceFileName,
+            self.fileName,
             skiprows=[0,2,3],
             header=[0],
             parse_dates=[self.timestampName],
@@ -171,9 +173,7 @@ class TOA5(csiTable):
             )
         # Extract metadata for each variable
         self.dataColumns =  {
-            columnName:dcToDict(
-                    csiTrace(variableName=columnName,units=units,operation=operation,dtype=dtype),repr=True
-                )
+            columnName:csiTrace(variableNameIn=columnName,units=units,operation=operation,dtype=dtype,variableSensorMap=self.variableSensorMap).to_dict(keepNull=False)
                 for columnName,units,operation,dtype in 
                 zip(self.asciiHeader[1],self.asciiHeader[2],self.asciiHeader[3],list(self.dataTable.dtypes))}
                 
@@ -186,13 +186,13 @@ class TOB3(csiTable):
     headerSize: int = field(default=12,repr=False,init=False)
     footerSize: int = field(default=4,repr=False,init=False)
     byteMap: str = field(repr=False,init=False)
-    sourceFormat: str = 'TOB3'
-    mode: str = 'rb'
+    fileFormat: str = 'TOB3'
+    mode: str = field(default='rb',repr=False)
         
     def processFile(self):
         #First read metadata from files header
-        self.fileSize = os.path.getsize(self.sourceFileName)
-        with open(self.sourceFileName,self.mode) as self.fileObject:
+        self.fileSize = os.path.getsize(self.fileName)
+        with open(self.fileName,self.mode) as self.fileObject:
             for _ in range(self.nLinesAsciiHeader):
                 next(self.fileObject)
             self.fileTimestamp = pd.to_datetime(self.asciiHeader[0][-1])
@@ -206,7 +206,7 @@ class TOB3(csiTable):
             # Extract metadata for each variable.  Add the metadata for timestamp and record which are parsed from the data frames and not in the header
             self.implicitColumns = [self.timestampName,self.recordName]
             self.dataColumns = {
-                columnName:csiTrace(variableName=columnName,units = units, operation = operation,dtype=dtype)
+                columnName:csiTrace(variableNameIn=columnName,units = units, operation = operation,dtype=dtype,variableSensorMap=self.variableSensorMap).to_dict(keepNull=False)
                     for columnName,units,operation,dtype in 
                     zip(
                         self.implicitColumns+self.asciiHeader[2],
@@ -218,8 +218,8 @@ class TOB3(csiTable):
             if self.extractData:
                 self.readFrames()
                 self.finishTable()
-        for key,value in self.dataColumns.items():
-            self.dataColumns[key] = dcToDict(value,repr=True)
+        # for key,value in self.dataColumns.items():
+        #     self.dataColumns[key] = dcToDict(value,repr=True)
             
     
     def readFrames(self):

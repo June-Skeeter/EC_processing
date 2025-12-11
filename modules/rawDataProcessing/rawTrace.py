@@ -5,12 +5,18 @@ from modules.helperFunctions.baseClass import baseClass
 @dataclass(kw_only=True)
 class rawTraceIn(baseClass):
     variableNumber: int = field(default=1,repr=False) # Counter variable to represent position (in source file or processing order)
-    variableName: str
-    units: str = None
+    variableNameIn: str
+    variableNameOut: str = None
+    units: str = ''
     dtype: str = None
     ignore: bool = False
+    operation: str = None
     minMax: list = field(default_factory=list)
-    sensorID: str = None
+    sensorID: str = ''
+    variableSensorMap: dict = field(default=None,repr=False)
+    verbose: str = None
 
     def __post_init__(self):
+        if self.variableSensorMap and self.variableNameIn in self.variableSensorMap:
+            self.sensorID = self.variableSensorMap[self.variableNameIn]
         return super().__post_init__()
