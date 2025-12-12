@@ -7,20 +7,22 @@ from modules.databaseSetup.spatialObject import spatialObject
 @dataclass(kw_only=True)
 class sensor(spatialObject):
     verbose: bool = field(default=False,repr=False)
-    # sensorID: str = field(default=None)
-    sensorModel: str = field(init=False,metadata = {'description': 'The sensor model, auto-filled from class name',})
+    sensorModel: str = field(init=False,default=None)
+    sensorID: str = field(default=None,metadata = {'description': 'The sensor model, auto-filled from class name',})
     manufacturer: str = field(default = '',metadata = {'description': 'Indicates manufacturer of sensor, auto from class name',})
     serialNumber: str = field(default = '',metadata = {'description': 'Serial# (if known)',})
     sensorType: str = field(default='',repr=False)
     variables: list = field(default_factory=list,repr=False)
-    UID_name = 'sensorModel'
-    
+    UID_name = 'sensorID'
+    UID_source = 'sensorModel'
 
     def __post_init__(self):
-        if not hasattr(self,'sensorModel'):
-            self.sensorModel = type(self).__name__
-        elif self.sensorModel is None:
-            self.logError('Provide sensor model for generic instrumentation')
+        self.sensorModel = type(self).__name__
+        # if not hasattr(self,'sensorID'):
+        if self.sensorID is None:
+            self.sensorID = self.sensorModel
+        elif self.sensorID is None:
+            self.logError('Provide sensor ID for generic instrumentation')
         super().__post_init__()
 
 # BIOMET sensors
@@ -69,7 +71,7 @@ class ecSensor(sensor):
 @dataclass(kw_only=True)
 class IRGASON(ecSensor):
     manufacturer: str = 'Campbell Scientific'
-    sensorType: str = 'soinc-irga-open-path'
+    sensorType: str = 'sonic-irga-open-path'
     measurementHeight: float
     northOffset: float
     northwardSeparation: float = 0.0

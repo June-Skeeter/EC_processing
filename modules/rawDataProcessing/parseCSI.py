@@ -35,6 +35,7 @@ class csiTrace(rawTraceIn):
     byteMap: str = field(init=False,repr=False)
 
     def __post_init__(self):
+        self.ignoreByDefault =  ['RECORD','TIMESTAMP']
         if self.dtype is None:
             self.dtype = self.defaultTypes[self.variableNameIn]
         elif self.dtype in self.csiTypeMap:
@@ -209,7 +210,7 @@ class TOB3(csiTable):
                     for columnName,units,operation,dtype in 
                     zip(
                         self.implicitColumns+self.asciiHeader[2],
-                        ['s',None]+self.asciiHeader[3],
+                        ['s','']+self.asciiHeader[3],
                         [None,None]+self.asciiHeader[4],
                         ['<f8','<i8']+self.asciiHeader[5]
                         )

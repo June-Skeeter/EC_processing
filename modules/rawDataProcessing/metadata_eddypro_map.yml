@@ -37,16 +37,16 @@ METADATA:
 
   Timing:
     acquisition_frequency: self.sourceFileConfiguration.samplingFrequency
-    file_duration: int(self.defaultInterval/60)
+    file_duration: self.defaultInterval
     pc_time_settings: 
 
   Instruments:
-    instr_n_manufacturer: sensor['manufacturer'].lower()
-    instr_n_model: sensor['sensorModel'].lower()
+    instr_n_manufacturer: sensor['manufacturer']
+    instr_n_model: sensor['sensorID']
     instr_n_sw_version: 
     instr_n_id: 
     instr_n_height: sensor['measurementHeight']
-    instr_n_wformat: uvw  
+    instr_n_wformat: sensor['windFormat']  
     instr_n_wref: 
     instr_n_head_corr: 
     instr_n_north_offset: sensor['northOffset']
@@ -55,8 +55,8 @@ METADATA:
     instr_n_vertical_separation: sensor['verticalSeparation']
     instr_n_vpath_length: 
     instr_n_hpath_length: 
-    instr_n_tube_length: 
-    instr_n_tube_diameter: 
+    instr_n_tube_length: sensor['tubeLength']
+    instr_n_tube_diameter: sensor['tubeDiameter']
     instr_n_tube_flowrate: 
     instr_n_tau: 
     instr_n_kw: 
@@ -68,10 +68,10 @@ METADATA:
     separator: 
     header_rows: 
     data_label: 
-    col_n_variable: self.f32Variables[n]['variableName']
-    col_n_instrument: self.f32Variables[n]['instrument']
-    col_n_measure_type: #self.logChoice('Choose a measurement type')
-    col_n_unit_in: self.f32Variables[n]['units']
+    col_n_variable: variable['variableName']
+    col_n_instrument: variable['instrument']
+    col_n_measure_type: 
+    col_n_unit_in: variable['units']
     col_n_min_value: 0
     col_n_max_value: 0
     col_n_conversion: 

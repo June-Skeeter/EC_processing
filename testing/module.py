@@ -78,7 +78,8 @@ configurations.dataSourceConfiguration(
     sourceFileConfiguration={'fileName':sourceFileName,'fileFormat':'TOB3'}
 )
 
-# ecf32(projectPath=projectPath,siteID='SCL',dataSourceID='EC_2025')
+ecf32(projectPath=projectPath,siteID='SCL',dataSourceID='EC_2025',verbose=False)
+
 # dsc = configurations.dataSourceConfiguration(
 #     projectPath=projectPath,
 #     siteID='SCL',

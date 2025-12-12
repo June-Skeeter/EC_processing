@@ -7,12 +7,18 @@ from modules.helperFunctions.parseCoordinates import parseCoordinates
 class UID(baseClass):
     # verbose: bool = field(default=False,repr=False)
     index: int = field(default=1,init=False,repr=False)
-    UID: str = field(default=None)
+    UID: str = field(default=None,repr=False)
+    UID_source: str = field(default=None,init=False,repr=False)
     UID_name: str = field(default=None,init=False,repr=False)
 
     def __post_init__(self):
-        if self.UID is None and self.UID_name is not None:
-            self.UID = f"{getattr(self,self.UID_name)}_{self.index}"
+        if self.UID_source is None and self.UID_name is not None:
+            self.UID_source = self.UID_name
+        elif self.UID_name is None and self.UID_source is not None:
+            self.UID_name = self.UID_source
+        if self.UID is None and self.UID_source is not None:
+            self.UID = f"{getattr(self,self.UID_source)}_{self.index}"
+            setattr(self,self.UID_name,self.UID)
         elif self.UID is not None:
             self.index = int(self.UID.rsplit('_',1)[-1])
         super().__post_init__()
@@ -20,6 +26,7 @@ class UID(baseClass):
     def updateUID(self):
         self.index += 1
         self.UID = f"{getattr(self,self.UID_name)}_{self.index}"
+        setattr(self,self.UID_name,self.UID)
 
 @dataclass(kw_only=True)
 class spatialObject(UID):
