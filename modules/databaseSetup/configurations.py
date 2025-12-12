@@ -69,7 +69,7 @@ class dataSourceConfiguration(baseClass):
     projectPath: str = field(repr=False)
     siteID: str
     dataSourceID: str
-    sourceSystemConfiguration: dict = field(default_factory=dict)
+    systemConfiguration: dict = field(default_factory=dict)
     sourceFileConfiguration: Iterable = None
     
     def __post_init__(self):
@@ -85,26 +85,35 @@ class dataSourceConfiguration(baseClass):
                 self.sourceFileConfiguration = rawFile.sourceFile(
                     fileFormat=self.sourceFileConfiguration['fileFormat'],
                     fileName=self.sourceFileConfiguration['fileName'],
-                    variableSensorMap = self.sourceSystemConfiguration.variableSensorMap,
+                    variableSensorMap = self.systemConfiguration.variableSensorMap,
                     verbose=self.verbose,
                     configFileRoot=self.configFileRoot,
                     ).parseMetadata()#.to_dict(keepNull=False)
-        self.sourceFileConfiguration = self.sourceFileConfiguration.to_dict(keepNull=False)
-        self.sourceSystemConfiguration = self.sourceSystemConfiguration.to_dict(keepNull=False)
         # self.sourceFileConfiguration.saveConfigFile(keepNull=False)
-        # self.sourceSystemConfiguration.saveConfigFile(keepNull=False)
+        # self.systemConfiguration.saveConfigFile(keepNull=False)
         if not self.configFileExists or not self.safeMode:
-
+            sourceFileConfiguration_DC = self.sourceFileConfiguration
+            self.sourceFileConfiguration = self.sourceFileConfiguration.to_dict(keepNull=False)
+            systemConfiguration_DC = self.systemConfiguration
+            self.systemConfiguration = self.systemConfiguration.to_dict(keepNull=False)
             self.saveConfigFile(keepNull=False) 
+            self.sourceFileConfiguration = sourceFileConfiguration_DC
+            self.systemConfiguration = systemConfiguration_DC
+
 
     def systemCheck(self):
-        if is_dataclass(self.sourceSystemConfiguration):
-            self.sourceSystemConfiguration = self.sourceSystemConfiguration.to_dict()
-        if hasattr(systemTypes,self.sourceSystemConfiguration['systemType']):
-            system = getattr(systemTypes,self.sourceSystemConfiguration['systemType'])
-            self.sourceSystemConfiguration = system.from_dict(self.sourceSystemConfiguration|{
+        if is_dataclass(self.systemConfiguration):
+            self.systemConfiguration = self.systemConfiguration.to_dict()
+        if hasattr(systemTypes,self.systemConfiguration['systemType']):
+            system = getattr(systemTypes,self.systemConfiguration['systemType'])
+            self.systemConfiguration = system.from_dict(self.systemConfiguration|{
                 'configFileRoot':self.configFileRoot,
-                'configFileName':'sourceSystemConfiguration.yml'})
+                'configFileName':'systemConfiguration.yml'})
         else:
             self.logError('System type not yet supported')
+        for key,value in self.systemConfiguration.__dict__.items():
+            if value is None and hasattr(self.siteConfiguration,key):
+                siteProp = getattr(self.siteConfiguration,key)
+                # If value is not present, default to site parameter, allows for paramters (e.g. lat/lon) to differe if needed
+                setattr(self.systemConfiguration,key,siteProp)
 

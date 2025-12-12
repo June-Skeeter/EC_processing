@@ -13,7 +13,7 @@ import modules.databaseSetup.dataLoggers as dataLoggers
 
 @dataclass(kw_only=True)
 class system(spatialObject):
-    # configFileName: str = 'sourceSystemConfiguration.yml'
+    # configFileName: str = 'systemConfiguration.yml'
     verbose: bool = field(default=False,repr=False)
     systemType: str = field(init=False)
     # dataFormat: str = None
@@ -62,15 +62,28 @@ class BIOMET(system):
 
 @dataclass(kw_only=True)
 class EC(system):
-    measurementHeight: float = field(default = None, metadata = {'description': 'Measurement height (Zm) in meters, required for Sonics, optional otherwise'})
-    northOffset: float = field(default = None, metadata = {'description': 'Offset from North in degrees (clockwise) of main sonic'})
+    measurementHeight: float = field(default = None, metadata = {'description': 'Measurement height (Zm) in meters, of reference sonic'})
+    northOffset: float = field(default = None, metadata = {'description': 'Offset from North in degrees (clockwise) of reference sonic'})
+    canopyHeight: float = None
 
     # systemType:str = 'EC'
     def __post_init__(self):
         # if self.dataInterval is not None and self.dataInterval > 1:
         #     self.logError(f"dataInterval is invalid for EC system: {self.dataInterval} s ")
         super().__post_init__()
+        nsonic = 0
         for key,value in self.sensorConfigurations.items():
+            if value['sensorType'].startswith('sonic'):
+                nsonic += 1
+                if self.measurementHeight is None or self.northOffset is None:
+                    self.measurementHeight = value['measurementHeight']
+                    self.northOffset = value['northOffset']
+                if nsonic>1 and all([v==0.0 or v is None for k,v in value.items() if k.endswith('Separation')]):
+                    if value['measurementHeight'] != self.measurementHeight:
+                        self.sensorConfigurations[key]['verticalSeparation'] = round(value['measurementHeight']-self.measurementHeight,3)
+                        self.logWarning('Separation parameters for secondary sonic not specified, but different measurment heights are.  Inferring verticalSeparation from measurment heights, assuming horizontal allignement')
+                    else:
+                        self.logError('At least one non-zero separation parameter (North/South/Vertical or X,Y,Z) required for valid secondary sonic position')
             if 'northwardSeparation' not in value or 'eastwardSeparation' not in value or 'verticalSeparation' not in value:
                 if 'xSeparation' in value and 'ySeparation' in value and 'verticalSeparation' in value:
                     value['northwardSeparation'],value['eastwardSeparation']=self.geographicSeparation(value['xSeparation'],value['ySeparation'])
@@ -116,7 +129,7 @@ class IRGASON_LI7700(EC):
             self.dataLogger = dataLoggers.CR1000X().to_dict(keepNull=False)
         if self.sensorConfigurations == {}:
             self.sensorConfigurations = [
-                sensorModels.IRGASON(),
+                sensorModels.IRGASON(measurementHeight=self.measurementHeight,northOffset=self.northOffset),
                 sensorModels.LI7700(xSeparation=self.xSeparation,ySeparation=self.ySeparation,zSeparation=self.zSeparation),
                 sensorModels.CSI_T107()
             ]

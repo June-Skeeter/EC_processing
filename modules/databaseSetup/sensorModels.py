@@ -46,8 +46,8 @@ class voltage(sensor):
 
 @dataclass(kw_only=True)
 class ecSensor(sensor):
-    # measurementHeight: float = field(default = None, metadata = {'description': 'Measurement height (Zm) in meters, required for Sonics, optional otherwise'})
-    # northOffset: float = field(default = None, metadata = {'description': 'Offset from North in degrees (clockwise) of main sonic'})
+    measurementHeight: float = field(default = None, metadata = {'description': 'Measurement height (Zm) in meters, required for Sonics, optional otherwise'})
+    northOffset: float = field(default = None, metadata = {'description': 'Offset from North in degrees (clockwise) of main sonic'})
     northwardSeparation: float = field(default = None,metadata = {'description':'Northward separation from reference sonic (in m) required for irgas, and any secondary sonics.  Calculated from x&y separation if not provided.'})
     eastwardSeparation: float = field(default = None,metadata = {'description':'Eastward separation from reference sonic (in m) required for irgas, and any secondary sonics.  Calculated from x&y separation if not provided.'})
     verticalSeparation: float = field(default = None,metadata = {'description':'Vertical separation from reference sonic (in m) required for irgas, and any secondary sonics.'})
@@ -70,6 +70,8 @@ class ecSensor(sensor):
 class IRGASON(ecSensor):
     manufacturer: str = 'Campbell Scientific'
     sensorType: str = 'soinc-irga-open-path'
+    measurementHeight: float
+    northOffset: float
     northwardSeparation: float = 0.0
     eastwardSeparation: float = 0.0
     verticalSeparation: float = 0.0
@@ -83,6 +85,8 @@ class IRGASON(ecSensor):
 class CSAT3(ecSensor):
     manufacturer: str = 'Campbell Scientific'
     sensorType: str = 'sonic'
+    measurementHeight: float
+    northOffset: float
     northwardSeparation: float = 0.0
     eastwardSeparation: float = 0.0
     verticalSeparation: float = 0.0

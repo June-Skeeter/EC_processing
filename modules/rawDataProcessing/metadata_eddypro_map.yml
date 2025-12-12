@@ -8,7 +8,7 @@ METADATA:
     last_change_date: 
     start_date: 
     end_date: 
-    file_name: self.sourceFileConfiguration['fileName']
+    file_name: f"{self.dataSourceID}.metadata"
     sw_version: 
     ini_version: 
 
@@ -22,54 +22,47 @@ METADATA:
     tstamp_end: 0
 
   Site:
-    site_name: self.siteName
-    site_id: self.siteID
-    altitude: self.altitude
-    latitude: self.latitude
-    longitude: lself.ongitude
-    canopy_height: 
+    site_name: self.siteConfiguration.siteName
+    site_id: self.siteConfiguration.siteID
+    altitude: self.systemConfiguration.altitude
+    latitude: self.systemConfiguration.latitude
+    longitude: self.systemConfiguration.longitude
+    canopy_height: self.systemConfiguration.canopyHeight
     displacement_height: 
     roughness_length: 
 
   Station:
-    station_name: self.siteName
-    station_id: self.siteID
+    station_name: self.siteConfiguration.siteName
+    station_id: self.siteConfiguration.siteID
 
   Timing:
-    acquisition_frequency: self.samplingFrequency
+    acquisition_frequency: self.sourceFileConfiguration.samplingFrequency
     file_duration: int(self.defaultInterval/60)
     pc_time_settings: 
 
   Instruments:
-    instr_1_manufacturer: 
-    instr_1_model: 
-    instr_1_sw_version: 
-    instr_1_id: 
-    instr_1_height: 
-    instr_1_wformat: uvw  
-    instr_1_wref: 
-    instr_1_north_offset: self.sonicNorthOffset
-    instr_1_northward_separation: 0.00
-    instr_1_eastward_separation: 0.00
-    instr_1_vertical_separation: 0.00
-    instr_1_vpath_length: 
-    instr_1_hpath_length: 
-    instr_1_tau: 
-    instr_n+1_manufacturer: 
-    instr_n+1_model: 
-    instr_n+1_sw_version: 
-    instr_n+1_id: 
-    instr_n+1_tube_length: 
-    instr_n+1_tube_diameter: 
-    instr_n+1_tube_flowrate: 
-    instr_n+1_northward_separation: 
-    instr_n+1_eastward_separation: 
-    instr_n+1_vertical_separation: 
-    instr_n+1_vpath_length: 
-    instr_n+1_hpath_length: 
-    instr_n+1_tau: 
-    instr_n+1_kw: 
-    instr_n+1_ko: 
+    instr_n_manufacturer: sensor['manufacturer'].lower()
+    instr_n_model: sensor['sensorModel'].lower()
+    instr_n_sw_version: 
+    instr_n_id: 
+    instr_n_height: sensor['measurementHeight']
+    instr_n_wformat: uvw  
+    instr_n_wref: 
+    instr_n_head_corr: 
+    instr_n_north_offset: sensor['northOffset']
+    instr_n_northward_separation: sensor['northwardSeparation']
+    instr_n_eastward_separation: sensor['eastwardSeparation']
+    instr_n_vertical_separation: sensor['verticalSeparation']
+    instr_n_vpath_length: 
+    instr_n_hpath_length: 
+    instr_n_tube_length: 
+    instr_n_tube_diameter: 
+    instr_n_tube_flowrate: 
+    instr_n_tau: 
+    instr_n_kw: 
+    instr_n_ko: 
+    instr_n_void1: 
+    instr_n_void2: 
 
   FileDescription:
     separator: 

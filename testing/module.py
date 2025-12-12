@@ -45,10 +45,32 @@ sourceFileName = os.path.join(data,'57840_Time_Series_40.dat')
 configurations.dataSourceConfiguration(
     projectPath=projectPath,
     siteID='SCL',
+    dataSourceID ='EC_2024',
+    systemConfiguration = systemTypes.EC(
+        sensorConfigurations=[
+            sensorModels.CSAT3(
+                measurementHeight=3.28,
+                northOffset=33.0,
+                ),
+            sensorModels.CSAT3(
+                measurementHeight=4.28,
+                northOffset=33.0,
+                ),
+            sensorModels.LI7500(northwardSeparation=-0.06,eastwardSeparation=0.15,verticalSeparation=0.0),
+            sensorModels.LI7700(northwardSeparation=0.13,eastwardSeparation=0.23,verticalSeparation=0.04)
+        ]
+
+    ),
+    sourceFileConfiguration={'fileName':sourceFileName,'fileFormat':'TOB3'}
+)
+
+configurations.dataSourceConfiguration(
+    projectPath=projectPath,
+    siteID='SCL',
     dataSourceID ='EC_2025',
-    sourceSystemConfiguration = systemTypes.IRGASON_LI7700(
-        measurementHeight=4.25,
-        northOffset=135.0,
+    systemConfiguration = systemTypes.IRGASON_LI7700(
+        measurementHeight=3.26,
+        northOffset=33.0,
         xSeparation=0.41,
         ySeparation=0.16,
         zSeparation=0.0
@@ -56,7 +78,7 @@ configurations.dataSourceConfiguration(
     sourceFileConfiguration={'fileName':sourceFileName,'fileFormat':'TOB3'}
 )
 
-ecf32(projectPath=projectPath,siteID='SCL',dataSourceID='EC_2025')
+# ecf32(projectPath=projectPath,siteID='SCL',dataSourceID='EC_2025')
 # dsc = configurations.dataSourceConfiguration(
 #     projectPath=projectPath,
 #     siteID='SCL',

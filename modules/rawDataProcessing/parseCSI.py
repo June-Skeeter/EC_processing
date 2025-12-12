@@ -141,9 +141,6 @@ class csiTable(csiFile):
             self.dataTable[self.timestampName] -= Offset
             if self.verbose:
                 log(f"Total GPS induced offset in {self.fileName} is {Offset.iloc[-1]}s",verbose=False)
-        if self.samplingInterval is None:
-            self.samplingInterval = self.dataTable.TIMESTAMP.diff().median().total_seconds()
-        self.samplingFrequency = (1.0 / self.samplingInterval)
         
 @dataclass(kw_only=True)
 class TOA5(csiTable):
@@ -161,7 +158,7 @@ class TOA5(csiTable):
         if self.extractData:
             nrows = None
         else:
-            nrows = 10
+            nrows = 30
         self.dataTable = pd.read_csv(
             self.fileName,
             skiprows=[0,2,3],
@@ -176,7 +173,8 @@ class TOA5(csiTable):
             columnName:csiTrace(variableNameIn=columnName,units=units,operation=operation,dtype=dtype,variableSensorMap=self.variableSensorMap).to_dict(keepNull=False)
                 for columnName,units,operation,dtype in 
                 zip(self.asciiHeader[1],self.asciiHeader[2],self.asciiHeader[3],list(self.dataTable.dtypes))}
-                
+        self.samplingInterval = self.dataTable.TIMESTAMP.diff().median().total_seconds()
+        self.samplingFrequency = (1.0 / self.samplingInterval)
         self.finishTable()
 
 
@@ -198,6 +196,7 @@ class TOB3(csiTable):
             self.fileTimestamp = pd.to_datetime(self.asciiHeader[0][-1])
             self.tableName = self.asciiHeader[1][0]
             self.samplingInterval = pd.to_timedelta(parseFrequency(self.asciiHeader[1][1])).total_seconds()
+            self.samplingFrequency = (1.0 / self.samplingInterval)
             self.frameSize = int(self.asciiHeader[1][2])
             self.tableSize = int(self.asciiHeader[1][3])
             self.validationStamp = int(self.asciiHeader[1][4])
