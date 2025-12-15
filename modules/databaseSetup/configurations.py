@@ -85,7 +85,7 @@ class dataSourceConfiguration(baseClass):
                 self.sourceFileConfiguration = rawFile.sourceFile(
                     fileFormat=self.sourceFileConfiguration['fileFormat'],
                     fileName=self.sourceFileConfiguration['fileName'],
-                    variableSensorMap = self.systemConfiguration.variableSensorMap,
+                    traceMetadataMap = self.systemConfiguration.traceMetadataMap,
                     verbose=self.verbose,
                     configFileRoot=self.configFileRoot,
                     ).parseMetadata()#.to_dict(keepNull=False)

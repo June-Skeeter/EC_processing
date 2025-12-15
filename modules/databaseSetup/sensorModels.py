@@ -1,4 +1,5 @@
 import numpy as np
+from typing import Iterable
 from dataclasses import dataclass, field
 from modules.databaseSetup.spatialObject import spatialObject
 
@@ -12,13 +13,12 @@ class sensor(spatialObject):
     manufacturer: str = field(default = '',metadata = {'description': 'Indicates manufacturer of sensor, auto from class name',})
     serialNumber: str = field(default = '',metadata = {'description': 'Serial# (if known)',})
     sensorType: str = field(default='',repr=False)
-    variables: list = field(default_factory=list,repr=False)
+    traceMetadataMap: dict = field(default=None)
     UID_name = 'sensorID'
     UID_source = 'sensorModel'
 
     def __post_init__(self):
         self.sensorModel = type(self).__name__
-        # if not hasattr(self,'sensorID'):
         if self.sensorID is None:
             self.sensorID = self.sensorModel
         elif self.sensorID is None:
@@ -61,7 +61,6 @@ class ecSensor(sensor):
 
     def __post_init__(self):
         super().__post_init__()
-        
         # x,y,z are alternative formats
         # z & vertical are synonymous so always drop z
         if self.verticalSeparation == None and self.zSeparation is not None:
@@ -78,10 +77,26 @@ class IRGASON(ecSensor):
     eastwardSeparation: float = 0.0
     verticalSeparation: float = 0.0
     windFormat: str = 'uvw'
-    variables: list = field(
-        repr=False,default_factory=lambda:[
-        'Ux','Uy','Uz','T_SONIC','diag_sonic','CO2_density','CO2_density_fast_tmpr','H2O_density','diag_irga','T_SONIC_corr','PA','CO2_sig_strgth','H2O_sig_strgth'
-    ])
+    defaultTraceMap: dict = field(
+        repr=False,
+        default_factory=lambda:{
+            'Ux':{'measurementType':''},
+            'Uy':{'measurementType':''},
+            'Uz':{'measurementType':''},
+            'T_SONIC':{'measurementType':''},
+            'diag_sonic':{'measurementType':''},
+            'CO2_density':{'measurementType':'molar_density'},
+            'CO2_density_fast_tmpr':{'measurementType':''},
+            'H2O_density':{'measurementType':'molar_density'},
+            'diag_irga':{'measurementType':''},
+            'T_SONIC_corr':{'measurementType':''},
+            'PA':{'measurementType':''},
+            'CO2_sig_strgth':{'measurementType':''},
+            'H2O_sig_strgth':{'measurementType':''},
+        })
+
+    def __post_init__(self):
+        super().__post_init__()
     
 @dataclass(kw_only=True)
 class CSAT3(ecSensor):
@@ -93,11 +108,6 @@ class CSAT3(ecSensor):
     eastwardSeparation: float = 0.0
     verticalSeparation: float = 0.0
     windFormat: str = 'uvw'
-    variables: list = field(
-        repr=False,
-    default_factory=lambda:[
-        'Ux','Uy','Uz','T_SONIC','diag_sonic'
-    ])
     
 
 @dataclass(kw_only=True)
@@ -109,7 +119,6 @@ class LI7700(ecSensor):
 class LI7500(ecSensor):
     manufacturer: str = 'LICOR'
     sensorType: str = 'irga-open-path'
-
 
 @dataclass(kw_only=True)
 class LI7200(ecSensor):
@@ -126,9 +135,11 @@ class fwThermocouple(ecSensor):
 class CSI_T107(ecSensor):
     manufacturer: str = 'Campbell Scientific'
     sensorType: str = 'thermistor'
-    variables: list = field(repr=False,default_factory=lambda:[
-        'TA_1_1_1'
-    ])
+    defaultTraceMap: Iterable = field(
+        repr=False,
+        default_factory=lambda:{
+        'TA_1_1_1':{'measurementType': 'temperature'}
+    })
     # These values aren't needed for any flux calculations either
     northwardSeparation: float = None
     eastwardSeparation: float = None

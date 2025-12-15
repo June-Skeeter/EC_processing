@@ -20,7 +20,7 @@ class system(spatialObject):
     # dataInterval: float = field(default=None,metadata={'description':'Interval of dataset in seconds'})
     dataLogger: dict = field(default_factory=dict)
     sensorConfigurations: Iterable = field(default_factory=dict)
-    variableSensorMap: dict = field(default_factory=dict,repr=False)
+    traceMetadataMap: dict = field(default_factory=dict,repr=False)
     
     def __post_init__(self):
         if not hasattr(self,'systemType'):
@@ -36,9 +36,19 @@ class system(spatialObject):
             model = getattr(sensorModels,sensor['sensorModel']).from_dict(sensor)
             while model.UID in UD.keys():
                 model.updateUID()
-            if hasattr(model,'variables') and len(model.variables)>0:
-                for var in model.variables:
-                    self.variableSensorMap[var] = model.UID
+            if hasattr(sensor,'traceMetadataMap') and len(sensor.traceMetadataMap)>0:
+                for var in sensor.traceMetadataMap:
+                    self.traceMetadataMap[var] = {}
+                    self.traceMetadataMap[var]['sensorID'] = model.UID
+                    for key,val in model.traceMetadataMap[var].items():
+                        self.traceMetadataMap[var][key] = val
+            elif hasattr(model,'defaultTraceMap'):
+                for var in model.defaultTraceMap:
+                    self.traceMetadataMap[var] = {}
+                    for key,val in model.defaultTraceMap[var].items():
+                        self.traceMetadataMap[var][key] = val
+                    self.traceMetadataMap[var]['sensorID'] = model.UID
+
             UD[model.UID] = model.to_dict(keepNull=False)
 
         self.sensorConfigurations = UD
@@ -47,7 +57,6 @@ class system(spatialObject):
 @dataclass(kw_only=True)
 class Manual(system):
     pass
-    # systemType: str = 'Manual'
 
 @dataclass(kw_only=True)
 class External(system):
@@ -129,8 +138,21 @@ class IRGASON_LI7700(EC):
             self.dataLogger = dataLoggers.CR1000X().to_dict(keepNull=False)
         if self.sensorConfigurations == {}:
             self.sensorConfigurations = [
-                sensorModels.IRGASON(measurementHeight=self.measurementHeight,northOffset=self.northOffset),
-                sensorModels.LI7700(xSeparation=self.xSeparation,ySeparation=self.ySeparation,zSeparation=self.zSeparation),
+                sensorModels.IRGASON(
+                    measurementHeight=self.measurementHeight,
+                    northOffset=self.northOffset
+                    ),
+                sensorModels.LI7700(
+                    xSeparation=self.xSeparation,
+                    ySeparation=self.ySeparation,
+                    zSeparation=self.zSeparation,
+                    traceMetadataMap={
+                        'LI7700_CH4D':{'measurementType':'molar_density'},
+                        'LI7700_pressure':{'measurementType':''},
+                        'LI7700_temperature':{'measurementType':''},
+                        'LI7700_sig_strgth':{'measurementType':''},
+                        'LI7700_diag':{'measurementType':''}
+                    }),
                 sensorModels.CSI_T107()
             ]
         else:

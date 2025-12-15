@@ -13,6 +13,8 @@ from modules.rawDataProcessing.ecf32 import ecf32
 data = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
 
 
+sm = sensorModels.CSI_T107(traceMetadataMap={'TA_1_1_1':{'measurementType':'temperature'}})
+
 projectPath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'outputs','testProject'))
 
 shutil.rmtree(projectPath, ignore_errors=True)
@@ -80,48 +82,6 @@ configurations.dataSourceConfiguration(
 
 ecf32(projectPath=projectPath,siteID='SCL',dataSourceID='EC_2025',verbose=False)
 
-# dsc = configurations.dataSourceConfiguration(
-#     projectPath=projectPath,
-#     siteID='SCL',
-#     dataSourceID='EC_2025',
-# )
 
-# breakpoint()
 
-# c = configurations.dataSourceConfiguration(
-#     projectPath=projectPath,
-#     siteID='SCL',
-#     dataSourceID='EC_2025',
-#     # sourceSystem=st.toConfig(keepNull=False)
-# )
 
-# dc = configurations.dataSourceConfiguration(
-#     # verbose=True,
-#     projectPath=projectPath,
-#     siteID='SCL',
-#     dataSourceID='EC_2025',
-#     dataFormat='TOB3',
-#     systemType='EC',
-#     dataInterval=0.1,
-#     sensorConfigurations=[
-#         sensorModels.IRGASON(measurementHeight=4.25,northOffset=135,verbose=None),
-#         sensorModels.LI7700(
-#             northOffset=33.0,
-#             xSeparation=0.41,
-#             ySeparation=0.16,
-#             zSeparation=0.0
-#             ),
-#             ],
-#     # fileTemplate=sourceFileName
-# )
-
-# print(dc.logFile)
-
-# print(sensors.IRGASON(measurementHeight=4.25,northOffset=135,).toConfig())
-
-# print(sensors.LI7700(
-#     northOffset=33.0,
-#     xSeparation=0.41,
-#     ySeparation=0.16,
-#     zSeparation=0.0
-#     ).toConfig(keepNull=False))

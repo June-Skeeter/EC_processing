@@ -8,7 +8,7 @@ METADATA:
     last_change_date: 
     start_date: 
     end_date: 
-    file_name: f"{self.dataSourceID}.metadata"
+    file_name: self.metadataFilePath
     sw_version: 
     ini_version: 
 
@@ -70,10 +70,10 @@ METADATA:
     data_label: 
     col_n_variable: variable['variableName']
     col_n_instrument: variable['instrument']
-    col_n_measure_type: 
+    col_n_measure_type: variable['measurementType']
     col_n_unit_in: variable['units']
-    col_n_min_value: 0
-    col_n_max_value: 0
+    col_n_min_value: variable['minMax'][0]
+    col_n_max_value: variable['minMax'][-1]
     col_n_conversion: 
     col_n_unit_out: 
     col_n_a_value: 
@@ -86,7 +86,7 @@ EDDYPRO:
   Project:
     creation_date:
     last_change_date:
-    file_name: 
+    file_name: self.eddyproFilePath
     run_mode: 0
     run_fcc: 0
     project_title: Template
