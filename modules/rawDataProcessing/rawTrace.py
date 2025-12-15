@@ -24,4 +24,6 @@ class rawTraceIn(baseClass):
                 setattr(self,key,value)
         if self.variableNameIn in self.ignoreByDefault:
             self.ignore = True
+        if self.units == '%':
+            self.units = 'percent'
         return super().__post_init__()

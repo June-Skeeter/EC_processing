@@ -2,6 +2,7 @@ import configparser
 from modules.helperFunctions.baseClass import baseClass
 from modules.databaseSetup.configurations import dataSourceConfiguration
 from dataclasses import dataclass, field
+# from pathlib import path
 import numpy as np
 import time
 import yaml
@@ -72,8 +73,11 @@ class ecf32(dataSourceConfiguration):
                     value = eval(value)
                     if type(value) is str:
                         value = value.lower()
+                else:
+                    value = None
             if value is None:
                 value = ''
+            print(value)
             return(value)
 
         i = 1
@@ -81,7 +85,8 @@ class ecf32(dataSourceConfiguration):
         for sensor in self.systemConfiguration.sensorConfigurations.values():
             for key,value in self.template['METADATA']['Instruments'].items():
                 self.metadataFile['Instruments'][key.replace('_n_',f"_{i}_")] = parseSensor(value,sensor)
-                if 'sonic' in sensor['sensorType'] and sensor['sensorModel'] in self.integratedSonics:
+            if 'sonic' in sensor['sensorType'] and sensor['sensorModel'] in self.integratedSonics:
+                for key,value in self.template['METADATA']['Instruments'].items():
                     self.metadataFile['Instruments'][key.replace('_n_',f"_{i+1}_")] = parseSensor(value,sensor)
             if 'sonic' in sensor['sensorType'] and sensor['sensorModel'] in self.integratedSonics:
                 i += 2
@@ -96,15 +101,19 @@ class ecf32(dataSourceConfiguration):
                     value = eval(value)
                     if type(value) is str:
                         value = value.lower()
+                else:
+                    value = None
             if value is None:
                 value = ''
             return(value)
 
+        i = 1
         self.metadataFile['FileDescription'] = {key:self.parseSelf(value) for key,value in self.template['METADATA']['FileDescription'].items() if not key.startswith('col_n')}
         for variable in self.sourceFileConfiguration.dataColumns.values():
             if variable['dtype'] == '<f4' and not variable['ignore']:
                 for key,value in self.template['METADATA']['FileDescription'].items():
                     self.metadataFile['FileDescription'][key.replace('_n_',f'_{i}_')] = parseVariable(value,variable)
+                i += 1
             else:
                 self.sourceFileConfiguration.dataColumns[variable['variableNameIn']]['ignore'] = True
 

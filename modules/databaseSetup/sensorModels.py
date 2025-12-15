@@ -69,7 +69,7 @@ class ecSensor(sensor):
 
 @dataclass(kw_only=True)
 class IRGASON(ecSensor):
-    manufacturer: str = 'Campbell Scientific'
+    manufacturer: str = 'CSI'
     sensorType: str = 'sonic-irga-open-path'
     measurementHeight: float
     northOffset: float
@@ -100,7 +100,7 @@ class IRGASON(ecSensor):
     
 @dataclass(kw_only=True)
 class CSAT3(ecSensor):
-    manufacturer: str = 'Campbell Scientific'
+    manufacturer: str = 'CSI'
     sensorType: str = 'sonic'
     measurementHeight: float
     northOffset: float
@@ -108,6 +108,15 @@ class CSAT3(ecSensor):
     eastwardSeparation: float = 0.0
     verticalSeparation: float = 0.0
     windFormat: str = 'uvw'
+    defaultTraceMap: dict = field(
+        repr=False,
+        default_factory=lambda:{
+            'Ux':{'measurementType':''},
+            'Uy':{'measurementType':''},
+            'Uz':{'measurementType':''},
+            'T_SONIC':{'measurementType':''},
+            'diag_sonic':{'measurementType':''},
+        })
     
 
 @dataclass(kw_only=True)
@@ -133,7 +142,7 @@ class fwThermocouple(ecSensor):
 
 @dataclass(kw_only=True)
 class CSI_T107(ecSensor):
-    manufacturer: str = 'Campbell Scientific'
+    manufacturer: str = 'CSI'
     sensorType: str = 'thermistor'
     defaultTraceMap: Iterable = field(
         repr=False,

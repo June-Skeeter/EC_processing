@@ -68,8 +68,8 @@ METADATA:
     separator: 
     header_rows: 
     data_label: 
-    col_n_variable: variable['variableName']
-    col_n_instrument: variable['instrument']
+    col_n_variable: variable['variableNameIn']
+    col_n_instrument: variable['sensorID']
     col_n_measure_type: variable['measurementType']
     col_n_unit_in: variable['units']
     col_n_min_value: variable['minMax'][0]
@@ -96,7 +96,7 @@ EDDYPRO:
     file_type: 0
     file_prototype: 
     use_pfile: 1
-    proj_file: 
+    proj_file: self.metadataFilePath
     use_dyn_md_file: 0
     dyn_metadata_file: 
     binary_hnlines: -1
