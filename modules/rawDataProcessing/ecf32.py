@@ -1,7 +1,9 @@
 import configparser
 from modules.helperFunctions.baseClass import baseClass
 from modules.databaseSetup.configurations import dataSourceConfiguration
+from modules.rawDataProcessing.rawFile import sourceFile
 from dataclasses import dataclass, field
+from datetime import datetime
 # from pathlib import path
 import numpy as np
 import time
@@ -14,16 +16,17 @@ with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','configFi
 
 @dataclass(kw_only=True)
 class ecf32(dataSourceConfiguration):
+    fileName: str
     template: dict = field(default_factory=lambda:metadataMap)
     metadataFile: dict = field(default_factory=dict)
+    f32Files: list = field(default_factory=list)
     eddyproFile: dict = field(default_factory=dict)
     defaultInterval: int = 30
     integratedSonics: list = field(default_factory=lambda:['IRGASON'])
-    # sourceFile
+
     def __post_init__(self):
         T1 = time.time()
         super().__post_init__()
-        print(time.time()-T1)
 
         self.metadataFilePath = os.path.join(self.configFileRoot,'ecf32.metadata')
         self.eddyproFilePath = os.path.join(self.configFileRoot,'ecf32.eddypro')
@@ -31,27 +34,10 @@ class ecf32(dataSourceConfiguration):
         # Use eval statements to fill dynamic variables
         # both .metadata and .eddypro files should be created
         self.generateMetaDataFile()
+        self.generateBinaryFile()
         self.generateEddyProFile()
-        
-        metadata = configparser.ConfigParser()
-        for sec in self.metadataFile.keys():
-            metadata.add_section(sec)
-            for key,value in self.metadataFile[sec].items():
-                metadata[sec][key]=str(value)
-        with open(self.metadataFilePath,'w') as f:
-            f.write(';GHG_METADATA\n')
-            metadata.write(f,space_around_delimiters=False)
-
-        eddypro = configparser.ConfigParser()
-        for sec in self.eddyproFile.keys():
-            eddypro.add_section(sec)
-            for key,value in self.eddyproFile[sec].items():
-                eddypro[sec][key]=str(value)
-        with open(self.eddyproFilePath,'w') as f:
-            f.write(';EDDYPRO_PROCESSING\n')
-            eddypro.write(f,space_around_delimiters=False)
-        
-        # print(self.metadataFile)
+        print(time.time()-T1)
+               
 
     def generateMetaDataFile(self):
 
@@ -77,7 +63,6 @@ class ecf32(dataSourceConfiguration):
                     value = None
             if value is None:
                 value = ''
-            print(value)
             return(value)
 
         i = 1
@@ -109,13 +94,35 @@ class ecf32(dataSourceConfiguration):
 
         i = 1
         self.metadataFile['FileDescription'] = {key:self.parseSelf(value) for key,value in self.template['METADATA']['FileDescription'].items() if not key.startswith('col_n')}
-        for variable in self.sourceFileConfiguration.dataColumns.values():
+        for variable in self.sourceFile.dataColumns.values():
             if variable['dtype'] == '<f4' and not variable['ignore']:
                 for key,value in self.template['METADATA']['FileDescription'].items():
                     self.metadataFile['FileDescription'][key.replace('_n_',f'_{i}_')] = parseVariable(value,variable)
                 i += 1
             else:
-                self.sourceFileConfiguration.dataColumns[variable['variableNameIn']]['ignore'] = True
+                self.sourceFile.dataColumns[variable['variableNameIn']]['ignore'] = True
+
+        metadata = configparser.ConfigParser()
+        for sec in self.metadataFile.keys():
+            metadata.add_section(sec)
+            for key,value in self.metadataFile[sec].items():
+                metadata[sec][key]=str(value)
+        with open(self.metadataFilePath,'w') as f:
+            f.write(';GHG_METADATA\n')
+            metadata.write(f,space_around_delimiters=False)
+
+    def generateBinaryFile(self):
+        kwargs = self.sourceFile.to_dict()
+        data = sourceFile(fileName=self.fileName,fileFormat=kwargs['fileFormat'],kwargs=kwargs).parseFile()
+        keep = [value['variableNameIn'] for value in self.sourceFile.dataColumns.values() if not value['ignore']]
+        maxN = int(self.metadataFile['Timing']['acquisition_frequency']*self.metadataFile['Timing']['file_duration']*60)
+        splits = int(np.ceil(data.shape[0]/maxN))
+        for i in range(splits):
+            sub = data.iloc[i*maxN:(i+1)*maxN]
+            fn = datetime.fromtimestamp(sub['TIMESTAMP'][sub.index[0]]).strftime('%Y%m%dT%H%M%S.f32') 
+            filepath = os.path.join(self.configFileRoot,fn)
+            sub[keep].values.T.flatten().astype('float32').tofile(filepath)
+            self.f32Files.append(filepath)
 
     def generateEddyProFile(self):
         
@@ -124,6 +131,16 @@ class ecf32(dataSourceConfiguration):
             self.eddyproFile[sec] = {}
             for key,value in self.template['EDDYPRO'][sec].items():
                 self.eddyproFile[sec][key] = self.parseSelf(value)
+                
+
+        eddypro = configparser.ConfigParser()
+        for sec in self.eddyproFile.keys():
+            eddypro.add_section(sec)
+            for key,value in self.eddyproFile[sec].items():
+                eddypro[sec][key]=str(value)
+        with open(self.eddyproFilePath,'w') as f:
+            f.write(';EDDYPRO_PROCESSING\n')
+            eddypro.write(f,space_around_delimiters=False)
 
     def parseSelf(self,value):
         if value is not None and type(value) is str and value.startswith('self.'):
@@ -132,39 +149,3 @@ class ecf32(dataSourceConfiguration):
             value = ''
         return(value)
         
-        # 
-        # for n,sensor in enumerate(self.systemConfiguration.sensorConfigurations.values()):
-        #     if 'soinc' in sensor['sensorType']:
-        #         if sensor['sensorModel'] in integratedSonics:
-        #             i += 1
-        #         for key,value in self.template['METADATA']['Instruments'].items():
-        #             if key.startswith('instr_n') and value is not None and type(value) is str and value.startswith('sensor['):
-        #                 param = value.replace("sensor['",'').replace("']",'')
-        #                 if param in sensor:
-        #                     paramValue = eval(value)
-        #                     if type(paramValue) is str:
-        #                         paramValue = paramValue.lower()
-        #                 else:
-        #                     paramValue = ''
-        #                 self.template['METADATA']['Instruments'][key] = paramValue
-        #             # elif key.starswith('instr_n') and value is not None and type(value) is str and value.startswith('sensor['):
-        #         # Note this includes integrated sonics, which have sensor type "sonic-...."
-        #         # if sensor['sensorType'] != 'sonic':
-        #         #     for key,value in s
-
-        #     n = n+i
-        #     print(n)
-        #     # breakpoint()
-        # for sec in self.template['METADATA'].keys():
-        #     for key,value in self.template['METADATA'][sec].items():
-        #         if value is not None and type(value) is str and value.startswith('self.'):
-        #             try:
-        #                 self.template['METADATA'][sec][key] = eval(value)
-        #             except:
-        #                 print(value)
-        #                 breakpoint()
-        # print(self.template['METADATA']['Project'])
-        # breakpoint()
-
-    def writeMetadata(self,fileName):
-        header = ';GHG_METADATA'

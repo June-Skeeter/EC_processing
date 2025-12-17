@@ -18,14 +18,19 @@ class system(spatialObject):
     systemType: str = field(init=False)
     # dataFormat: str = None
     # dataInterval: float = field(default=None,metadata={'description':'Interval of dataset in seconds'})
-    dataLogger: dict = field(default_factory=dict)
+    dataLogger: Iterable = field(default_factory=dict)
     sensorConfigurations: Iterable = field(default_factory=dict)
-    traceMetadataMap: dict = field(default_factory=dict,repr=False)
+    traceMetadataMap: Iterable = field(default=None)
     
     def __post_init__(self):
         if not hasattr(self,'systemType'):
             self.systemType = type(self).__name__
         UD = {}
+        if type(self.dataLogger) is str:
+            if hasattr(dataLoggers,self.dataLogger):
+                self.dataLogger = getattr(dataLoggers,self.dataLogger)()
+            else:
+                self.logError('Could not find datalogger')
         if type(self.sensorConfigurations) is dict:
             self.sensorConfigurations = list(self.sensorConfigurations.values())
         for sensor in self.sensorConfigurations:
@@ -36,18 +41,18 @@ class system(spatialObject):
             model = getattr(sensorModels,sensor['sensorModel']).from_dict(sensor)
             while model.UID in UD.keys():
                 model.updateUID()
-            if hasattr(sensor,'traceMetadataMap') and len(sensor.traceMetadataMap)>0:
-                for var in sensor.traceMetadataMap:
-                    self.traceMetadataMap[var] = {}
-                    self.traceMetadataMap[var]['sensorID'] = model.UID
-                    for key,val in model.traceMetadataMap[var].items():
-                        self.traceMetadataMap[var][key] = val
-            elif hasattr(model,'defaultTraceMap'):
-                for var in model.defaultTraceMap:
-                    self.traceMetadataMap[var] = {}
-                    for key,val in model.defaultTraceMap[var].items():
-                        self.traceMetadataMap[var][key] = val
-                    self.traceMetadataMap[var]['sensorID'] = model.UID
+            # if hasattr(sensor,'traceMetadataMap') and len(sensor.traceMetadataMap)>0:
+            #     for var in sensor.traceMetadataMap:
+            #         self.traceMetadataMap[var] = {}
+            #         self.traceMetadataMap[var]['sensorID'] = model.UID
+            #         for key,val in model.traceMetadataMap[var].items():
+            #             self.traceMetadataMap[var][key] = val
+            # elif hasattr(model,'defaultTraceMap'):
+            #     for var in model.defaultTraceMap:
+            #         self.traceMetadataMap[var] = {}
+            #         for key,val in model.defaultTraceMap[var].items():
+            #             self.traceMetadataMap[var][key] = val
+            #         self.traceMetadataMap[var]['sensorID'] = model.UID
 
             UD[model.UID] = model.to_dict(keepNull=False)
 
@@ -125,6 +130,10 @@ class EC(system):
         xSeparation = float(Rv[0])
         ySeparation = float(Rv[1])
         return (xSeparation,ySeparation)
+    
+class SmartFlux(EC):
+    systemType: str = 'EC'
+
 
 @dataclass(kw_only=True)
 class IRGASON_LI7700(EC):
@@ -132,6 +141,7 @@ class IRGASON_LI7700(EC):
     xSeparation: float = field(default=None,repr=False)
     ySeparation: float = field(default=None,repr=False)
     zSeparation: float = field(default=None,repr=False)
+    traceMetadataMap: str ='EasyFlux'
     
     def __post_init__(self):
         if self.dataLogger == {}:
@@ -145,14 +155,7 @@ class IRGASON_LI7700(EC):
                 sensorModels.LI7700(
                     xSeparation=self.xSeparation,
                     ySeparation=self.ySeparation,
-                    zSeparation=self.zSeparation,
-                    traceMetadataMap={
-                        'LI7700_CH4D':{'measurementType':'molar_density'},
-                        'LI7700_pressure':{'measurementType':''},
-                        'LI7700_temperature':{'measurementType':''},
-                        'LI7700_sig_strgth':{'measurementType':''},
-                        'LI7700_diag':{'measurementType':''}
-                    }),
+                    zSeparation=self.zSeparation),
                 sensorModels.CSI_T107()
             ]
         else:

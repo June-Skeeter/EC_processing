@@ -20,6 +20,11 @@ class projectConfiguration(baseClass):
     projectPath: str
     dateModified: str = field(default=None)
     createdBy: str = field(default=None)
+    structure: dict = field(default_factory=lambda:{
+        'configFiles':None,
+        'database':None,
+        'highFrequencyData':None
+        })
 
     def __post_init__(self):
         self.configFileRoot = self.projectPath
@@ -33,16 +38,15 @@ class projectConfiguration(baseClass):
         # Only save if it is first time creating
         # Otherwise saves are performed where appropriate in child classes
         if not self.configFileExists:
-            # if self.createdBy is None:
-            #     self.logWarning('Missing "createdBy" parameter, please specify to proceed',verbose=True)
-            #     self.createdBy = input('createdBy: ')
             self.saveConfigFile()
+            for sub in self.structure:
+                os.makedirs(os.path.join(self.projectPath,sub))
 
 
 
 @dataclass(kw_only=True)
 class siteConfiguration(spatialObject):
-    configFileName: str = field(default='siteConfiguration.yml',repr=False)
+    configFileName: str = field('siteConfiguration.yml',repr=False)
     projectPath: str = field(repr=False)
     siteID: str
     siteName: str = field(
@@ -57,10 +61,13 @@ class siteConfiguration(spatialObject):
     def __post_init__(self):
         self.projectConfiguration = projectConfiguration(projectPath=self.projectPath,verbose=False)
         self.logMessage(self.projectConfiguration.logFile,verbose=False)
-        self.configFileRoot = os.path.join(self.projectPath,self.siteID)
+        self.configFileRoot = os.path.join(self.projectPath,'configFiles',self.siteID)
         super().__post_init__()
-        if not self.configFileExists:
+        if not self.configFileExists or not self.readOnly:
             self.saveConfigFile(keepNull=False)
+            self.projectConfiguration.close()
+
+
 
 
 @dataclass(kw_only=True)
@@ -70,38 +77,24 @@ class dataSourceConfiguration(baseClass):
     siteID: str
     dataSourceID: str
     systemConfiguration: dict = field(default_factory=dict)
-    sourceFileConfiguration: Iterable = None
+    sourceFile: Iterable = None
     
     def __post_init__(self):
         self.siteConfiguration = siteConfiguration(projectPath=self.projectPath,siteID=self.siteID,verbose=False)
         self.configFileRoot = os.path.join(self.projectPath,self.siteID,self.dataSourceID)
         super().__post_init__()
-        self.systemCheck()
-
-        if self.sourceFileConfiguration is not None:
-            if is_dataclass(self.sourceFileConfiguration):
-                self.sourceFileConfiguration = self.sourceFileConfiguration.to_dict()
-            else:
-                self.sourceFileConfiguration = rawFile.sourceFile(
-                    fileFormat=self.sourceFileConfiguration['fileFormat'],
-                    fileName=self.sourceFileConfiguration['fileName'],
-                    traceMetadataMap = self.systemConfiguration.traceMetadataMap,
-                    verbose=self.verbose,
-                    configFileRoot=self.configFileRoot,
-                    ).parseMetadata()#.to_dict(keepNull=False)
-        # self.sourceFileConfiguration.saveConfigFile(keepNull=False)
-        # self.systemConfiguration.saveConfigFile(keepNull=False)
-        if not self.configFileExists or not self.safeMode:
-            sourceFileConfiguration_DC = self.sourceFileConfiguration
-            self.sourceFileConfiguration = self.sourceFileConfiguration.to_dict(keepNull=False)
-            systemConfiguration_DC = self.systemConfiguration
+        self.systemConfig()
+        self.fileConfig()
+        if not self.configFileExists or not self.readOnly:
+            self.systemConfiguration_DC = self.systemConfiguration
             self.systemConfiguration = self.systemConfiguration.to_dict(keepNull=False)
+            self.sourceFile_DC = self.sourceFile
+            self.sourceFile = self.sourceFile.to_dict(keepNull=False)
             self.saveConfigFile(keepNull=False) 
-            self.sourceFileConfiguration = sourceFileConfiguration_DC
-            self.systemConfiguration = systemConfiguration_DC
+            self.sourceFile = self.sourceFile_DC
+            self.systemConfiguration = self.systemConfiguration_DC
 
-
-    def systemCheck(self):
+    def systemConfig(self):
         if is_dataclass(self.systemConfiguration):
             self.systemConfiguration = self.systemConfiguration.to_dict()
         if hasattr(systemTypes,self.systemConfiguration['systemType']):
@@ -117,3 +110,24 @@ class dataSourceConfiguration(baseClass):
                 # If value is not present, default to site parameter, allows for paramters (e.g. lat/lon) to differe if needed
                 setattr(self.systemConfiguration,key,siteProp)
 
+    def fileConfig(self):
+        if self.sourceFile is None:
+            self.sourceFile = baseClass()
+        elif is_dataclass(self.sourceFile):
+            self.logError('DC input not supported')
+        elif type(self.sourceFile) is str:
+            if self.systemConfiguration.dataLogger['manufacturer'] == 'CSI':
+                self.sourceFile = rawFile.sourceFile(
+                    fileName=self.sourceFile,
+                    sourceType=self.systemConfiguration.dataLogger['manufacturer'],
+                    traceMetadataMap=self.systemConfiguration.traceMetadataMap,
+                    verbose=self.verbose
+                    ).parseMetadata()
+            else:
+                self.logError('Logger files not yet supported')
+        else:
+            self.sourceFile = rawFile.sourceFile.from_dict(
+                self.sourceFile|{
+                    'sourceType':self.systemConfiguration.dataLogger['manufacturer'],
+                    'verbose':self.verbose
+                    }).parseMetadata()

@@ -1,0 +1,115 @@
+# Default maps for variables not contained in sourceFile metadata
+# Mainly needed for high frequency CSI files, these should be available in GHG file .metadata files
+CSI_LI7500_default:
+  Ux:
+    sensorID: CSAT3_1
+    measurementType: wind_vector
+  Uy:
+    sensorID: CSAT3_1
+    measurementType: wind_vector
+  Uz:
+    sensorID: CSAT3_1
+    measurementType: wind_vector
+  TS:
+    sensorID: CSAT3_1
+    measurementType: sonic_temperature
+  T_SONIC:
+    sensorID: CSAT3_1
+    measurementType: sonic_temperature
+  diag_sonic:
+    sensorID: CSAT3_1
+    measurementType: diagnostic
+  Diagnostic_CSAT:
+    sensorID: CSAT3_1
+    measurementType: diagnostic
+  CO2:
+    sensorID: LI7500_1
+    measurementType: molar_density
+  H2O:
+    sensorID: LI7500_1
+    measurementType: molar_density
+  press:
+    sensorID: LI7500_1
+    measurementType: air_pressure
+  LI7500_diag:
+    sensorID: LI7500_1
+    measurementType: diagnostic
+  LI7550_SignalStrength: 
+    sensorID: LI7500_1
+    measurementType: signal_strength
+  Diagnostic_7700:
+    sensorID: LI7700_1
+    measurementType: diagnostic
+  CH4_density:
+    sensorID: LI7700_1
+    measurementType: molar_density
+  CH4_mole_fraction:
+    sensorID: LI7700_1
+    measurementType: mole_fraction
+  Temperature:
+    sensorID: LI7700_1
+    measurementType: air_temperature
+  Pressure:
+    sensorID: LI7700_1
+    measurementType: air_pressure
+  RSSI:
+    sensorID: LI7700_1
+    measurementType: signal_strength
+EasyFlux:
+  Ux:
+    sensorID: IRGASON_1
+    measurementType: wind_vector
+  Uy:
+    sensorID: IRGASON_1
+    measurementType: wind_vector
+  Uz:
+    sensorID: IRGASON_1
+    measurementType: wind_vector
+  T_SONIC:
+    sensorID: IRGASON_1
+    measurementType: sonic_temperature
+  diag_sonic:
+    sensorID: IRGASON_1
+    measurementType: diagnostic
+  CO2_density:
+    sensorID: IRGASON_2
+    measurementType: molar_density
+  CO2_density_fast_tmpr:
+    sensorID: IRGASON_2
+    measurementType: air_temperature
+  H2O_density:
+    sensorID: IRGASON_2
+    measurementType: molar_density
+  diag_irga:
+    sensorID: IRGASON_2
+    measurementType: diagnostic
+  T_SONIC_corr: 
+    sensorID: IRGASON_1
+    measurementType: sonic_temperature
+  PA:
+    sensorID: IRGASON_2
+    measurementType: air_pressure
+  CO2_sig_strgth:
+    sensorID: IRGASON_2
+    measurementType: signal_strength
+  H2O_sig_strgth:
+    sensorID: IRGASON_2
+    measurementType: signal_strength
+  LI7700_CH4D:
+    sensorID: LI7700_1
+    measurementType: molar_density
+  LI7700_pressure: 
+    sensorID: LI7700_1
+    measurementType: air_pressure
+  LI7700_temperature: 
+    sensorID: LI7700_1
+    measurementType: air_temperature
+  LI7700_sig_strgth: 
+    sensorID: LI7700_1
+    measurementType: signal_strength
+  LI7700_diag: 
+    sensorID: LI7700_1
+    measurementType: diagnostic
+  TA_1_1_1:
+    sensorID: CSI_T107_1
+    measurementType: air_temperature

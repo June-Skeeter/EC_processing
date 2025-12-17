@@ -19,7 +19,7 @@ class rawTraceIn(baseClass):
     verbose: str = None
 
     def __post_init__(self):
-        if self.variableNameIn in self.traceMetadataMap:
+        if self.traceMetadataMap is not None and self.variableNameIn in self.traceMetadataMap:
             for key,value in self.traceMetadataMap[self.variableNameIn].items():
                 setattr(self,key,value)
         if self.variableNameIn in self.ignoreByDefault:

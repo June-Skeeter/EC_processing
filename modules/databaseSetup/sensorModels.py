@@ -56,7 +56,7 @@ class ecSensor(sensor):
     xSeparation: float = field(default = None,metadata = {'description':'Lateral separation from reference sonic (in m) parallel to the main axis of the sonic (towards mast/sonic head = positive).  See Fig D2 in (https://s.campbellsci.com/documents/us/manuals/easyflux-dl-cr6op.pdf) for example.  Required for irgas, and any secondary sonics to calculate northward/eastward separation if not provided.',})
     ySeparation: float = field(default = None,metadata = {'description':'Lateral separation from reference sonic (in m) perpendicular to the main axis of the sonic (right of mast/sonic head = positive).  See Fig D2 in (https://s.campbellsci.com/documents/us/manuals/easyflux-dl-cr6op.pdf) for example.  Required for irgas, and any secondary sonics to calculate northward/eastward separation if not provided.',})
     zSeparation: float = field(default = None,repr = False,metadata = {'description':'Synonymous with Vertical separation from reference sonic (in m) required for irgas, and any secondary sonics.',})
-    windFormat: str = field(default=None,metadata = {'description': 'Format of wind data (only supports uvw for now).  Required for EddyPro','options':['uvw']})
+    windFormat: str = field(default=None,metadata = {'description': 'Format of wind data (only supports uvw for now).  Required for EddyPro','options':['uvw', 'polar_w', 'axis']})
 
 
     def __post_init__(self):
@@ -77,23 +77,6 @@ class IRGASON(ecSensor):
     eastwardSeparation: float = 0.0
     verticalSeparation: float = 0.0
     windFormat: str = 'uvw'
-    defaultTraceMap: dict = field(
-        repr=False,
-        default_factory=lambda:{
-            'Ux':{'measurementType':''},
-            'Uy':{'measurementType':''},
-            'Uz':{'measurementType':''},
-            'T_SONIC':{'measurementType':''},
-            'diag_sonic':{'measurementType':''},
-            'CO2_density':{'measurementType':'molar_density'},
-            'CO2_density_fast_tmpr':{'measurementType':''},
-            'H2O_density':{'measurementType':'molar_density'},
-            'diag_irga':{'measurementType':''},
-            'T_SONIC_corr':{'measurementType':''},
-            'PA':{'measurementType':''},
-            'CO2_sig_strgth':{'measurementType':''},
-            'H2O_sig_strgth':{'measurementType':''},
-        })
 
     def __post_init__(self):
         super().__post_init__()
@@ -108,16 +91,6 @@ class CSAT3(ecSensor):
     eastwardSeparation: float = 0.0
     verticalSeparation: float = 0.0
     windFormat: str = 'uvw'
-    defaultTraceMap: dict = field(
-        repr=False,
-        default_factory=lambda:{
-            'Ux':{'measurementType':''},
-            'Uy':{'measurementType':''},
-            'Uz':{'measurementType':''},
-            'T_SONIC':{'measurementType':''},
-            'diag_sonic':{'measurementType':''},
-        })
-    
 
 @dataclass(kw_only=True)
 class LI7700(ecSensor):
@@ -144,11 +117,6 @@ class fwThermocouple(ecSensor):
 class CSI_T107(ecSensor):
     manufacturer: str = 'CSI'
     sensorType: str = 'thermistor'
-    defaultTraceMap: Iterable = field(
-        repr=False,
-        default_factory=lambda:{
-        'TA_1_1_1':{'measurementType': 'temperature'}
-    })
     # These values aren't needed for any flux calculations either
     northwardSeparation: float = None
     eastwardSeparation: float = None

@@ -21,6 +21,22 @@ import re
 # from src.readData.dataSource import dataSource
 # from src.databaseObjects.defaultObjects import sourceObject
 
+@dataclass
+class csiType:
+    filepath: str
+    fileType: str = field(init=False)
+
+    def __post_init__(self):
+        if not os.path.isfile(self.filepath):
+            self.logError('Invalid filepath')
+        else:
+            with open(self.filepath,'rb') as f:
+                l = f.readline()
+                self.fileType = l.decode('ascii').strip().replace('"','').split(',')[0]
+            if len(self.fileType) == 3 and int(self.fileType):
+                self.fileType = 'MixedArray'
+
+
 @dataclass(kw_only=True)
 class csiTrace(rawTraceIn):
     defaultTypes = defaultdict(lambda: '<f4',RECORD ='<i8',TIMESTAMP = 'string') # Does not apply to TOB3 which have type specified in header
@@ -32,7 +48,7 @@ class csiTrace(rawTraceIn):
         'INT4':{'struct':'i','output':'<i4'},
         'ASCII':{'struct':'s','output':'string'},
     }
-    byteMap: str = field(init=False,repr=False)
+    byteMap: str = field(init=False)
 
     def __post_init__(self):
         self.ignoreByDefault =  ['RECORD','TIMESTAMP']
@@ -116,10 +132,10 @@ class csiTable(csiFile):
 
     def __post_init__(self):
         if self.fileFormat == 'TOB3':
-            with open(self.fileName, 'rb') as self.fileObject:
+            with open(self.fileName, self.mode) as self.fileObject:
                 self.asciiHeader = [self.readAsciiLine(self.fileObject.readline()) for l in range(self.nLinesAsciiHeader)]
         else:
-            with open(self.fileName, 'rb') as self.fileObject:
+            with open(self.fileName, self.mode) as self.fileObject:
                 self.asciiHeader = [self.readAsciiLine(self.fileObject.readline()) for l in range(self.nLinesAsciiHeader)]
         if self.fileFormat != self.asciiHeader[0][0]:
             self.logError(f"{self.fileName} is not in {self.fileFormat} format")
@@ -224,7 +240,7 @@ class TOB3(csiTable):
     
     def readFrames(self):
         # Parameters dictating extraction
-        self.byteMap = ''.join([var.byteMap for key,var in self.dataColumns.items() if key not in self.implicitColumns])     
+        self.byteMap = ''.join([var['byteMap'] for key,var in self.dataColumns.items() if key not in self.implicitColumns])     
         self.recordSize = struct.calcsize('>'+self.byteMap)
         self.recordsPerFrame = int((self.frameSize-self.headerSize-self.footerSize)/self.recordSize)
         nframes = int((self.fileSize-self.fileObject.tell())/self.frameSize)
@@ -236,7 +252,7 @@ class TOB3(csiTable):
                 self.decodeFrame(bindata[i*self.frameSize:(i+1)*self.frameSize])]
         self.dataTable = pd.DataFrame(frames,
             columns=[self.timestampName,self.recordName]+[col for col in self.dataColumns if col not in self.implicitColumns])
-        self.typeMap = {key:val.dtype for key,val in self.dataColumns.items()}
+        self.typeMap = {key:var['dtype'] for key,var in self.dataColumns.items()}
         self.dataTable = self.dataTable.astype(self.typeMap)  
 
     def decodeFrame(self,frame):

@@ -64,63 +64,63 @@ configurations.dataSourceConfiguration(
 ecf32(projectPath=projectPath,siteID='BBS',dataSourceID='EC',verbose=False)
 
 
-# sc = configurations.siteConfiguration(
-#     verbose=False,
-#     projectPath=projectPath,
-#     siteID='SCL',
-#     startDate=dateparser.parse(
-#         '2024-07-10',
-#         settings={'DATE_ORDER':'YMD','RETURN_AS_TIMEZONE_AWARE':True}),
-#     latitude = 'N69 13.5850',
-#     longitude = 'W135 15.1144',
-#     altitude = 1.0,
-#     siteName = 'Swiss Cheese Lake',
-#     PI = 'June Skeeter & Peter Morse',
-#     description = 'Wet sedge meadow, continuous permafrost',
-#     )
+sc = configurations.siteConfiguration(
+    verbose=False,
+    projectPath=projectPath,
+    siteID='SCL',
+    startDate=dateparser.parse(
+        '2024-07-10',
+        settings={'DATE_ORDER':'YMD','RETURN_AS_TIMEZONE_AWARE':True}),
+    latitude = 'N69 13.5850',
+    longitude = 'W135 15.1144',
+    altitude = 1.0,
+    siteName = 'Swiss Cheese Lake',
+    PI = 'June Skeeter & Peter Morse',
+    description = 'Wet sedge meadow, continuous permafrost',
+    )
 
 
-# sourceFileName = os.path.join(data,'57840_Time_Series_40.dat')
+sourceFileName = os.path.join(data,'57840_Time_Series_40.dat')
 
 
-# configurations.dataSourceConfiguration(
-#     projectPath=projectPath,
-#     siteID='SCL',
-#     dataSourceID ='EC_2024',
-#     systemConfiguration = systemTypes.EC(
-#         sensorConfigurations=[
-#             sensorModels.CSAT3(
-#                 measurementHeight=3.28,
-#                 northOffset=33.0,
-#                 ),
-#             sensorModels.CSAT3(
-#                 measurementHeight=4.28,
-#                 northOffset=33.0,
-#                 ),
-#             sensorModels.LI7500(northwardSeparation=-0.06,eastwardSeparation=0.15,verticalSeparation=0.0),
-#             sensorModels.LI7700(northwardSeparation=0.13,eastwardSeparation=0.23,verticalSeparation=0.04)
-#         ]
+configurations.dataSourceConfiguration(
+    projectPath=projectPath,
+    siteID='SCL',
+    dataSourceID ='EC_2024',
+    systemConfiguration = systemTypes.EC(
+        sensorConfigurations=[
+            sensorModels.CSAT3(
+                measurementHeight=3.28,
+                northOffset=33.0,
+                ),
+            sensorModels.CSAT3(
+                measurementHeight=4.28,
+                northOffset=33.0,
+                ),
+            sensorModels.LI7500(northwardSeparation=-0.06,eastwardSeparation=0.15,verticalSeparation=0.0),
+            sensorModels.LI7700(northwardSeparation=0.13,eastwardSeparation=0.23,verticalSeparation=0.04)
+        ]
 
-#     ),
-#     sourceFileConfiguration={'fileName':sourceFileName,'fileFormat':'TOB3'}
-# )
+    ),
+    sourceFileConfiguration={'fileName':sourceFileName,'fileFormat':'TOB3'}
+)
 
-# configurations.dataSourceConfiguration(
-#     projectPath=projectPath,
-#     siteID='SCL',
-#     dataSourceID ='EC_2025',
-#     systemConfiguration = systemTypes.IRGASON_LI7700(
-#         measurementHeight=3.26,
-#         northOffset=33.0,
-#         xSeparation=0.41,
-#         ySeparation=0.16,
-#         zSeparation=0.0
-#     ),
-#     sourceFileConfiguration={'fileName':sourceFileName,'fileFormat':'TOB3'}
-# )
+configurations.dataSourceConfiguration(
+    projectPath=projectPath,
+    siteID='SCL',
+    dataSourceID ='EC_2025',
+    systemConfiguration = systemTypes.IRGASON_LI7700(
+        measurementHeight=3.26,
+        northOffset=33.0,
+        xSeparation=0.41,
+        ySeparation=0.16,
+        zSeparation=0.0
+    ),
+    sourceFileConfiguration={'fileName':sourceFileName,'fileFormat':'TOB3'}
+)
 
-# ecf32(projectPath=projectPath,siteID='SCL',dataSourceID='EC_2024',verbose=False)
-# ecf32(projectPath=projectPath,siteID='SCL',dataSourceID='EC_2025',verbose=False)
+ecf32(projectPath=projectPath,siteID='SCL',dataSourceID='EC_2024',verbose=False)
+ecf32(projectPath=projectPath,siteID='SCL',dataSourceID='EC_2025',verbose=False)
 
 
 
