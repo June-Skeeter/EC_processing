@@ -1,12 +1,13 @@
 import numpy as np
 from typing import Iterable
 from dataclasses import dataclass, field
-from modules.databaseSetup.spatialObject import spatialObject
+from modules.helperFunctions.baseClass import baseClass
+# from modules.databaseSetup.spatialObject import spatialObject
 
 # dataclasses to define specs/default values for sensors
 
 @dataclass(kw_only=True)
-class sensor(spatialObject):
+class sensor(baseClass):
     verbose: bool = field(default=False,repr=False)
     sensorModel: str = field(init=False,default=None)
     sensorID: str = field(default=None,metadata = {'description': 'The sensor model, auto-filled from class name',})

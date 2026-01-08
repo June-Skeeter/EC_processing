@@ -28,7 +28,7 @@ class sourceFile(baseClass):
             self.traceMetadataMap = traceMap[self.traceMetadataMap]
         if hasattr(parseCSI,self.fileFormat):
             csiFile = getattr(parseCSI,self.fileFormat)
-            sourceAttributes = csiFile(fileName=self.fileName,extractData=False,traceMetadataMap=self.traceMetadataMap,configFileRoot=self.configFileRoot,configFileName=self.configFileName)
+            sourceAttributes = csiFile(fileName=self.fileName,extractData=False,traceMetadataMap=self.traceMetadataMap,rootPath=self.rootPath,configName=self.configName)
         else:
             self.logError(f"{self.fileFormat} not yet supported")
         return(sourceAttributes)

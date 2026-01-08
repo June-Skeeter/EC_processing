@@ -16,6 +16,8 @@ with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','configFi
 
 @dataclass(kw_only=True)
 class ecf32(dataSourceConfiguration):
+    siteID: str
+    dataSourceID: str
     fileName: str
     template: dict = field(default_factory=lambda:metadataMap)
     metadataFile: dict = field(default_factory=dict)
@@ -23,8 +25,13 @@ class ecf32(dataSourceConfiguration):
     eddyproFile: dict = field(default_factory=dict)
     defaultInterval: int = 30
     integratedSonics: list = field(default_factory=lambda:['IRGASON'])
+    configName: str = field(default='dataSourceConfiguration.yml',repr=False,init=False)
 
     def __post_init__(self):
+        self.subPath = os.path.sep.join(['highfrequencyData',self.siteID,self.dataSourceID])
+
+        breakpoint()
+
         T1 = time.time()
         super().__post_init__()
 

@@ -2,7 +2,8 @@ from dataclasses import dataclass, field
 from typing import Iterable
 import numpy as np
 from dataclasses import is_dataclass
-from modules.databaseSetup.spatialObject import spatialObject
+from modules.helperFunctions.baseClass import baseClass
+# from modules.databaseSetup.spatialObject import spatialObject
 import modules.databaseSetup.sensorModels as sensorModels
 import modules.databaseSetup.dataLoggers as dataLoggers
 
@@ -12,12 +13,9 @@ import modules.databaseSetup.dataLoggers as dataLoggers
 # avoid adding significant functionally here
 
 @dataclass(kw_only=True)
-class system(spatialObject):
-    # configFileName: str = 'systemConfiguration.yml'
+class system(baseClass):
     verbose: bool = field(default=False,repr=False)
     systemType: str = field(init=False)
-    # dataFormat: str = None
-    # dataInterval: float = field(default=None,metadata={'description':'Interval of dataset in seconds'})
     dataLogger: Iterable = field(default_factory=dict)
     sensorConfigurations: Iterable = field(default_factory=dict)
     traceMetadataMap: Iterable = field(default=None)
@@ -40,24 +38,14 @@ class system(spatialObject):
                 self.logError('Sensor not currently supported')
             model = getattr(sensorModels,sensor['sensorModel']).from_dict(sensor)
             while model.UID in UD.keys():
+                print(UD.keys(),model.UID)
+                breakpoint()
                 model.updateUID()
-            # if hasattr(sensor,'traceMetadataMap') and len(sensor.traceMetadataMap)>0:
-            #     for var in sensor.traceMetadataMap:
-            #         self.traceMetadataMap[var] = {}
-            #         self.traceMetadataMap[var]['sensorID'] = model.UID
-            #         for key,val in model.traceMetadataMap[var].items():
-            #             self.traceMetadataMap[var][key] = val
-            # elif hasattr(model,'defaultTraceMap'):
-            #     for var in model.defaultTraceMap:
-            #         self.traceMetadataMap[var] = {}
-            #         for key,val in model.defaultTraceMap[var].items():
-            #             self.traceMetadataMap[var][key] = val
-            #         self.traceMetadataMap[var]['sensorID'] = model.UID
-
             UD[model.UID] = model.to_dict(keepNull=False)
 
         self.sensorConfigurations = UD
         super().__post_init__()
+
 
 @dataclass(kw_only=True)
 class Manual(system):

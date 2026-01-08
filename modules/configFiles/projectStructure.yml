@@ -1,0 +1,13 @@
+configFiles:
+  self.siteID:
+    siteConfig.yml: 'site configuration file'
+    self.dataSourceID: 
+      dataSourceConfiguration.yml: 'data source configuration file'
+database:
+  self.year:
+    self.siteID:
+highfrequencyData:
+  self.siteID:
+    self.year:
+      self.month:
+        

@@ -14,25 +14,24 @@ File Created: {datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}
 '''
 @dataclass(kw_only=True)
 class projectConfiguration(baseClass):
-    configFileName: str = field(default='projectConfiguration.yml',repr=False)
+    # fileName: str = field(default='projectConfiguration.yml',repr=False)
     header: str = field(default=default_comment,repr=False,init=False) # YAML header, must be treated differently
 
-    projectPath: str
     dateModified: str = field(default=None)
     createdBy: str = field(default=None)
     structure: dict = field(default_factory=lambda:{
-        'configFiles':None,
-        'database':None,
-        'highFrequencyData':None
+        'configFiles':{'siteID':{'siteConfiguration.yml':None,'dataSourceID':{'dataSourceConfiguration.yml':None}}},
+        'database':{'year':{'siteID':{'stage':None}}},
+        'highFrequencyData':{'siteID':{'year':{'month':None}}}
         })
 
     def __post_init__(self):
-        self.configFileRoot = self.projectPath
+        # self.configFileRoot = self.rootPath
         # baseClass will load configuration (if it exists) and perform type-enforcement
         super().__post_init__()
         
-        if os.path.isdir(self.projectPath) and not os.path.exists(self.configFilePath) and len(os.listdir(self.projectPath))!=0:
-            self.logError(f'Error: Cannot initiate new project in non-empty diretory: {self.projectPath}')
+        if os.path.isdir(self.rootPath) and not os.path.exists(self.configFilePath) and len(os.listdir(self.rootPath))!=0:
+            self.logError(f'Error: Cannot initiate new project in non-empty diretory: {self.rootPath}')
         self.dateModified = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
 
         # Only save if it is first time creating
@@ -40,14 +39,12 @@ class projectConfiguration(baseClass):
         if not self.configFileExists:
             self.saveConfigFile()
             for sub in self.structure:
-                os.makedirs(os.path.join(self.projectPath,sub))
+                os.makedirs(os.path.join(self.rootPath,sub))
 
 
 
 @dataclass(kw_only=True)
 class siteConfiguration(spatialObject):
-    configFileName: str = field('siteConfiguration.yml',repr=False)
-    projectPath: str = field(repr=False)
     siteID: str
     siteName: str = field(
         default = None,
@@ -59,29 +56,28 @@ class siteConfiguration(spatialObject):
     )
 
     def __post_init__(self):
-        self.projectConfiguration = projectConfiguration(projectPath=self.projectPath,verbose=False)
+        self.subPath = os.path.sep.join(['configFiles',self.siteID])
+
+        self.projectConfiguration = projectConfiguration(rootPath=self.rootPath,verbose=False)
         self.logMessage(self.projectConfiguration.logFile,verbose=False)
-        self.configFileRoot = os.path.join(self.projectPath,'configFiles',self.siteID)
         super().__post_init__()
         if not self.configFileExists or not self.readOnly:
             self.saveConfigFile(keepNull=False)
             self.projectConfiguration.close()
 
 
-
-
 @dataclass(kw_only=True)
 class dataSourceConfiguration(baseClass):
-    configFileName: str = field(default='dataSourceConfiguration.yml',repr=False)
-    projectPath: str = field(repr=False)
     siteID: str
     dataSourceID: str
     systemConfiguration: dict = field(default_factory=dict)
     sourceFile: Iterable = None
     
     def __post_init__(self):
-        self.siteConfiguration = siteConfiguration(projectPath=self.projectPath,siteID=self.siteID,verbose=False)
-        self.configFileRoot = os.path.join(self.projectPath,self.siteID,self.dataSourceID)
+        self.subPath = os.path.sep.join(['configFiles',self.siteID,self.dataSourceID])
+
+        self.siteConfiguration = siteConfiguration(rootPath=self.rootPath,siteID=self.siteID,verbose=False)
+        self.configFileRoot = os.path.join(self.rootPath,self.siteID,self.dataSourceID)
         super().__post_init__()
         self.systemConfig()
         self.fileConfig()
@@ -131,3 +127,11 @@ class dataSourceConfiguration(baseClass):
                     'sourceType':self.systemConfiguration.dataLogger['manufacturer'],
                     'verbose':self.verbose
                     }).parseMetadata()
+
+@dataclass(kw_only=True)
+class template(projectConfiguration):
+    pass
+
+    def __post_init__(self):
+        super().__post_init__()
+        print(siteConfiguration.template())

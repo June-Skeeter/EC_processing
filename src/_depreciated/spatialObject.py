@@ -19,7 +19,7 @@ class UID(baseClass):
         if self.UID is None and self.UID_source is not None:
             self.UID = f"{getattr(self,self.UID_source)}_{self.index}"
             setattr(self,self.UID_name,self.UID)
-        elif self.UID is not None:
+        elif self.UID is not None and self.typeCheck:
             self.index = int(self.UID.rsplit('_',1)[-1])
         super().__post_init__()
 
@@ -36,12 +36,12 @@ class spatialObject(UID):
     startDate: datetime = field(
         default = None,
         metadata = {
-            'description': 'Date of installation. For nested values, assumed to be same as parent object.  Optionally to provide if different from parent value.',
+            'description': 'Date of installation. Will parse from string (assuming Year-Month-Day order) For nested values, defaults to parent object, provide to override',
     })
     endDate: datetime = field(
         default = None,
         metadata = {
-            'description': 'Date of removal (or None). For nested values, assumed to be same as parent object.  Optionally to provide if different from parent value.'
+            'description': 'Date of removal (or None). Will parse from string (assuming Year-Month-Day order) For nested values, defaults to parent object, provide to override',
     })
     latitude: float = field(
         default = None,
@@ -69,7 +69,7 @@ class spatialObject(UID):
     )
 
     def __post_init__(self):
-        if type(self.latitude) is not self.__dataclass_fields__['latitude'].type or type(self.longitude) is not self.__dataclass_fields__['longitude'].type:
+        if (type(self.latitude) is not self.__dataclass_fields__['latitude'].type or type(self.longitude) is not self.__dataclass_fields__['longitude'].type) and self.typeCheck:
             pC = parseCoordinates(UID=None,latitude=self.latitude, longitude=self.longitude)
             self.latitude, self.longitude = pC.latitude, pC.longitude
         super().__post_init__()
