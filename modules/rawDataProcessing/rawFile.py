@@ -22,16 +22,19 @@ class sourceFile(baseClass):
         super().__post_init__()
 
     def parseMetadata(self):
-        if self.fileFormat is None:
-            self.getFormat()
-        if type(self.traceMetadataMap) is str and self.traceMetadataMap in traceMap.keys():
-            self.traceMetadataMap = traceMap[self.traceMetadataMap]
-        if hasattr(parseCSI,self.fileFormat):
-            csiFile = getattr(parseCSI,self.fileFormat)
-            sourceAttributes = csiFile(fileName=self.fileName,extractData=False,traceMetadataMap=self.traceMetadataMap,rootPath=self.rootPath,configName=self.configName)
+        if self.fileName is None:
+            sourceAttributes = baseClass()
         else:
-            self.logError(f"{self.fileFormat} not yet supported")
-        return(sourceAttributes)
+            if self.fileFormat is None:
+                self.getFormat()
+            if type(self.traceMetadataMap) is str and self.traceMetadataMap in traceMap.keys():
+                self.traceMetadataMap = traceMap[self.traceMetadataMap]
+            if hasattr(parseCSI,self.fileFormat):
+                csiFile = getattr(parseCSI,self.fileFormat)
+                sourceAttributes = csiFile(fileName=self.fileName,extractData=False,traceMetadataMap=self.traceMetadataMap,rootPath=self.rootPath,configName=self.configName)
+            else:
+                self.logError(f"{self.fileFormat} not yet supported")
+        return(sourceAttributes.to_dict())
 
 
     def parseFile(self):

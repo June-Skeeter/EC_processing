@@ -1,10 +1,11 @@
 import configparser
 from modules.helperFunctions.baseClass import baseClass
-from modules.databaseSetup.configurations import dataSourceConfiguration
+from modules.database.dataSource import dataSourceConfiguration
 from modules.rawDataProcessing.rawFile import sourceFile
 from dataclasses import dataclass, field
 from datetime import datetime
 # from pathlib import path
+from pandas.api.types import is_datetime64_any_dtype as is_datetime
 import numpy as np
 import time
 import yaml
@@ -16,8 +17,8 @@ with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','configFi
 
 @dataclass(kw_only=True)
 class ecf32(dataSourceConfiguration):
-    siteID: str
-    dataSourceID: str
+    # siteID: str
+    # dataSourceID: str
     fileName: str
     template: dict = field(default_factory=lambda:metadataMap)
     metadataFile: dict = field(default_factory=dict)
@@ -28,15 +29,17 @@ class ecf32(dataSourceConfiguration):
     configName: str = field(default='dataSourceConfiguration.yml',repr=False,init=False)
 
     def __post_init__(self):
-        self.subPath = os.path.sep.join(['highfrequencyData',self.siteID,self.dataSourceID])
-
-        breakpoint()
+        self.subPath = os.path.sep.join(['configurationFiles',self.siteID,self.dataSourceID])
 
         T1 = time.time()
         super().__post_init__()
 
-        self.metadataFilePath = os.path.join(self.configFileRoot,'ecf32.metadata')
-        self.eddyproFilePath = os.path.join(self.configFileRoot,'ecf32.eddypro')
+        #Reset rootpath to save outputs to highFrequencyDataFolder location
+        self.subPath = os.path.sep.join(['highFrequencyData',self.siteID,self.dataSourceID])
+        self.rootPath = os.path.join(self.projectPath,self.subPath)
+        os.makedirs(self.rootPath,exist_ok=True)
+        self.metadataFilePath = os.path.join(self.rootPath,'ecf32.metadata')
+        self.eddyproFilePath = os.path.join(self.rootPath,'ecf32.eddypro')
 
         # Use eval statements to fill dynamic variables
         # both .metadata and .eddypro files should be created
@@ -52,7 +55,11 @@ class ecf32(dataSourceConfiguration):
         for sec in ['Project','Files','Site','Station','Timing']:
             self.metadataFile[sec] = {}
             for key,value in self.template['METADATA'][sec].items():
-                self.metadataFile[sec][key] = self.parseSelf(value)
+                print(key,value)
+                try:
+                    self.metadataFile[sec][key] = self.parseSelf(value)
+                except:
+                    breakpoint()
 
         # Next process intruments
         # Bellow is intenteded for "simple" setup with one sonic & corresponding IRGAS
@@ -74,7 +81,7 @@ class ecf32(dataSourceConfiguration):
 
         i = 1
         self.metadataFile['Instruments'] = {}
-        for sensor in self.systemConfiguration.sensorConfigurations.values():
+        for sensor in self.measurementSystem['sensorConfigurations'].values():
             for key,value in self.template['METADATA']['Instruments'].items():
                 self.metadataFile['Instruments'][key.replace('_n_',f"_{i}_")] = parseSensor(value,sensor)
             if 'sonic' in sensor['sensorType'] and sensor['sensorModel'] in self.integratedSonics:
@@ -101,13 +108,13 @@ class ecf32(dataSourceConfiguration):
 
         i = 1
         self.metadataFile['FileDescription'] = {key:self.parseSelf(value) for key,value in self.template['METADATA']['FileDescription'].items() if not key.startswith('col_n')}
-        for variable in self.sourceFile.dataColumns.values():
+        for variable in self.sourceFileTemplate['dataColumns'].values():
             if variable['dtype'] == '<f4' and not variable['ignore']:
                 for key,value in self.template['METADATA']['FileDescription'].items():
                     self.metadataFile['FileDescription'][key.replace('_n_',f'_{i}_')] = parseVariable(value,variable)
                 i += 1
             else:
-                self.sourceFile.dataColumns[variable['variableNameIn']]['ignore'] = True
+                self.sourceFileTemplate['dataColumns'][variable['variableNameIn']]['ignore'] = True
 
         metadata = configparser.ConfigParser()
         for sec in self.metadataFile.keys():
@@ -119,15 +126,18 @@ class ecf32(dataSourceConfiguration):
             metadata.write(f,space_around_delimiters=False)
 
     def generateBinaryFile(self):
-        kwargs = self.sourceFile.to_dict()
-        data = sourceFile(fileName=self.fileName,fileFormat=kwargs['fileFormat'],kwargs=kwargs).parseFile()
-        keep = [value['variableNameIn'] for value in self.sourceFile.dataColumns.values() if not value['ignore']]
+        # kwargs = self.sourceFileTemplate.to_dict()
+        data = sourceFile(fileName=self.fileName,fileFormat=self.sourceFileTemplate['fileFormat'],kwargs=self.sourceFileTemplate).parseFile()
+        keep = [value['variableNameIn'] for value in self.sourceFileTemplate['dataColumns'].values() if not value['ignore']]
         maxN = int(self.metadataFile['Timing']['acquisition_frequency']*self.metadataFile['Timing']['file_duration']*60)
         splits = int(np.ceil(data.shape[0]/maxN))
         for i in range(splits):
             sub = data.iloc[i*maxN:(i+1)*maxN]
-            fn = datetime.fromtimestamp(sub['TIMESTAMP'][sub.index[0]]).strftime('%Y%m%dT%H%M%S.f32') 
-            filepath = os.path.join(self.configFileRoot,fn)
+            if is_datetime(sub['TIMESTAMP']):
+                fn = sub['TIMESTAMP'][sub.index[0]].strftime('%Y%m%dT%H%M%S.f32') 
+            else:
+                fn = datetime.fromtimestamp(sub['TIMESTAMP'][sub.index[0]]).strftime('%Y%m%dT%H%M%S.f32') 
+            filepath = os.path.join(self.rootPath,fn)
             sub[keep].values.T.flatten().astype('float32').tofile(filepath)
             self.f32Files.append(filepath)
 

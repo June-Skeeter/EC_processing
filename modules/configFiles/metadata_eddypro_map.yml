@@ -22,21 +22,21 @@ METADATA:
     tstamp_end: 0
 
   Site:
-    site_name: self.siteConfiguration.siteName
-    site_id: self.siteConfiguration.siteID
-    altitude: self.systemConfiguration.altitude
-    latitude: self.systemConfiguration.latitude
-    longitude: self.systemConfiguration.longitude
-    canopy_height: self.systemConfiguration.canopyHeight
+    site_name: self.siteName
+    site_id: self.siteID
+    altitude: self.altitude
+    latitude: self.latitude
+    longitude: self.longitude
+    canopy_height: self.canopyHeight
     displacement_height: 
     roughness_length: 
 
   Station:
-    station_name: self.siteConfiguration.siteName
-    station_id: self.siteConfiguration.siteID
+    station_name: self.siteName
+    station_id: self.siteID
 
   Timing:
-    acquisition_frequency: self.sourceFile.samplingFrequency
+    acquisition_frequency: self.sourceFileTemplate['samplingFrequency']
     file_duration: self.defaultInterval
     pc_time_settings: 
 
