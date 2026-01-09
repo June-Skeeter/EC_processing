@@ -1,6 +1,5 @@
 import configparser
-from modules.helperFunctions.baseClass import baseClass
-from modules.database.dataSource import dataSourceConfiguration
+from modules.database.dataSource import dataSource
 from modules.rawDataProcessing.rawFile import sourceFile
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -16,7 +15,7 @@ with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','configFi
 
 
 @dataclass(kw_only=True)
-class ecf32(dataSourceConfiguration):
+class ecf32(dataSource):
     # siteID: str
     # dataSourceID: str
     fileName: str
@@ -29,11 +28,10 @@ class ecf32(dataSourceConfiguration):
     configName: str = field(default='dataSourceConfiguration.yml',repr=False,init=False)
 
     def __post_init__(self):
-        self.subPath = os.path.sep.join(['configurationFiles',self.siteID,self.dataSourceID])
+        # self.subPath = os.path.sep.join(['configurationFiles',self.siteID,self.dataSourceID])
 
         T1 = time.time()
         super().__post_init__()
-
         #Reset rootpath to save outputs to highFrequencyDataFolder location
         self.subPath = os.path.sep.join(['highFrequencyData',self.siteID,self.dataSourceID])
         self.rootPath = os.path.join(self.projectPath,self.subPath)
@@ -46,7 +44,7 @@ class ecf32(dataSourceConfiguration):
         self.generateMetaDataFile()
         self.generateBinaryFile()
         self.generateEddyProFile()
-        print(time.time()-T1)
+        self.logMessage(f"Time Elapsed generating f32 file{time.time()-T1}")
                
 
     def generateMetaDataFile(self):
@@ -55,11 +53,10 @@ class ecf32(dataSourceConfiguration):
         for sec in ['Project','Files','Site','Station','Timing']:
             self.metadataFile[sec] = {}
             for key,value in self.template['METADATA'][sec].items():
-                print(key,value)
                 try:
                     self.metadataFile[sec][key] = self.parseSelf(value)
                 except:
-                    breakpoint()
+                    self.logError('Error in f32 variable assignment')
 
         # Next process intruments
         # Bellow is intenteded for "simple" setup with one sonic & corresponding IRGAS

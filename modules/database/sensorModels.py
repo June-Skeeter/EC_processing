@@ -16,11 +16,12 @@ class sensor(pointObject,baseClass):
     manufacturer: str = field(default = '',metadata = {'description': 'Indicates manufacturer of sensor, auto from class name',})
     serialNumber: str = field(default = '',metadata = {'description': 'Serial# (if known)',})
     sensorType: str = field(default='',repr=False)
+    measurementHeight: float = field(default = None, metadata = {'description': 'Measurement height (Zm) optional for BIOMET sensors'})
     traceMetadataMap: dict = field(default=None)
 
     def __post_init__(self):
-        if self.sensorModel is None:
-            self.sensorModel = type(self).__name__
+        # if self.sensorModel is None:
+        #     self.sensorModel = type(self).__name__
         self.formatUID('sensorModel')
         if self.sensorID is None:
             self.sensorID = self.UID
@@ -31,7 +32,14 @@ class sensor(pointObject,baseClass):
 # BIOMET sensors
 @dataclass(kw_only=True)
 class thermocouple(sensor):
+    sensorModel: str = 'thermocouple'
     sensorType: str = 'thermocouple'
+
+@dataclass(kw_only=True)
+class NRLite(sensor):
+    sensorModel: str = 'NRLite'
+    manufacturer: str = 'Kipp & Zonen'
+    sensorType: str = 'net-radiometer'
 
 @dataclass(kw_only=True)
 class SN500(sensor):
@@ -40,14 +48,28 @@ class SN500(sensor):
     sensorType: str = 'net-radiometer'
 
 @dataclass(kw_only=True)
-class HMP(sensor):
+class HMP155(sensor):
     sensorModel: str = 'HMP'
     manufacturer: str = 'Vaisala'
     sensorType: str = 'temperature-humidity'
 
 @dataclass(kw_only=True)
-class voltage(sensor):
-    pass
+class BaroVue(sensor):
+    sensorModel: str = 'BaroVue'
+    manufacturer: str = 'CSI'
+    sensorType: str = 'Barometer'
+
+@dataclass(kw_only=True)
+class PLS(sensor):
+    sensorModel: str = 'PLS'
+    manufacturer: str = 'OTT'
+    sensorType: str = 'Pressure Transducer'
+
+@dataclass(kw_only=True)
+class VoltDiff(sensor):
+    sensorModel: str = 'VoltDiff'
+    sensorType: str = 'dataLogger'
+
 
 ## Eddy Covariance Sensors require enhanced functionality because of their positional relationship to on-another
 

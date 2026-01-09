@@ -62,6 +62,8 @@ class dataSourceConfiguration(dataSource):
         super().__post_init__()
         if self.sourceType == 'measurement':
             self.modelDescription = None
+            if self.measurementSystem == {}:
+                breakpoint()
             self.measurementSystem = measurementSystem.from_dict(self.measurementSystem).to_dict(keepNull=False)
         else:
             self.measurementSystem = None
@@ -79,10 +81,10 @@ class dataSourceConfiguration(dataSource):
                 self.logError('Logger files not yet supported')
         else:
             self.sourceFileTemplate = rawFile.sourceFile.from_dict(
-                self.sourceFileTemplate|{
-                    'sourceType':self.measurementSystem['dataLogger']['manufacturer'],
-                    'verbose':self.verbose
-                    }).parseMetadata()
+                    self.sourceFileTemplate|{
+                        'sourceType':self.measurementSystem['dataLogger']['manufacturer'],
+                        'verbose':self.verbose
+                        }).parseMetadata()
         if not self.configFileExists or not self.readOnly:
             self.saveConfigFile(keepNull=False)
 
@@ -93,7 +95,7 @@ class measurementSystem(baseClass):
     
     measurementHeight: float = field(default = None, metadata = {'description': 'Measurement height (Zm) in meters, of reference sonic'},repr=False)
     northOffset: float = field(default = None, metadata = {'description': 'Offset from North in degrees (clockwise) of reference sonic'},repr=False)
-    canopyHeight: float = None
+    # canopyHeight: float = None
     dataLogger: Iterable = field(default_factory=dict)
     sensorConfigurations: Iterable = field(default_factory=dict)
 
@@ -103,7 +105,7 @@ class measurementSystem(baseClass):
             if hasattr(dataLoggers,self.dataLogger):
                 self.dataLogger = getattr(dataLoggers,self.dataLogger)().to_dict()
             else:
-                self.logError('Could not find data logger')
+                self.logError(f'Could not find data logger: {self.dataLogger}')
         elif is_dataclass(self.dataLogger):
             self.dataLogger = self.dataLogger.to_dict()
             
@@ -117,7 +119,8 @@ class measurementSystem(baseClass):
             if 'sensorModel' not in sensor:
                 self.logError('must provide sensorModel')
             elif sensor['sensorModel'] not in sensorModels:
-                self.logError('Sensor not currently supported')
+                breakpoint()
+                self.logError(f'Sensor not currently supported: {sensor['sensorModel']}')
             model = sensorModels[sensor['sensorModel']].from_dict(sensor)
             while model.UID in sensorDict.keys():
                 model.updateUID()
@@ -176,9 +179,28 @@ class measurementSystem(baseClass):
         ySeparation = float(Rv[1])
         return (xSeparation,ySeparation)
     
+@dataclass(kw_only=True)
+class CustomFlux(measurementSystem):
+    measurementType: str = 'EC'
+    SONIC: str = field(repr=False)
+    CO2: str = field(default=None,repr=False)
+    CH4: str = field(default=None,repr=False)
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.sensorConfigurations = [
+            sensorModels[self.SONIC](
+                    measurementHeight=self.measurementHeight,
+                    northOffset=self.northOffset)
+        ]
+        if self.CO2 is not None:
+            self.sensorConfigurations += [
+            sensorModels[self.CO2]()
+        ]
+    
 
 @dataclass(kw_only=True)
-class IRGASON_LI7700(measurementSystem):
+class EasyFlux_IRGASON_LI7700(measurementSystem):
     
     measurementType: str = 'EC'
     xSeparation: float = field(default=None,repr=False)

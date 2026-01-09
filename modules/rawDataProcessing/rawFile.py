@@ -54,11 +54,3 @@ class sourceFile(baseClass):
         else:
             breakpoint()
 
-
-# @dataclass(kw_only=True)
-# class sourceInventory(baseClass):
-#     sourceDirectory: str
-#     wildcard: str = None
-
-#     def __post_init__(self):
-#         super().__post_init__()
