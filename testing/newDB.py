@@ -3,6 +3,7 @@ import time
 import shutil
 import context
 
+import dateparser
 
 import modules.database.project as project
 import modules.database.site as site
@@ -62,23 +63,22 @@ ds = dataSource.dataSourceConfiguration(
 ecf32(projectPath=projectPath,siteID='BBS',dataSourceID='EC',verbose=False,fileName=sourceFileName)
 
 # sourceFileName = os.path.join(data,'57840_Time_Series_40.dat')
-# ds = dataSource.dataSourceConfiguration(
-#     verbose=False,
-#     projectPath=projectPath,
-#     siteID='BBS',
-#     dataSourceID='EC_2025',
-#     measurementSystem = dataSource.IRGASON_LI7700(
-#         measurementHeight=3.26,
-#         northOffset=33.0,
-#         xSeparation=0.41,
-#         ySeparation=0.16,
-#         zSeparation=0.0
-#     ),
-#     sourceFileTemplate={'fileName':sourceFileName,'fileFormat':'TOB3'}
-# )
-# ds = dataSource.dataSource(projectPath=projectPath,
-#     siteID='BBS',
-#     dataSourceID='EC',)
+
+sc = site.siteConfiguration(
+    verbose=False,
+    projectPath=projectPath,
+    siteID='SCL',
+    startDate=dateparser.parse(
+        '2024-07-10',
+        settings={'DATE_ORDER':'YMD','RETURN_AS_TIMEZONE_AWARE':True}),
+    latitude = 'N69 13.5850',
+    longitude = 'W135 15.1144',
+    altitude = 1.0,
+    siteName = 'Swiss Cheese Lake',
+    PI = 'June Skeeter & Peter Morse',
+    description = 'Wet sedge meadow, continuous permafrost',
+    )
+
 
 T2 = time.time()
 print(f"runtime = {(T2-T1)}")
