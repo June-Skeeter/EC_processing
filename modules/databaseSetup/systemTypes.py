@@ -28,7 +28,7 @@ class system(baseClass):
             if hasattr(dataLoggers,self.dataLogger):
                 self.dataLogger = getattr(dataLoggers,self.dataLogger)()
             else:
-                self.logError('Could not find datalogger')
+                self.logError('Could not find data logger')
         if type(self.sensorConfigurations) is dict:
             self.sensorConfigurations = list(self.sensorConfigurations.values())
         for sensor in self.sensorConfigurations:
@@ -104,7 +104,6 @@ class EC(system):
         Rv = Rv.sum(axis=1).round(3)
         northwardSeparation = float(Rv[1])
         eastwardSeparation = float(Rv[0])
-
         return(northwardSeparation,eastwardSeparation)
     
     def cartesianSeparation(self,northwardSeparation,eastwardSeparation):

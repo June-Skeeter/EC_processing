@@ -33,7 +33,7 @@ project.siteConfiguration(
     projectPath=projectPath,
     siteID='BBS',
     startDate='2023-06-10',
-    endDate='2024-05-30',
+    # endDate='2024-05-30',
     latitude = '49.12930679',
     longitude = '-122.9849701',
     altitude = 4.0,
@@ -41,37 +41,37 @@ project.siteConfiguration(
     PI = 'June Skeeter',
     description = 'Post-fire lodgeable pine seedling stand',)
 
-# site = project.site(
+# # site = project.site(
+# #     verbose=False,
+# #     projectPath=projectPath,
+# #     siteID='BBS',
+# #     )
+
+
+# project.sourceConfiguration(
 #     verbose=False,
 #     projectPath=projectPath,
 #     siteID='BBS',
-#     )
-
-
-project.sourceConfiguration(
-    verbose=False,
-    projectPath=projectPath,
-    siteID='BBS',
-    sourceID='EC',
-    longitude=-69,
-    # systemConfiguration={'some':'chode'},
-    systemConfiguration = systemTypes.EC(
-        sensorConfigurations=[
-            sensorModels.CSAT3(
-                measurementHeight=4.25,
-                northOffset=135.0,
-                ),
-            sensorModels.LI7500(xSeparation=0.158,ySeparation=-0.031,verticalSeparation=0.0),
-        ]
-    ),
-    sourceFile=os.path.join(data,'TOA5_BBS.FLUX_2023_08_01_1530.dat') 
-)
-# breakpoint()
-pr = project.source(
-    verbose=False,
-    projectPath=projectPath,
-    siteID='BBS',
-    sourceID='EC')
+#     sourceID='EC',
+#     longitude=-69,
+#     # systemConfiguration={'some':'chode'},
+#     systemConfiguration = systemTypes.EC(
+#         sensorConfigurations=[
+#             sensorModels.CSAT3(
+#                 measurementHeight=4.25,
+#                 northOffset=135.0,
+#                 ),
+#             sensorModels.LI7500(xSeparation=0.158,ySeparation=-0.031,verticalSeparation=0.0),
+#         ]
+#     ),
+#     sourceFile=os.path.join(data,'TOA5_BBS.FLUX_2023_08_01_1530.dat') 
+# )
+# # breakpoint()
+# pr = project.source(
+#     verbose=False,
+#     projectPath=projectPath,
+#     siteID='BBS',
+#     sourceID='EC')
 
 
 # breakpoint()

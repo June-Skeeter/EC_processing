@@ -160,6 +160,7 @@ class source(site):
         super().__post_init__()
         if not type(self).__name__.endswith('sourceConfiguration'):
             self.syncConfig(sourceConfiguration)
+            
 @dataclass(kw_only=True)
 class sourceConfiguration(source):
     header: str = field(default=default_comment,repr=False,init=False) # YAML header, must be treated differently

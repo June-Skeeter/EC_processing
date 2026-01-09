@@ -103,7 +103,7 @@ class dataSourceConfiguration(baseClass):
         for key,value in self.systemConfiguration.__dict__.items():
             if value is None and hasattr(self.siteConfiguration,key):
                 siteProp = getattr(self.siteConfiguration,key)
-                # If value is not present, default to site parameter, allows for paramters (e.g. lat/lon) to differe if needed
+                # If value is not present, default to site parameter, allows for parameters (e.g. lat/lon) to differ if needed
                 setattr(self.systemConfiguration,key,siteProp)
 
     def fileConfig(self):
