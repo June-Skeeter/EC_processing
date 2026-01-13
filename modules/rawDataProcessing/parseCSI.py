@@ -8,6 +8,7 @@ from modules.helperFunctions.dictFuncs import dcToDict
 from modules.helperFunctions.baseClass import baseClass
 import modules.databaseSetup.dataLoggers as dataLoggers
 from modules.rawDataProcessing.rawTrace import rawTraceIn
+from pandas.api.types import is_datetime64_any_dtype as is_datetime
 import pandas as pd
 import os
 from datetime import datetime
@@ -39,7 +40,7 @@ class csiType:
 
 @dataclass(kw_only=True)
 class csiTrace(rawTraceIn):
-    defaultTypes = defaultdict(lambda: '<f4',RECORD ='<i8',TIMESTAMP = 'string') # Does not apply to TOB3 which have type specified in header
+    defaultTypes = defaultdict(lambda: '<f4',RECORD ='<u4',TIMESTAMP = 'string') # Does not apply to TOB3 which have type specified in header
     csiTypeMap = {
         'FP2':{'struct':'H','output':'<f4'},
         'IEEE4B':{'struct':'f','output':'<f4'},
@@ -51,7 +52,7 @@ class csiTrace(rawTraceIn):
     byteMap: str = field(init=False)
 
     def __post_init__(self):
-        self.ignoreByDefault =  ['RECORD','TIMESTAMP']
+        self.ignoreByDefault =  ['RECORD','TIMESTAMP','SECONDS','NANOSECONDS']
         if self.dtype is None:
             self.dtype = self.defaultTypes[self.variableNameIn]
         elif self.dtype in self.csiTypeMap:
@@ -61,8 +62,8 @@ class csiTrace(rawTraceIn):
             self.byteMap = self.dtype.strip('ASCII()') + self.csiTypeMap['ASCII']['struct']
             self.dtype = self.csiTypeMap['ASCII']['output']
         if self.variableNameIn == 'TIMESTAMP':
-            self.units = 'PosixTime'
-            self.dtypeOut = '<f8'
+            self.units = 'datetime'
+            # self.dtype = '<i8'
         if type(self.dtype) != str:
             self.dtype = self.dtype.str
         super().__post_init__()
@@ -78,6 +79,7 @@ class csiFile(baseClass):
     serialNumber: str = None
     program: str = None
     dataTable: pd.DataFrame = field(repr=False,init=False)
+    datetimeTrace: pd.DataFrame = field(repr=False,init=False)
     fileTimestamp: datetime = field(repr=False,init=False)
     campbellBaseTime: float = field(
         default=631152000.0,
@@ -152,6 +154,11 @@ class csiTable(csiFile):
             return(line.decode('ascii').strip().replace('"','').split(','))
         
     def finishTable(self):
+        self.datetimeTrace = pd.DataFrame()
+        if is_datetime(self.dataTable[self.timestampName]):
+            self.datetimeTrace['datetime'] = self.dataTable[self.timestampName]
+        else:
+            self.datetimeTrace['datetime'] = pd.to_datetime((self.dataTable['SECONDS']*1e9).astype('int64')+self.dataTable['NANOSECONDS'],unit='ns') 
         if self.gpsDriftCorrection:
             # Identify gaps in time series
             Offset = (self.dataTable[self.timestampName].diff().fillna(self.samplingInterval)-self.samplingInterval).cumsum()
@@ -197,6 +204,7 @@ class TOA5(csiTable):
 
 @dataclass(kw_only=True)
 class TOB3(csiTable):
+    timestampName: list = field(default_factory=lambda:['SECONDS','NANOSECONDS'],init=False,repr=False)
     nLinesAsciiHeader: int = field(default=6,repr=False,init=False)
     headerSize: int = field(default=12,repr=False,init=False)
     footerSize: int = field(default=4,repr=False,init=False)
@@ -220,15 +228,15 @@ class TOB3(csiTable):
             self.compValidationStamp=(0xFFFF^self.validationStamp)
             self.frameResolution = pd.to_timedelta(parseFrequency(self.asciiHeader[1][5])).total_seconds()
             # Extract metadata for each variable.  Add the metadata for timestamp and record which are parsed from the data frames and not in the header
-            self.implicitColumns = [self.timestampName,self.recordName]
+            self.implicitColumns = self.timestampName+[self.recordName]
             self.dataColumns = {
                 columnName:csiTrace(variableNameIn=columnName,units = units, operation = operation,dtype=dtype,traceMetadataMap=self.traceMetadataMap).to_dict(keepNull=False)
                     for columnName,units,operation,dtype in 
                     zip(
                         self.implicitColumns+self.asciiHeader[2],
-                        ['s','']+self.asciiHeader[3],
-                        [None,None]+self.asciiHeader[4],
-                        ['<f8','<i8']+self.asciiHeader[5]
+                        ['s','ns','']+self.asciiHeader[3],
+                        [None,None,None]+self.asciiHeader[4],
+                        ['<i4','<i4','<u4']+self.asciiHeader[5]
                         )
                     }
             if self.extractData:
@@ -251,7 +259,7 @@ class TOB3(csiTable):
         frames = [f for i in range(nframes) for f in 
                 self.decodeFrame(bindata[i*self.frameSize:(i+1)*self.frameSize])]
         self.dataTable = pd.DataFrame(frames,
-            columns=[self.timestampName,self.recordName]+[col for col in self.dataColumns if col not in self.implicitColumns])
+            columns=self.implicitColumns+[col for col in self.dataColumns if col not in self.implicitColumns])
         self.typeMap = {key:var['dtype'] for key,var in self.dataColumns.items()}
         self.dataTable = self.dataTable.astype(self.typeMap)  
 
@@ -259,7 +267,10 @@ class TOB3(csiTable):
         frame = [struct.unpack('iii', frame[:self.headerSize]),
                  struct.unpack(self.byteMap_Body, frame[self.headerSize:-self.footerSize]),
                  struct.unpack('i',frame[-self.footerSize:])[0]]
-        frame[0] = [frame[0][0]+frame[0][1]*self.frameResolution+self.campbellBaseTime,frame[0][2]]
+        # frame[0] = [frame[0][0]+frame[0][1]*self.frameResolution+self.campbellBaseTime,frame[0][2]]
+        # Use nanoseconds so timestamp can be stored as int64 instead of float64, avoids floating point precision issues
+        # frame[0] = [int((frame[0][0]+self.campbellBaseTime)*1e9)+int((frame[0][1]*self.frameResolution)*1e9),frame[0][2]]
+        frame[0] = [int((frame[0][0]+self.campbellBaseTime)),int((frame[0][1]*self.frameResolution)*1e9),frame[0][2]]
         if 'H' in self.byteMap_Body:
             frame[1] = self.decode_fp2(frame[1])
         frame[1] = list(frame[1])
@@ -279,7 +290,9 @@ class TOB3(csiTable):
                 offset = 0
         else:
             offset = self.recordsPerFrame
-        frame = [[frame[0][0]+self.samplingInterval*i,frame[0][1]+i]+frame[1][i] for i in range(self.recordsPerFrame) if i < offset and frame[2]]
+        frame = [[int((frame[0][0]+frame[0][1]*1e-9+self.samplingInterval*i)//1),int((frame[0][1]+self.samplingInterval*i*1e9) % 1e9),frame[0][2]+i]+frame[1][i] for i in range(self.recordsPerFrame) if i < offset and frame[2]]
+        
+        # frame = [[frame[0][0]+(self.samplingInterval*1e9)*i,frame[0][1]+i]+frame[1][i] for i in range(self.recordsPerFrame) if i < offset and frame[2]]
         return(frame)
   
     def decode_fp2(self,Body):

@@ -42,9 +42,10 @@ class sourceFile(baseClass):
             csiFile = getattr(parseCSI,self.fileFormat)
             csiFile = csiFile.from_dict(self.kwargs|{'fileName':self.fileName})
             data = csiFile.dataTable
+            timestamp = csiFile.datetimeTrace
         else:
             self.logError(f"{self.fileFormat} not yet supported")
-        return(data)
+        return(data,timestamp)
 
     def getFormat(self):
         if self.sourceType == 'CSI':

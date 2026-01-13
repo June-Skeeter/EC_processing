@@ -58,8 +58,8 @@ class ecf32(dataSource):
                 except:
                     self.logError('Error in f32 variable assignment')
 
-        # Next process intruments
-        # Bellow is intenteded for "simple" setup with one sonic & corresponding IRGAS
+        # Next process instruments
+        # Bellow is intended for "simple" setup with one sonic & corresponding IRGAS
         # Eddy-pro "supports" defining sonics, but all flux calculations are done based one reference sonic, so secondary sonics give littel extra info
         # Extension to multi-sonic setups could be made but would require minor edits here, and major eddits to EddyPro source code
         
@@ -124,16 +124,13 @@ class ecf32(dataSource):
 
     def generateBinaryFile(self):
         # kwargs = self.sourceFileTemplate.to_dict()
-        data = sourceFile(fileName=self.fileName,fileFormat=self.sourceFileTemplate['fileFormat'],kwargs=self.sourceFileTemplate).parseFile()
+        data,timestamp = sourceFile(fileName=self.fileName,fileFormat=self.sourceFileTemplate['fileFormat'],kwargs=self.sourceFileTemplate).parseFile()
         keep = [value['variableNameIn'] for value in self.sourceFileTemplate['dataColumns'].values() if not value['ignore']]
         maxN = int(self.metadataFile['Timing']['acquisition_frequency']*self.metadataFile['Timing']['file_duration']*60)
         splits = int(np.ceil(data.shape[0]/maxN))
         for i in range(splits):
             sub = data.iloc[i*maxN:(i+1)*maxN]
-            if is_datetime(sub['TIMESTAMP']):
-                fn = sub['TIMESTAMP'][sub.index[0]].strftime('%Y%m%dT%H%M%S.f32') 
-            else:
-                fn = datetime.fromtimestamp(sub['TIMESTAMP'][sub.index[0]]).strftime('%Y%m%dT%H%M%S.f32') 
+            fn = timestamp['datetime'].iloc[i*maxN].strftime('%Y%m%dT%H%M%S.f32')
             filepath = os.path.join(self.rootPath,fn)
             sub[keep].values.T.flatten().astype('float32').tofile(filepath)
             self.f32Files.append(filepath)
