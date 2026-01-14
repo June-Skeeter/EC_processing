@@ -10,7 +10,7 @@ import modules.database.site as site
 import modules.database.dataSource as dataSource
 import modules.database.sensorModels as sensorModels
 from modules.rawDataProcessing.ecf32 import ecf32
-from modules.database.dbDump import dbDump
+from modules.database.dbDump import dbDump,database
 
 T1 = time.time()
 
@@ -19,10 +19,15 @@ data = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
 
 projectPath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'outputs','testProject'))
 
-shutil.rmtree(projectPath, ignore_errors=True)
+# database(projectPath=projectPath)
+# sourceFileName = os.path.join(data,'Met_Data121.dat') 
+# dbDump(projectPath=projectPath,siteID='SCL',dataSourceID='BIOMET_2024',fileName=sourceFileName)
+
+# shutil.rmtree(projectPath, ignore_errors=True)
 
 
 pr = project.projectConfiguration(
+
     projectPath=projectPath,
     createdBy='JS',
     verbose=False)
@@ -103,7 +108,7 @@ dataSource.dataSourceConfiguration(
 ecf32(projectPath=projectPath,siteID='SCL',dataSourceID='EC_2024',verbose=False,fileName=sourceFileName)
 
 
-sourceFileName = os.path.join(data,'Met_Data121.dat') 
+sourceFileName = os.path.join(data,'Met_Data120.dat') 
 dataSource.dataSourceConfiguration(
     verbose=False,
     projectPath=projectPath,
@@ -121,6 +126,8 @@ dataSource.dataSourceConfiguration(
     sourceFileTemplate=sourceFileName
 )
 
+dbDump(projectPath=projectPath,siteID='SCL',dataSourceID='BIOMET_2024',fileName=sourceFileName)
+sourceFileName = os.path.join(data,'Met_Data121.dat') 
 dbDump(projectPath=projectPath,siteID='SCL',dataSourceID='BIOMET_2024',fileName=sourceFileName)
 
 

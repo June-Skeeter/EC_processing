@@ -43,6 +43,7 @@ class sourceFile(baseClass):
             csiFile = csiFile.from_dict(self.kwargs|{'fileName':self.fileName})
             data = csiFile.dataTable
             timestamp = csiFile.datetimeTrace
+            # data.index=timestamp.datetime
         else:
             self.logError(f"{self.fileFormat} not yet supported")
         return(data,timestamp)

@@ -52,7 +52,7 @@ class csiTrace(rawTraceIn):
     byteMap: str = field(init=False)
 
     def __post_init__(self):
-        self.ignoreByDefault =  ['RECORD','TIMESTAMP','SECONDS','NANOSECONDS']
+        self.ignoreByDefault =  ['RECORD','TIMESTAMP','POSIX_Time','NANOSECONDS']#,'POSIX_Time','NANOSECONDS']
         if self.dtype is None:
             self.dtype = self.defaultTypes[self.variableNameIn]
         elif self.dtype in self.csiTypeMap:
@@ -158,7 +158,9 @@ class csiTable(csiFile):
         if is_datetime(self.dataTable[self.timestampName]):
             self.datetimeTrace['datetime'] = self.dataTable[self.timestampName]
         else:
-            self.datetimeTrace['datetime'] = pd.to_datetime((self.dataTable['SECONDS']*1e9).astype('int64')+self.dataTable['NANOSECONDS'],unit='ns') 
+            self.datetimeTrace['datetime'] = pd.to_datetime((self.dataTable['POSIX_Time']*1e9).astype('int64')+self.dataTable['NANOSECONDS'],unit='ns') 
+            # self.dataTable.index = pd.to_datetime((self.dataTable['POSIX_Time']*1e9).astype('int64')+self.dataTable['NANOSECONDS'],unit='ns') 
+        # breakpoint()
         if self.gpsDriftCorrection:
             # Identify gaps in time series
             Offset = (self.dataTable[self.timestampName].diff().fillna(self.samplingInterval)-self.samplingInterval).cumsum()
@@ -204,7 +206,7 @@ class TOA5(csiTable):
 
 @dataclass(kw_only=True)
 class TOB3(csiTable):
-    timestampName: list = field(default_factory=lambda:['SECONDS','NANOSECONDS'],init=False,repr=False)
+    timestampName: list = field(default_factory=lambda:['POSIX_Time','NANOSECONDS'],init=False,repr=False)
     nLinesAsciiHeader: int = field(default=6,repr=False,init=False)
     headerSize: int = field(default=12,repr=False,init=False)
     footerSize: int = field(default=4,repr=False,init=False)
