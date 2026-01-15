@@ -120,7 +120,7 @@ class measurementSystem(baseClass):
                 self.logError('must provide sensorModel')
             elif sensor['sensorModel'] not in sensorModels:
                 breakpoint()
-                self.logError(f'Sensor not currently supported: {sensor['sensorModel']}')
+                self.logError(f'Sensor not currently supported: {sensor["sensorModel"]}')
             model = sensorModels[sensor['sensorModel']].from_dict(sensor)
             while model.UID in sensorDict.keys():
                 model.updateUID()

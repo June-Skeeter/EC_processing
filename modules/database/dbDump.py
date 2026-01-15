@@ -7,16 +7,54 @@ import pandas as pd
 import datetime
 import os
 
+# @dataclass(kw_only=True)
+# class database(project):
+#     subPath: str = 'Database'
+
 @dataclass(kw_only=True)
 class database(project):
     dbInterval: int = 1800 # seconds
-    timestampName: str = 'POSIX_Time'
-    subPath: str = os.path.join('Database','yyyy','siteID')
+    timestampName: str = 'POSIX_Time_int32'
+    siteID: str = None
+    stageID: str = ''
+    subPath: str = os.path.join('Database','yyyy','siteID','stageID')
+    dfFolder: str = None
+    dbFiles: list = None
+    dbData: dict = None
 
+    def setFolder(self,yyyy):
+        dbFolder = self.rootPath.replace('yyyy',str(yyyy)).replace('siteID',self.siteID).replace('stageID',self.stageID)
+        self.dbFolder = os.path.join(dbFolder,self.stageID)
+        os.makedirs(self.dbFolder,exist_ok=True)
+        
+    # def tracePath(self,traceName)#,dtype='float32'):
+    #     return(os.path.join(self.dbFolder,f"{traceName}.{dtype}"))
+        
+    # def writeDB(self):
 
-    def dbPath(self,yyyy,stageID='',varName=''):
-        rootPath = self.rootPath.replace('yyyy',str(yyyy)).replace('siteID',self.siteID)
-        return(os.path.join(rootPath,stageID,varName))
+    def readDB(self):
+        self.dbFiles = os.listdir(self.dbFolder)
+        if self.timestampName not in self.dbFiles:
+            ((self.datetimeIndex.astype(int)//1e9).astype('int32').values).tofile(os.path.join(self.dbFolder,self.timestampName))
+        
+        
+
+    def dbYear(self,year):
+        self.setFolder(year)
+        self.datetimeIndex = pd.DatetimeIndex(pd.date_range(
+                    datetime.datetime(year,1,1,0,30),
+                    datetime.datetime(year+1,1,1,0,0),
+                    freq=str(self.dbInterval)+'s'))
+        self.readDB()
+        # fpath = self.tracePath(self.timestampName,'int32')
+        # if not os.path.isfile(fpath):
+        #     ((self.datetimeIndex.astype(int)//1e9).astype('int32').values).tofile(fpath)
+        # # os.listdir
+        # self.readDB()
+        # breakpoint()
+
+    
+    # def makeYear(self,year):
     
     # def readTrace(self,):
 
@@ -31,6 +69,7 @@ class dbDump(database,dataSource):
     configName: str = field(default='dataSourceConfiguration.yml',repr=False,init=False)
 
     def __post_init__(self):
+        self.stageID = self.dataSourceID
         super().__post_init__()
 
 
@@ -40,8 +79,14 @@ class dbDump(database,dataSource):
         data = data[keep]#.astype('float32')
 
         for yyyy in data.index.year.unique():
-            
-            year = pd.DataFrame(index=pd.date_range(datetime.datetime(yyyy,1,1,0,30),datetime.datetime(yyyy+1,1,1,0,0),freq=str(self.dbInterval)+'s'), columns=data.columns)
+            self.dbYear(yyyy)
+            year = pd.DataFrame(
+                index=pd.date_range(
+                    datetime.datetime(yyyy,1,1,0,30),
+                    datetime.datetime(yyyy+1,1,1,0,0),
+                    freq=str(self.dbInterval)+'s'),
+                columns=data.columns,
+                dtype='float32')
             # year = year.astype(data.dtypes)
             breakpoint()
 
