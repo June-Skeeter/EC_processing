@@ -35,8 +35,8 @@ class dataSourceConfiguration(dataSource):
     )
     sourceType: str = field(
         default='measurement',
-        metadata={'options':['measurement','model']}
-        )
+                            metadata={'options':['EC','BIOMET','Met','Manual','Model']}
+                            )
     measurementSystem: dict = field(
         default_factory=dict,
         metadata={
@@ -60,11 +60,11 @@ class dataSourceConfiguration(dataSource):
         self.logWarning('Fix spatialObject order?')
         self.spatialObject()
         super().__post_init__()
-        if self.sourceType == 'measurement':
+        if self.sourceType != 'Model':
             self.modelDescription = None
             if self.measurementSystem == {}:
                 breakpoint()
-            self.measurementSystem = measurementSystem.from_dict(self.measurementSystem|{'verbose':self.verbose}).to_dict(keepNull=False)
+            self.measurementSystem = measurementSystem.from_dict(self.measurementSystem|{'verbose':self.verbose,'measurementType':self.sourceType}).to_dict(keepNull=False)
         else:
             self.measurementSystem = None
         if self.sourceFileTemplate is None:

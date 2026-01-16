@@ -1,23 +1,17 @@
 import os
+import sys
 import time
 import shutil
 import context
-
 import dateparser
-
 import modules.database.project as project
 import modules.database.site as site
 import modules.database.dataSource as dataSource
 import modules.database.sensorModels as sensorModels
 from modules.rawDataProcessing.ecf32 import ecf32
-from modules.database.dbDump import dbDump,database
+from modules.database.dbTools import dbDump,database
 
 T1 = time.time()
-
-
-
-
-
 
 test = False
 if test:
@@ -119,7 +113,7 @@ if test:
         verbose=False,
         projectPath=projectPath,
         siteID='SCL',
-        dataSourceID='BIOMET_2024',
+        dataSourceID='EC_V1',
         measurementSystem = dataSource.measurementSystem(
             measurementType='BIOMET',
             dataLogger='CR1000X',
@@ -161,11 +155,14 @@ if test:
 
 setup = True
 if setup:
-    
-    data = r"U:\data-dump\SCL"#os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
+    data = r'D:\data-dump\SCL'
+    if not os.path.isdir(data):
+        data = r"U:\data-dump\SCL"#os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
+        if not os.path.isdir(data):
+            sys.exit('invalid dir')
     projectPath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'outputs','myProject'))
     
-    # shutil.rmtree(projectPath, ignore_errors=True)
+    shutil.rmtree(projectPath, ignore_errors=True)
 
     pr = project.projectConfiguration(
         projectPath=projectPath,
@@ -190,38 +187,23 @@ if setup:
 
 
 
-    # sourceFileName = os.path.join(data,'20240912','Flux_Data1426.dat') 
-    # dataSource.dataSourceConfiguration(
-    #     verbose=False,
-    #     projectPath=projectPath,
-    #     siteID='SCL',
-    #     dataSourceID='EC_2024',
-    #     measurementSystem = dataSource.measurementSystem(
-    #         measurementType='EC',
-    #         dataLogger='CR1000X',
-    #         sensorConfigurations=[
-    #             sensorModels.CSAT3(
-    #                 measurementHeight=4.25,
-    #                 northOffset=135.0,
-    #                 ),
-    #             sensorModels.LI7500(xSeparation=0.158,ySeparation=-0.031,verticalSeparation=0.0),
-    #         ]),
-    #     sourceFileTemplate=sourceFileName
-    # )
+    # 2024 Met data
+    sourceDir = os.path.join(data,'2024') 
+    sourceFiles = []
+    for dir,_,fn in os.walk(sourceDir):
+        sourceFiles = sourceFiles + [os.path.join(dir,f) for f in fn if f.startswith('Met_')]
+        
 
-    # ecf32(projectPath=projectPath,siteID='SCL',dataSourceID='EC_2024',verbose=False,fileName=sourceFileName)
 
-    sourceDir = os.path.join(data,'2024','20240912') 
-    sourceFiles = [f for f in os.listdir(sourceDir) if f.startswith('Met_')]
-    # breakpoint()
     sourceFileName = os.path.join(sourceDir,sourceFiles[0])
     dataSource.dataSourceConfiguration(
         verbose=False,
         projectPath=projectPath,
         siteID='SCL',
-        dataSourceID='BIOMET_2024',
+        dataSourceID='SCL_V1',
+        sourceType='BIOMET',
         measurementSystem = dataSource.measurementSystem(
-            measurementType='BIOMET',
+            # measurementType='BIOMET',
             dataLogger='CR1000X',
             sensorConfigurations=[
                 sensorModels.VoltDiff(),
@@ -232,13 +214,39 @@ if setup:
             verbose=False),
         sourceFileTemplate=sourceFileName
     )
-    # for f in sourceFiles:
-    #     # print('writing: ',f)
-    #     sourceFileName = os.path.join(sourceDir,f)
-    #     dbDump(projectPath=projectPath,siteID='SCL',dataSourceID='BIOMET_2024',fileName=sourceFileName,verbose=False)
+    for f in sourceFiles[:2]:
+        # print('writing: ',f)
+        sourceFileName = os.path.join(sourceDir,f)
+        dbDump(projectPath=projectPath,siteID='SCL',dataSourceID='SCL_V1',fileName=sourceFileName,verbose=False)
+
+    breakpoint()
+
+    
+
+    sourceFileName = os.path.join(data,'20240912','Flux_Data1426.dat') 
+    dataSource.dataSourceConfiguration(
+        verbose=False,
+        projectPath=projectPath,
+        siteID='SCL',
+        dataSourceID='EC_2024',
+        measurementSystem = dataSource.measurementSystem(
+            measurementType='EC',
+            dataLogger='CR1000X',
+            sensorConfigurations=[
+                sensorModels.CSAT3(
+                    measurementHeight=4.25,
+                    northOffset=135.0,
+                    ),
+                sensorModels.LI7500(xSeparation=0.158,ySeparation=-0.031,verticalSeparation=0.0),
+            ]),
+        sourceFileTemplate=sourceFileName
+    )
+
+    ecf32(projectPath=projectPath,siteID='SCL',dataSourceID='EC_2024',verbose=False,fileName=sourceFileName)
 
 
 
+    # 2025 Met data
     sourceDir = os.path.join(data,'2025','20250806') 
     sourceFiles = [os.path.join(sourceDir,f) for f in os.listdir(sourceDir) if 'CSFormat' in f]
     sourceDir = os.path.join(data,'2025','20250910') 
@@ -246,13 +254,14 @@ if setup:
     sourceDir = os.path.join(data,'2025','20250927') 
     sourceFiles = sourceFiles+[os.path.join(sourceDir,f) for f in os.listdir(sourceDir) if 'CSFormat' in f]
     sourceFileName = sourceFiles[-1]
+
     dataSource.dataSourceConfiguration(
         verbose=False,
         projectPath=projectPath,
         siteID='SCL',
         dataSourceID='EasyFlux_2025',
         measurementSystem = dataSource.measurementSystem(
-            measurementType='EC',
+            measurementType='BIOMET',
             dataLogger='CR1000X',
             sensorConfigurations=[
                 sensorModels.CSAT3(
