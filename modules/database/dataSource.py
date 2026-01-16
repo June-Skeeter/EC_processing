@@ -64,11 +64,11 @@ class dataSourceConfiguration(dataSource):
             self.modelDescription = None
             if self.measurementSystem == {}:
                 breakpoint()
-            self.measurementSystem = measurementSystem.from_dict(self.measurementSystem).to_dict(keepNull=False)
+            self.measurementSystem = measurementSystem.from_dict(self.measurementSystem|{'verbose':self.verbose}).to_dict(keepNull=False)
         else:
             self.measurementSystem = None
         if self.sourceFileTemplate is None:
-            self.sourceFileTemplate = baseClass().to_dict()
+            self.sourceFileTemplate = baseClass(verbose=self.verbose).to_dict()
         elif type(self.sourceFileTemplate) is str:
             if self.measurementSystem['dataLogger']['manufacturer'] == 'CSI':
                 self.sourceFileTemplate = rawFile.sourceFile(

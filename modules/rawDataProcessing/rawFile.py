@@ -31,7 +31,7 @@ class sourceFile(baseClass):
                 self.traceMetadataMap = traceMap[self.traceMetadataMap]
             if hasattr(parseCSI,self.fileFormat):
                 csiFile = getattr(parseCSI,self.fileFormat)
-                sourceAttributes = csiFile(fileName=self.fileName,extractData=False,traceMetadataMap=self.traceMetadataMap,rootPath=self.rootPath,configName=self.configName)
+                sourceAttributes = csiFile(fileName=self.fileName,extractData=False,traceMetadataMap=self.traceMetadataMap,rootPath=self.rootPath,configName=self.configName,verbose=self.verbose)
             else:
                 self.logError(f"{self.fileFormat} not yet supported")
         return(sourceAttributes.to_dict())
@@ -40,7 +40,7 @@ class sourceFile(baseClass):
     def parseFile(self):
         if hasattr(parseCSI,self.fileFormat):
             csiFile = getattr(parseCSI,self.fileFormat)
-            csiFile = csiFile.from_dict(self.kwargs|{'fileName':self.fileName})
+            csiFile = csiFile.from_dict(self.kwargs|{'fileName':self.fileName,'verbose':self.verbose})
             data = csiFile.dataTable
             timestamp = csiFile.datetimeTrace
             # data.index=timestamp.datetime

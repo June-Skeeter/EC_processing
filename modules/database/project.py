@@ -45,7 +45,7 @@ class project(baseClass):
         super().__post_init__()
 
     def syncConfig(self,config,dbg=False):
-        config = config.from_dict(self.to_dict(keepNull=False)|{'projectPath':self.projectPath})
+        config = config.from_dict(self.to_dict(keepNull=False)|{'projectPath':self.projectPath,'verbose':self.verbose})
         self.depth+=1
         exclude = list(baseClass.__dataclass_fields__.keys()) + [k for k,v in project.__dataclass_fields__.items() if not v.repr]
         

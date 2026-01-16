@@ -6,7 +6,7 @@ from modules.helperFunctions.log import log
 from modules.helperFunctions.parseFrequency import parseFrequency
 from modules.helperFunctions.dictFuncs import dcToDict
 from modules.helperFunctions.baseClass import baseClass
-import modules.databaseSetup.dataLoggers as dataLoggers
+import modules.database.dataLoggers as dataLoggers
 from modules.rawDataProcessing.rawTrace import rawTraceIn
 from pandas.api.types import is_datetime64_any_dtype as is_datetime
 import pandas as pd
@@ -66,6 +66,8 @@ class csiTrace(rawTraceIn):
             # self.dtype = '<i8'
         if type(self.dtype) != str:
             self.dtype = self.dtype.str
+        if self.dtype == 'string':
+            self.ignore = True
         super().__post_init__()
 
 @dataclass(kw_only=True)

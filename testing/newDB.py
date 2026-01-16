@@ -15,21 +15,25 @@ from modules.database.dbDump import dbDump,database
 T1 = time.time()
 
 
-data = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
 
-projectPath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'outputs','testProject'))
 
-db = database(projectPath=projectPath,siteID = 'SCL',stageID='BIOMET')
-db.dbYear(year=2025)
+
+
+test = False
+if test:
+    data = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
+    projectPath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'outputs','testProject'))
+
+    shutil.rmtree(projectPath, ignore_errors=True)
+
+# db = database(projectPath=projectPath,siteID = 'SCL',stageID='BIOMET')
+# db.dbYear(year=2025)
 # sourceFileName = os.path.join(data,'Met_Data121.dat') 
 # dbDump(projectPath=projectPath,siteID='SCL',dataSourceID='BIOMET_2024',fileName=sourceFileName)
 
-Cumtinue = False
-if Cumtinue:
     shutil.rmtree(projectPath, ignore_errors=True)
 
     pr = project.projectConfiguration(
-
         projectPath=projectPath,
         createdBy='JS',
         verbose=False)
@@ -155,7 +159,116 @@ if Cumtinue:
     # ecf32(projectPath=projectPath,siteID='SCL',dataSourceID='EC_2025',verbose=False,fileName=sourceFileName)
 
 
+setup = True
+if setup:
+    
+    data = r"U:\data-dump\SCL"#os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
+    projectPath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'outputs','myProject'))
+    
+    # shutil.rmtree(projectPath, ignore_errors=True)
 
+    pr = project.projectConfiguration(
+        projectPath=projectPath,
+        createdBy='JS',
+        verbose=False)
+    
+    
+    sc = site.siteConfiguration(
+        verbose=False,
+        projectPath=projectPath,
+        siteID='SCL',
+        startDate=dateparser.parse(
+            '2024-07-10',
+            settings={'DATE_ORDER':'YMD','RETURN_AS_TIMEZONE_AWARE':True}),
+        latitude = 'N69 13.5850',
+        longitude = 'W135 15.1144',
+        altitude = 1.0,
+        siteName = 'Swiss Cheese Lake',
+        PI = 'June Skeeter & Peter Morse',
+        description = 'Wet sedge meadow, continuous permafrost',
+        )
+
+
+
+    # sourceFileName = os.path.join(data,'20240912','Flux_Data1426.dat') 
+    # dataSource.dataSourceConfiguration(
+    #     verbose=False,
+    #     projectPath=projectPath,
+    #     siteID='SCL',
+    #     dataSourceID='EC_2024',
+    #     measurementSystem = dataSource.measurementSystem(
+    #         measurementType='EC',
+    #         dataLogger='CR1000X',
+    #         sensorConfigurations=[
+    #             sensorModels.CSAT3(
+    #                 measurementHeight=4.25,
+    #                 northOffset=135.0,
+    #                 ),
+    #             sensorModels.LI7500(xSeparation=0.158,ySeparation=-0.031,verticalSeparation=0.0),
+    #         ]),
+    #     sourceFileTemplate=sourceFileName
+    # )
+
+    # ecf32(projectPath=projectPath,siteID='SCL',dataSourceID='EC_2024',verbose=False,fileName=sourceFileName)
+
+    sourceDir = os.path.join(data,'2024','20240912') 
+    sourceFiles = [f for f in os.listdir(sourceDir) if f.startswith('Met_')]
+    # breakpoint()
+    sourceFileName = os.path.join(sourceDir,sourceFiles[0])
+    dataSource.dataSourceConfiguration(
+        verbose=False,
+        projectPath=projectPath,
+        siteID='SCL',
+        dataSourceID='BIOMET_2024',
+        measurementSystem = dataSource.measurementSystem(
+            measurementType='BIOMET',
+            dataLogger='CR1000X',
+            sensorConfigurations=[
+                sensorModels.VoltDiff(),
+                sensorModels.HMP155(measurementHeight=3),
+                sensorModels.BaroVue(),
+                sensorModels.PLS()
+            ]+[sensorModels.thermocouple()]*3,
+            verbose=False),
+        sourceFileTemplate=sourceFileName
+    )
+    # for f in sourceFiles:
+    #     # print('writing: ',f)
+    #     sourceFileName = os.path.join(sourceDir,f)
+    #     dbDump(projectPath=projectPath,siteID='SCL',dataSourceID='BIOMET_2024',fileName=sourceFileName,verbose=False)
+
+
+
+    sourceDir = os.path.join(data,'2025','20250806') 
+    sourceFiles = [os.path.join(sourceDir,f) for f in os.listdir(sourceDir) if 'CSFormat' in f]
+    sourceDir = os.path.join(data,'2025','20250910') 
+    sourceFiles = sourceFiles+[os.path.join(sourceDir,f) for f in os.listdir(sourceDir) if 'CSFormat' in f]
+    sourceDir = os.path.join(data,'2025','20250927') 
+    sourceFiles = sourceFiles+[os.path.join(sourceDir,f) for f in os.listdir(sourceDir) if 'CSFormat' in f]
+    sourceFileName = sourceFiles[-1]
+    dataSource.dataSourceConfiguration(
+        verbose=False,
+        projectPath=projectPath,
+        siteID='SCL',
+        dataSourceID='EasyFlux_2025',
+        measurementSystem = dataSource.measurementSystem(
+            measurementType='EC',
+            dataLogger='CR1000X',
+            sensorConfigurations=[
+                sensorModels.CSAT3(
+                    measurementHeight=4.25,
+                    northOffset=135.0,
+                    ),
+                sensorModels.LI7500(xSeparation=0.158,ySeparation=-0.031,verticalSeparation=0.0),
+            ],
+            verbose=False),
+        sourceFileTemplate=sourceFileName
+    )
+
+    for f in sourceFiles:
+        # print('writing: ',f)
+        # sourceFileName = os.path.join(sourceDir,f)
+        dbDump(projectPath=projectPath,siteID='SCL',dataSourceID='EasyFlux_2025',fileName=f,verbose=False)
 
 T2 = time.time()
 print(f"runtime = {(T2-T1)}")
