@@ -36,7 +36,7 @@ METADATA:
     station_id: self.siteID
 
   Timing:
-    acquisition_frequency: self.sourceFileTemplate['samplingFrequency']
+    acquisition_frequency: self.sourceFileMetadata['samplingFrequency']
     file_duration: self.defaultInterval
     pc_time_settings: 
 

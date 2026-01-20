@@ -13,7 +13,11 @@ from modules.database.dbTools import dbDump,database
 
 T1 = time.time()
 
-test = False
+# fs = firstStageTrace(inputFileName='ftest',measurementType='BIOMET')
+# print(fs.to_dict())
+
+
+test = True
 if test:
     data = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
     projectPath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'outputs','testProject'))
@@ -33,40 +37,40 @@ if test:
         verbose=False)
 
 
-    si = site.siteConfiguration(
-        verbose=False,
-        projectPath=projectPath,
-        siteID='BBS',
-        startDate='2023-06-10',
-        endDate='2024-05-30',
-        latitude = '49.12930679',
-        longitude = '-122.9849701',
-        altitude = 4.0,
-        siteName = 'Burns Bog Seedling Site',
-        PI = 'June Skeeter',
-        description = 'Post-fire lodgeable pine seedling stand',)
+    # si = site.siteConfiguration(
+    #     verbose=False,
+    #     projectPath=projectPath,
+    #     siteID='BBS',
+    #     startDate='2023-06-10',
+    #     endDate='2024-05-30',
+    #     latitude = '49.12930679',
+    #     longitude = '-122.9849701',
+    #     altitude = 4.0,
+    #     siteName = 'Burns Bog Seedling Site',
+    #     PI = 'June Skeeter',
+    #     description = 'Post-fire lodgeable pine seedling stand',)
 
 
-    sourceFileName = os.path.join(data,'TOA5_BBS.FLUX_2023_08_01_1530.dat')
-    ds = dataSource.dataSourceConfiguration(
-        verbose=False,
-        projectPath=projectPath,
-        siteID='BBS',
-        dataSourceID='EC',
-        measurementSystem={'measurementType':'EC',
-                        'dataLogger':'CR1000',
-                        'sensorConfigurations':[
-                sensorModels.CSAT3(
-                    measurementHeight=4.25,
-                    northOffset=135.0,
-                    ),
-                sensorModels.LI7500(xSeparation=0.158,ySeparation=-0.031,verticalSeparation=0.0),
-                sensorModels.LI7500(xSeparation=0.128,ySeparation=10.031,verticalSeparation=0.0),]},
-        sourceFileTemplate=sourceFileName
-    )
+    # sourceFileName = os.path.join(data,'TOA5_BBS.FLUX_2023_08_01_1530.dat')
+    # ds = dataSource.dataSourceConfiguration(
+    #     verbose=False,
+    #     projectPath=projectPath,
+    #     siteID='BBS',
+    #     dataSourceID='EC',
+    #     measurementSystem={'measurementType':'EC',
+    #                     'dataLogger':'CR1000',
+    #                     'sensorConfigurations':[
+    #             sensorModels.CSAT3(
+    #                 measurementHeight=4.25,
+    #                 northOffset=135.0,
+    #                 ),
+    #             sensorModels.LI7500(xSeparation=0.158,ySeparation=-0.031,verticalSeparation=0.0),
+    #             sensorModels.LI7500(xSeparation=0.128,ySeparation=10.031,verticalSeparation=0.0),]},
+    #     sourceFileMetadata=sourceFileName
+    # )
 
 
-    ecf32(projectPath=projectPath,siteID='BBS',dataSourceID='EC',verbose=False,fileName=sourceFileName)
+    # ecf32(projectPath=projectPath,siteID='BBS',dataSourceID='EC',verbose=False,fileName=sourceFileName)
 
 
     sc = site.siteConfiguration(
@@ -92,8 +96,8 @@ if test:
         projectPath=projectPath,
         siteID='SCL',
         dataSourceID='EC_2024',
+        measurementType='EC',
         measurementSystem = dataSource.measurementSystem(
-            measurementType='EC',
             dataLogger='CR1000X',
             sensorConfigurations=[
                 sensorModels.CSAT3(
@@ -102,7 +106,7 @@ if test:
                     ),
                 sensorModels.LI7500(xSeparation=0.158,ySeparation=-0.031,verticalSeparation=0.0),
             ]),
-        sourceFileTemplate=sourceFileName
+        sourceFileMetadata=sourceFileName
     )
 
     ecf32(projectPath=projectPath,siteID='SCL',dataSourceID='EC_2024',verbose=False,fileName=sourceFileName)
@@ -114,8 +118,9 @@ if test:
         projectPath=projectPath,
         siteID='SCL',
         dataSourceID='EC_V1',
+        measurementType='BIOMET',
         measurementSystem = dataSource.measurementSystem(
-            measurementType='BIOMET',
+            # measurementType='BIOMET',
             dataLogger='CR1000X',
             sensorConfigurations=[
                 sensorModels.VoltDiff(),
@@ -123,12 +128,15 @@ if test:
                 sensorModels.BaroVue(),
                 sensorModels.PLS()
             ]+[sensorModels.thermocouple()]*3),
-        sourceFileTemplate=sourceFileName
+        sourceFileMetadata={
+            'fileName':sourceFileName,
+            'traceMetadataMap':{'AirTC_Avg':{'variableName':'TA_1_1_1'}}}
     )
 
-    dbDump(projectPath=projectPath,siteID='SCL',dataSourceID='BIOMET_2024',fileName=sourceFileName)
+    dbDump(projectPath=projectPath,siteID='SCL',dataSourceID='EC_V1',fileName=sourceFileName)
+    breakpoint()
     sourceFileName = os.path.join(data,'Met_Data121.dat') 
-    dbDump(projectPath=projectPath,siteID='SCL',dataSourceID='BIOMET_2024',fileName=sourceFileName)
+    dbDump(projectPath=projectPath,siteID='SCL',dataSourceID='EC_V1',fileName=sourceFileName)
 
 
 
@@ -147,13 +155,13 @@ if test:
     #         ySeparation=0.16,
     #         zSeparation=0.0
     #     ),
-    #     sourceFileTemplate=sourceFileName
+    #     sourceFileMetadata=sourceFileName
     # )
 
     # ecf32(projectPath=projectPath,siteID='SCL',dataSourceID='EC_2025',verbose=False,fileName=sourceFileName)
 
 
-setup = True
+setup = False
 if setup:
     data = r'D:\data-dump\SCL'
     if not os.path.isdir(data):
@@ -185,8 +193,6 @@ if setup:
         description = 'Wet sedge meadow, continuous permafrost',
         )
 
-
-
     # 2024 Met data
     sourceDir = os.path.join(data,'2024') 
     sourceFiles = []
@@ -201,7 +207,7 @@ if setup:
         projectPath=projectPath,
         siteID='SCL',
         dataSourceID='SCL_V1',
-        sourceType='BIOMET',
+        measurementType='BIOMET',
         measurementSystem = dataSource.measurementSystem(
             # measurementType='BIOMET',
             dataLogger='CR1000X',
@@ -212,7 +218,7 @@ if setup:
                 sensorModels.PLS()
             ]+[sensorModels.thermocouple()]*3,
             verbose=False),
-        sourceFileTemplate=sourceFileName
+        sourceFileMetadata=sourceFileName
     )
     for f in sourceFiles[:2]:
         # print('writing: ',f)
@@ -239,7 +245,7 @@ if setup:
                     ),
                 sensorModels.LI7500(xSeparation=0.158,ySeparation=-0.031,verticalSeparation=0.0),
             ]),
-        sourceFileTemplate=sourceFileName
+        sourceFileMetadata=sourceFileName
     )
 
     ecf32(projectPath=projectPath,siteID='SCL',dataSourceID='EC_2024',verbose=False,fileName=sourceFileName)
@@ -271,7 +277,7 @@ if setup:
                 sensorModels.LI7500(xSeparation=0.158,ySeparation=-0.031,verticalSeparation=0.0),
             ],
             verbose=False),
-        sourceFileTemplate=sourceFileName
+        sourceFileMetadata=sourceFileName
     )
 
     for f in sourceFiles:

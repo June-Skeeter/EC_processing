@@ -1,28 +1,33 @@
 from dataclasses import dataclass, field
 # from src.helperFunctions.baseClass import baseClass
-from modules.helperFunctions.baseClass import baseClass
+from modules.database.dbTrace import trace
 
 @dataclass(kw_only=True)
-class rawTraceIn(baseClass):
+class rawTraceIn(trace):
     variableNumber: int = field(default=1,repr=False) # Counter variable to represent position (in source file or processing order)
-    variableNameIn: str
-    variableNameOut: str = None
-    units: str = ''
-    dtype: str = None
-    ignore: bool = False
+    originalVariable: str
+    dateRange: list = field(default_factory=list)
+    # variableName: str
+    # variableNameOut: str = None
+    # units: str = ''
+    # dtype: str = None
+    # ignore: bool = False
     operation: str = None
     measurementType: str = ''
-    minMax: list = field(default_factory=lambda:[None,None])
+    minMax: list = field(default_factory=list)
     sensorID: str = ''
     traceMetadataMap: dict = field(default_factory=dict,repr=False)
     ignoreByDefault: list = field(default_factory=list,repr=False)
-    verbose: str = None
+    # verbose: str = None
 
     def __post_init__(self):
-        if self.traceMetadataMap is not None and self.variableNameIn in self.traceMetadataMap:
-            for key,value in self.traceMetadataMap[self.variableNameIn].items():
+        if self.variableName == self.__dataclass_fields__['variableName'].default:
+            self.variableName = self.originalVariable
+        # breakpoint()
+        if self.traceMetadataMap is not None and self.variableName in self.traceMetadataMap:
+            for key,value in self.traceMetadataMap[self.variableName].items():
                 setattr(self,key,value)
-        if self.variableNameIn in self.ignoreByDefault:
+        if self.variableName in self.ignoreByDefault:
             self.ignore = True
         if self.units == '%':
             self.units = 'percent'

@@ -14,7 +14,7 @@ with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','configFi
 class sourceFile(baseClass):
     fileName: str = None
     fileFormat: str = field(default=None,metadata={'options':['TOB3','TOA5']})
-    sourceType: str = field(default=None,metadata={'options':['CSI','LICOR']},repr=False)
+    sourceFileType: str = field(default=None,metadata={'options':['CSI','LICOR']},repr=False)
     traceMetadataMap: Iterable = field(default=None,repr=False)
     kwargs: Iterable = field(default=None,repr=False)
 
@@ -49,9 +49,9 @@ class sourceFile(baseClass):
         return(data,timestamp)
 
     def getFormat(self):
-        if self.sourceType == 'CSI':
+        if self.sourceFileType == 'CSI':
             self.fileFormat = parseCSI.csiType(self.fileName).fileType
-        elif self.sourceType == 'LICOR':
+        elif self.sourceFileType == 'LICOR':
             self.fileFormat = 'GHG'
         else:
             breakpoint()

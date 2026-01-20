@@ -54,14 +54,14 @@ class csiTrace(rawTraceIn):
     def __post_init__(self):
         self.ignoreByDefault =  ['RECORD','TIMESTAMP','POSIX_Time','NANOSECONDS']#,'POSIX_Time','NANOSECONDS']
         if self.dtype is None:
-            self.dtype = self.defaultTypes[self.variableNameIn]
+            self.dtype = self.defaultTypes[self.variableName]
         elif self.dtype in self.csiTypeMap:
             self.byteMap = self.csiTypeMap[self.dtype]['struct']
             self.dtype = self.csiTypeMap[self.dtype]['output']
         elif type(self.dtype) is str and self.dtype.startswith('ASCII'):
             self.byteMap = self.dtype.strip('ASCII()') + self.csiTypeMap['ASCII']['struct']
             self.dtype = self.csiTypeMap['ASCII']['output']
-        if self.variableNameIn == 'TIMESTAMP':
+        if self.variableName == 'TIMESTAMP':
             self.units = 'datetime'
             # self.dtype = '<i8'
         if type(self.dtype) != str:
@@ -126,7 +126,7 @@ class csiTable(csiFile):
     asciiHeader: list = field(init=False,repr=False)
     nLinesAsciiHeader: int = field(repr=False)
     tableName: str = None
-    dataColumns: dict = field(default_factory=dict)
+    traceMetadata: dict = field(default_factory=dict)
     timestampName: str = field(default='TIMESTAMP',init=False,repr=False)
     recordName: str = field(default='RECORD',init=False,repr=False)
     samplingInterval: float = field(default=None,init=None)  # in seconds
@@ -197,8 +197,8 @@ class TOA5(csiTable):
             nrows=nrows
             )
         # Extract metadata for each variable
-        self.dataColumns =  {
-            columnName:csiTrace(variableNameIn=columnName,units=units,operation=operation,dtype=dtype,traceMetadataMap=self.traceMetadataMap).to_dict(keepNull=False)
+        self.traceMetadata =  {
+            columnName:csiTrace(variableName=columnName,units=units,operation=operation,dtype=dtype,traceMetadataMap=self.traceMetadataMap).to_dict(keepNull=False)
                 for columnName,units,operation,dtype in 
                 zip(self.asciiHeader[1],self.asciiHeader[2],self.asciiHeader[3],list(self.dataTable.dtypes))}
         self.samplingInterval = self.dataTable.TIMESTAMP.diff().median().total_seconds()
@@ -233,8 +233,8 @@ class TOB3(csiTable):
             self.frameResolution = pd.to_timedelta(parseFrequency(self.asciiHeader[1][5])).total_seconds()
             # Extract metadata for each variable.  Add the metadata for timestamp and record which are parsed from the data frames and not in the header
             self.implicitColumns = self.timestampName+[self.recordName]
-            self.dataColumns = {
-                columnName:csiTrace(variableNameIn=columnName,units = units, operation = operation,dtype=dtype,traceMetadataMap=self.traceMetadataMap).to_dict(keepNull=False)
+            self.traceMetadata = {
+                columnName:csiTrace(originalVariable=columnName,units = units, operation = operation,dtype=dtype,traceMetadataMap=self.traceMetadataMap).to_dict(keepNull=False)
                     for columnName,units,operation,dtype in 
                     zip(
                         self.implicitColumns+self.asciiHeader[2],
@@ -246,13 +246,13 @@ class TOB3(csiTable):
             if self.extractData:
                 self.readFrames()
                 self.finishTable()
-        # for key,value in self.dataColumns.items():
-        #     self.dataColumns[key] = dcToDict(value,repr=True)
+        # for key,value in self.traceMetadata.items():
+        #     self.traceMetadata[key] = dcToDict(value,repr=True)
             
     
     def readFrames(self):
         # Parameters dictating extraction
-        self.byteMap = ''.join([var['byteMap'] for key,var in self.dataColumns.items() if key not in self.implicitColumns])     
+        self.byteMap = ''.join([var['byteMap'] for key,var in self.traceMetadata.items() if key not in self.implicitColumns])     
         self.recordSize = struct.calcsize('>'+self.byteMap)
         self.recordsPerFrame = int((self.frameSize-self.headerSize-self.footerSize)/self.recordSize)
         nframes = int((self.fileSize-self.fileObject.tell())/self.frameSize)
@@ -263,8 +263,8 @@ class TOB3(csiTable):
         frames = [f for i in range(nframes) for f in 
                 self.decodeFrame(bindata[i*self.frameSize:(i+1)*self.frameSize])]
         self.dataTable = pd.DataFrame(frames,
-            columns=self.implicitColumns+[col for col in self.dataColumns if col not in self.implicitColumns])
-        self.typeMap = {key:var['dtype'] for key,var in self.dataColumns.items()}
+            columns=self.implicitColumns+[col for col in self.traceMetadata if col not in self.implicitColumns])
+        self.typeMap = {key:var['dtype'] for key,var in self.traceMetadata.items()}
         self.dataTable = self.dataTable.astype(self.typeMap)  
 
     def decodeFrame(self,frame):
@@ -329,7 +329,7 @@ class TOB3(csiTable):
         # fileTime = np.ceil(self.dataTable[self.timestampName]/self.databaseInterval)
         # if self.samplingInterval<self.databaseInterval:
         #     for ft in fileTime.unique():
-        #         dfColumns = {k:asdict_repr(v) for k,v in self.dataColumns.items() if v.dtype == '<f4'}
+        #         dfColumns = {k:asdict_repr(v) for k,v in self.traceMetadata.items() if v.dtype == '<f4'}
         #         df = self.dataTable.loc[fileTime[fileTime==ft].index,list(dfColumns.keys())]
         #         # Output as 1d binary array for processing in eddypro 
         #         # self.ecf32(ft*self.databaseInterval,df,dfColumns,self.databaseInterval)
@@ -342,7 +342,7 @@ class TOB3(csiTable):
         #     c = self.dataTable[self.recordName].resample(f'{self.databaseInterval}s').count()
         #     self.dataTable = self.dataTable.resample(f'{self.databaseInterval}s').mean()
         #     self.dataTable[self.recordName] = c.astype('int32')
-        #     self.dataColumns[self.recordName]['dtypeOut'] = '<i4'
+        #     self.traceMetadata[self.recordName]['dtypeOut'] = '<i4'
         # elif self.samplingInterval>self.databaseInterval:
         #     self.dataTable = self.dataTable.resample(f'{self.databaseInterval}s').nearest()
         # else:

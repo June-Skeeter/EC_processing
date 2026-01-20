@@ -91,27 +91,35 @@ class ecf32(dataSource):
         
 
         def parseVariable(value,variable):
-            if type(value) is str and value.startswith('variable['):
-                param = value.split("variable['")[-1].split("']")[0]
-                if param in variable:
-                    value = eval(value)
-                    if type(value) is str:
-                        value = value.lower()
-                else:
-                    value = None
             if value is None:
                 value = ''
+            elif type(value) is str and 'variable[' in value:
+                param = value.split("variable['")[-1].split("']")[0]
+                if param in variable:
+                    # check if value is empty:
+                    if len(variable[param]):
+                        value = eval(value)
+                        if type(value) is str:
+                            value = value.lower()
+                    else:
+                        value = ''
+                else:
+                    value = ''
+            else:
+                print(value)
+                print('issue?')
+                breakpoint()
             return(value)
 
         i = 1
         self.metadataFile['FileDescription'] = {key:self.parseSelf(value) for key,value in self.template['METADATA']['FileDescription'].items() if not key.startswith('col_n')}
-        for variable in self.sourceFileTemplate['dataColumns'].values():
+        for variable in self.sourceFileMetadata['traceMetadata'].values():
             if variable['dtype'] == '<f4' and not variable['ignore']:
                 for key,value in self.template['METADATA']['FileDescription'].items():
                     self.metadataFile['FileDescription'][key.replace('_n_',f'_{i}_')] = parseVariable(value,variable)
                 i += 1
             else:
-                self.sourceFileTemplate['dataColumns'][variable['variableNameIn']]['ignore'] = True
+                self.sourceFileMetadata['traceMetadata'][variable['variableName']]['ignore'] = True
 
         metadata = configparser.ConfigParser()
         for sec in self.metadataFile.keys():
@@ -123,9 +131,9 @@ class ecf32(dataSource):
             metadata.write(f,space_around_delimiters=False)
 
     def generateBinaryFile(self):
-        # kwargs = self.sourceFileTemplate.to_dict()
-        data,timestamp = sourceFile(fileName=self.fileName,fileFormat=self.sourceFileTemplate['fileFormat'],kwargs=self.sourceFileTemplate).parseFile()
-        keep = [value['variableNameIn'] for value in self.sourceFileTemplate['dataColumns'].values() if not value['ignore']]
+        # kwargs = self.sourceFileMetadata.to_dict()
+        data,timestamp = sourceFile(fileName=self.fileName,fileFormat=self.sourceFileMetadata['fileFormat'],kwargs=self.sourceFileMetadata).parseFile()
+        keep = [value['variableName'] for value in self.sourceFileMetadata['traceMetadata'].values() if not value['ignore']]
         maxN = int(self.metadataFile['Timing']['acquisition_frequency']*self.metadataFile['Timing']['file_duration']*60)
         splits = int(np.ceil(data.shape[0]/maxN))
         for i in range(splits):

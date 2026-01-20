@@ -85,7 +85,7 @@ class eddyCovarianceMeasurement(baseClass):
                 projectPath=self.projectPath,
                 siteID=self.siteID,
                 measurementID=self.measurementID,
-                variables=self.dataColumns
+                variables=self.traceMetadata
                 )
         self.syncAttributes(config,overwrite=False,inheritance=True)
         super().__post_init__()

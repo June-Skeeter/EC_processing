@@ -33,7 +33,7 @@ class dataSourceConfiguration(dataSource):
     dataSourceID: str = field(
         metadata = {'description': 'Unique dataSourceID code'} 
     )
-    sourceType: str = field(
+    measurementType: str = field(
         default='measurement',
                             metadata={'options':['EC','BIOMET','Met','Manual','Model']}
                             )
@@ -47,7 +47,7 @@ class dataSourceConfiguration(dataSource):
         metadata={
             'description':'Contains information on the model producing the data'
         })
-    sourceFileTemplate: Iterable = field(
+    sourceFileMetadata: Iterable = field(
         default=None,
         metadata={
             'description':'a system object, which contains information on the system collecting the data'
@@ -60,31 +60,40 @@ class dataSourceConfiguration(dataSource):
         self.logWarning('Fix spatialObject order?')
         self.spatialObject()
         super().__post_init__()
-        if self.sourceType != 'Model':
+        if self.measurementType != 'Model':
             self.modelDescription = None
             if self.measurementSystem == {}:
                 breakpoint()
-            self.measurementSystem = measurementSystem.from_dict(self.measurementSystem|{'verbose':self.verbose,'measurementType':self.sourceType}).to_dict(keepNull=False)
+            self.measurementSystem = measurementSystem.from_dict(self.measurementSystem|{'verbose':self.verbose,'measurementType':self.measurementType}).to_dict(keepNull=False)
         else:
             self.measurementSystem = None
-        if self.sourceFileTemplate is None:
-            self.sourceFileTemplate = baseClass(verbose=self.verbose).to_dict()
-        elif type(self.sourceFileTemplate) is str:
+        if self.sourceFileMetadata is not None and 'traceMetadata' in self.sourceFileMetadata:
+            traceMetadataMap = self.sourceFileMetadata['traceMetadata']
+        elif 'traceMetadata' in self.sourceFileMetadata:
+            traceMetadataMap = self.sourceFileMetadata['traceMetadata']
+        else:
+            traceMetadataMap = {}
+        if self.sourceFileMetadata is None:
+            self.sourceFileMetadata = baseClass(verbose=self.verbose).to_dict()
+        elif type(self.sourceFileMetadata) is str:
             if self.measurementSystem['dataLogger']['manufacturer'] == 'CSI':
-                self.sourceFileTemplate = rawFile.sourceFile(
-                    fileName=self.sourceFileTemplate,
-                    sourceType=self.measurementSystem['dataLogger']['manufacturer'],
-                    # traceMetadataMap=self.measurementSystem['traceMetadataMap'],
+                self.sourceFileMetadata = rawFile.sourceFile(
+                    fileName=self.sourceFileMetadata,
+                    sourceFileType=self.measurementSystem['dataLogger']['manufacturer'],
+                    traceMetadataMap=traceMetadataMap,
                     verbose=self.verbose
                     ).parseMetadata()
             else:
                 self.logError('Logger files not yet supported')
         else:
-            self.sourceFileTemplate = rawFile.sourceFile.from_dict(
-                    self.sourceFileTemplate|{
-                        'sourceType':self.measurementSystem['dataLogger']['manufacturer'],
+            self.sourceFileMetadata = rawFile.sourceFile.from_dict(
+                    self.sourceFileMetadata|{
+                        'sourceFileType':self.measurementSystem['dataLogger']['manufacturer'],
+                        'traceMetadataMap':traceMetadataMap,
                         'verbose':self.verbose
                         }).parseMetadata()
+        if self.sourceFileMetadata == {}:
+            breakpoint()
         if not self.configFileExists or not self.readOnly:
             self.saveConfigFile(keepNull=False)
 
