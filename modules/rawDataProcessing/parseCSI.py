@@ -297,6 +297,7 @@ class TOB3(csiTable):
         frame = [[int((frame[0][0]+frame[0][1]*1e-9+self.samplingInterval*i)//1),int((frame[0][1]+self.samplingInterval*i*1e9) % 1e9),frame[0][2]+i]+frame[1][i] for i in range(self.recordsPerFrame) if i < offset and frame[2]]
         
         # frame = [[frame[0][0]+(self.samplingInterval*1e9)*i,frame[0][1]+i]+frame[1][i] for i in range(self.recordsPerFrame) if i < offset and frame[2]]
+        print(len(frame))
         return(frame)
   
     def decode_fp2(self,Body):

@@ -68,17 +68,12 @@ class dataSourceConfiguration(dataSource):
             self.sourceSystemMetadata = sourceSystemMetadata.from_dict(self.sourceSystemMetadata|{'verbose':self.verbose,'measurementType':self.measurementType}).to_dict(keepNull=False)
         else:
             self.sourceSystemMetadata = None
-        if self.sourceFileMetadata is not None and 'traceMetadata' in self.sourceFileMetadata:
-            traceMetadata = self.sourceFileMetadata['traceMetadata']
-            print('x?')
-        elif self.sourceFileMetadata is not None and 'traceMetadata' in self.sourceFileMetadata:
-            traceMetadata = self.sourceFileMetadata['traceMetadata']
-            print('y?')
-        else:
-            breakpoint()
-            traceMetadata = {}
-            print('z?')
-        print(traceMetadata)
+        # if self.sourceFileMetadata is not None and 'traceMetadata' in self.sourceFileMetadata:
+        #     traceMetadata = self.sourceFileMetadata['traceMetadata']
+        # else:
+        #     traceMetadata = {}
+        #     print('z?')
+        # print(traceMetadata)
         if self.sourceFileMetadata is None:
             self.sourceFileMetadata = baseClass(verbose=self.verbose).to_dict()
         elif type(self.sourceFileMetadata) is str:
@@ -95,7 +90,7 @@ class dataSourceConfiguration(dataSource):
             self.sourceFileMetadata = rawFile.sourceFile.from_dict(
                     self.sourceFileMetadata|{
                         'sourceFileType':self.sourceSystemMetadata['dataLogger']['manufacturer'],
-                        'traceMetadata':traceMetadata,
+                        # 'traceMetadata':traceMetadata,
                         'verbose':self.verbose
                         }).parseMetadata()
         if self.startDate is not None and self.endDate is not None:

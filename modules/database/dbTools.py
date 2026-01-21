@@ -94,8 +94,9 @@ class dbDump(database,dataSource):
         
         if self.timezone is not None:
             data.index = data.index.tz_localize(self.timezone)
-        keep = [value['variableName'] for value in self.sourceFileMetadata['traceMetadata'].values() if not value['ignore']]
+        keep = [value['originalVariable'] for value in self.sourceFileMetadata['traceMetadata'].values() if not value['ignore']]
         data = data[keep]
+        print(data.shape)
 
         update = False
         for year in data.index.year.unique():
@@ -128,7 +129,7 @@ class dbDump(database,dataSource):
             self.writeDbYear(dbYear)
         if update:
             dataSourceConfiguration.from_class(self,{'readOnly':False,'projectPath':self.projectPath})
-        self.firstStageIni()
+        # self.firstStageIni()
 
     def firstStageIni(self):
         for key,value in self.sourceFileMetadata['traceMetadata'].items():

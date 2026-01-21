@@ -10,6 +10,7 @@ import modules.database.dataSource as dataSource
 import modules.database.sensorModels as sensorModels
 from modules.rawDataProcessing.ecf32 import ecf32
 from modules.database.dbTools import dbDump,database
+from modules.rawDataProcessing.parseCSI import TOB3
 
 T1 = time.time()
 
@@ -17,7 +18,11 @@ T1 = time.time()
 # print(fs.to_dict())
 
 
-test = True
+fn = r'C:\Users\jskeeter\gsc-permafrost\EC_processing\testing\data\Met_Data120.dat'
+f = TOB3(fileName=fn)
+breakpoint()
+
+test = False
 if test:
     data = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
     projectPath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'outputs','testProject'))
@@ -40,7 +45,7 @@ if test:
         verbose=False,
         projectPath=projectPath,
         siteID='SCL',
-        startDate='2024-07-10 00:00:00-00:00',
+        # startDate='2024-07-10 00:00:00-00:00',
         # startDate=dateparser.parse(
         #     '2024-07-10',
         #     settings={'DATE_ORDER':'YMD','RETURN_AS_TIMEZONE_AWARE':True}),
@@ -61,7 +66,7 @@ if test:
         dataSourceID='BIOMET_V1',
         measurementType='BIOMET',
         # startDate='2024-07-10 00:00:00+00:00',
-        endDate='2024-09-15 00:00:00+00:00',
+        # endDate='2024-09-15 00:00:00+00:00',
         sourceSystemMetadata = dataSource.sourceSystemMetadata(
             dataLogger='CR1000X',
             sensorConfigurations=[
@@ -75,7 +80,7 @@ if test:
             'traceMetadata':{'AirTC_Avg':{'variableName':'TA_1_1_1'}}}#,'sensorID':'HMP_1'}}}
     )
 
-    # dbDump(projectPath=projectPath,siteID='SCL',dataSourceID='BIOMET_V1',fileName=sourceFileName)
+    dbDump(projectPath=projectPath,siteID='SCL',dataSourceID='BIOMET_V1',fileName=sourceFileName)
 
     # breakpoint()
     # sourceFileName = os.path.join(data,'Met_Data121.dat') 
