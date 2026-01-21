@@ -70,10 +70,15 @@ class dataSourceConfiguration(dataSource):
             self.sourceSystemMetadata = None
         if self.sourceFileMetadata is not None and 'traceMetadata' in self.sourceFileMetadata:
             traceMetadataMap = self.sourceFileMetadata['traceMetadata']
-        elif 'traceMetadata' in self.sourceFileMetadata:
+            print('x?')
+        elif self.sourceFileMetadata is not None and 'traceMetadata' in self.sourceFileMetadata:
             traceMetadataMap = self.sourceFileMetadata['traceMetadata']
+            print('y?')
         else:
+            breakpoint()
             traceMetadataMap = {}
+            print('z?')
+        print(traceMetadataMap)
         if self.sourceFileMetadata is None:
             self.sourceFileMetadata = baseClass(verbose=self.verbose).to_dict()
         elif type(self.sourceFileMetadata) is str:

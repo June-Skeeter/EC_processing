@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from modules.database.project import project
 from modules.helperFunctions.baseClass import baseClass
 from modules.database.dbTrace import firstStageTrace
+from zoneinfo import ZoneInfo
 import pandas as pd
 import numpy as np
 import datetime
@@ -43,7 +44,8 @@ class database(project):
         self.datetimeIndex = pd.DatetimeIndex(pd.date_range(
                     datetime.datetime(year,1,1,0,30),
                     datetime.datetime(year+1,1,1,0,0),
-                    freq=str(self.dbInterval)+'s'))
+                    freq=str(self.dbInterval)+'s'),
+                    tz=ZoneInfo(self.timezone))
         self.dbFiles = os.listdir(self.dbFolder)
         timestamp = ((self.datetimeIndex.astype(int)//1e9).values).astype('int64')
         datenum = timestamp.astype('float64')/86400.0+719529.0
@@ -89,6 +91,9 @@ class dbDump(database,dataSource):
             self.stageID = os.path.join(self.measurementType,self.dataSourceID)
         data,timestamp = sourceFile(fileName=self.fileName,fileFormat=self.sourceFileMetadata['fileFormat'],kwargs=self.sourceFileMetadata,verbose=self.verbose).parseFile()
         data.index=timestamp.datetime
+        
+        if self.timezone is not None:
+            data.index = data.index.tz_localize(self.timezone)
         keep = [value['variableName'] for value in self.sourceFileMetadata['traceMetadata'].values() if not value['ignore']]
         data = data[keep]
 

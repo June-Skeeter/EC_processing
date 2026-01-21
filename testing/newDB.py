@@ -51,30 +51,7 @@ if test:
         PI = 'June Skeeter & Peter Morse',
         description = 'Wet sedge meadow, continuous permafrost',
         )
-
-    sourceFileName = os.path.join(data,'Flux_Data1426.dat') 
-    dataSource.dataSourceConfiguration(
-        verbose=False,
-        projectPath=projectPath,
-        siteID='SCL',
-        dataSourceID='EC_V1',
-        measurementType='EC',
-        # startDate='2024-07-10 00:00:00-00:00',
-        endDate='2024-09-15 00:00:00-00:00',
-        sourceSystemMetadata = dataSource.sourceSystemMetadata(
-            dataLogger='CR1000X',
-            sensorConfigurations=[
-                sensorModels.CSAT3(
-                    measurementHeight=4.25,
-                    northOffset=135.0,
-                    ),
-                sensorModels.LI7500(xSeparation=0.158,ySeparation=-0.031,verticalSeparation=0.0),
-            ]),
-        sourceFileMetadata=sourceFileName
-    )
-
-    ecf32(projectPath=projectPath,siteID='SCL',dataSourceID='EC_V1',verbose=False,fileName=sourceFileName)
-
+    
 
     sourceFileName = os.path.join(data,'Met_Data120.dat') 
     dataSource.dataSourceConfiguration(
@@ -95,14 +72,38 @@ if test:
             ]+[sensorModels.thermocouple()]*3),
         sourceFileMetadata={
             'fileName':sourceFileName,
-            'traceMetadataMap':{'AirTC_Avg':{'variableName':'TA_1_1_1','sensorID':'HMP_1'}}}
+            'traceMetadata':{'AirTC_Avg':{'variableName':'TA_1_1_1'}}}#,'sensorID':'HMP_1'}}}
     )
 
     # dbDump(projectPath=projectPath,siteID='SCL',dataSourceID='BIOMET_V1',fileName=sourceFileName)
+
     # breakpoint()
     # sourceFileName = os.path.join(data,'Met_Data121.dat') 
     # dbDump(projectPath=projectPath,siteID='SCL',dataSourceID='BIOMET_V1',fileName=sourceFileName)
 
+
+    # sourceFileName = os.path.join(data,'Flux_Data1426.dat') 
+    # dataSource.dataSourceConfiguration(
+    #     verbose=False,
+    #     projectPath=projectPath,
+    #     siteID='SCL',
+    #     dataSourceID='EC_V1',
+    #     measurementType='EC',
+    #     # startDate='2024-07-10 00:00:00-00:00',
+    #     endDate='2024-09-15 00:00:00-00:00',
+    #     sourceSystemMetadata = dataSource.sourceSystemMetadata(
+    #         dataLogger='CR1000X',
+    #         sensorConfigurations=[
+    #             sensorModels.CSAT3(
+    #                 measurementHeight=4.25,
+    #                 northOffset=135.0,
+    #                 ),
+    #             sensorModels.LI7500(xSeparation=0.158,ySeparation=-0.031,verticalSeparation=0.0),
+    #         ]),
+    #     sourceFileMetadata=sourceFileName
+    # )
+
+    # ecf32(projectPath=projectPath,siteID='SCL',dataSourceID='EC_V1',verbose=False,fileName=sourceFileName)
 
 
     # sourceFileName = os.path.join(data,'57840_Time_Series_40.dat')

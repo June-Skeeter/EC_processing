@@ -3,6 +3,7 @@ from typing import Iterable
 from datetime import datetime, timezone
 from dataclasses import dataclass, field
 from modules.helperFunctions.baseClass import baseClass
+from zoneinfo import ZoneInfo
 
 
 default_comment = f'''
@@ -34,7 +35,6 @@ class project(baseClass):
     depth: int = field(default=0,init=False,repr=False)
 
     def __post_init__(self):
-        
         if self.projectPath is None:
             return
         if not type(self).__name__.endswith('Configuration'):
@@ -43,6 +43,10 @@ class project(baseClass):
         if self.subPath:
             self.rootPath = os.path.join(self.rootPath,self.subPath)
         super().__post_init__()
+        if self.startDate is not None:
+            self.startDate = self.startDate.replace(tzinfo=ZoneInfo(self.timezone))
+        if self.endDate is not None:
+            self.endDate = self.endDate.replace(tzinfo=ZoneInfo(self.timezone))
 
     def syncConfig(self,config,dbg=False):
         config = config.from_dict(self.to_dict(keepNull=False)|{'projectPath':self.projectPath,'verbose':self.verbose})
