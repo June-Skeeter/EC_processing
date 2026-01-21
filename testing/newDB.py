@@ -36,6 +36,96 @@ if test:
         createdBy='JS',
         verbose=False)
 
+    sc = site.siteConfiguration(
+        verbose=False,
+        projectPath=projectPath,
+        siteID='SCL',
+        startDate='2024-07-10 00:00:00-00:00',
+        # startDate=dateparser.parse(
+        #     '2024-07-10',
+        #     settings={'DATE_ORDER':'YMD','RETURN_AS_TIMEZONE_AWARE':True}),
+        latitude = 'N69 13.5850',
+        longitude = 'W135 15.1144',
+        altitude = 1.0,
+        siteName = 'Swiss Cheese Lake',
+        PI = 'June Skeeter & Peter Morse',
+        description = 'Wet sedge meadow, continuous permafrost',
+        )
+
+    sourceFileName = os.path.join(data,'Flux_Data1426.dat') 
+    dataSource.dataSourceConfiguration(
+        verbose=False,
+        projectPath=projectPath,
+        siteID='SCL',
+        dataSourceID='EC_V1',
+        measurementType='EC',
+        # startDate='2024-07-10 00:00:00-00:00',
+        endDate='2024-09-15 00:00:00-00:00',
+        sourceSystemMetadata = dataSource.sourceSystemMetadata(
+            dataLogger='CR1000X',
+            sensorConfigurations=[
+                sensorModels.CSAT3(
+                    measurementHeight=4.25,
+                    northOffset=135.0,
+                    ),
+                sensorModels.LI7500(xSeparation=0.158,ySeparation=-0.031,verticalSeparation=0.0),
+            ]),
+        sourceFileMetadata=sourceFileName
+    )
+
+    ecf32(projectPath=projectPath,siteID='SCL',dataSourceID='EC_V1',verbose=False,fileName=sourceFileName)
+
+
+    sourceFileName = os.path.join(data,'Met_Data120.dat') 
+    dataSource.dataSourceConfiguration(
+        verbose=False,
+        projectPath=projectPath,
+        siteID='SCL',
+        dataSourceID='BIOMET_V1',
+        measurementType='BIOMET',
+        # startDate='2024-07-10 00:00:00+00:00',
+        endDate='2024-09-15 00:00:00+00:00',
+        sourceSystemMetadata = dataSource.sourceSystemMetadata(
+            dataLogger='CR1000X',
+            sensorConfigurations=[
+                sensorModels.VoltDiff(),
+                sensorModels.HMP155(measurementHeight=3),
+                sensorModels.BaroVue(),
+                sensorModels.PLS()
+            ]+[sensorModels.thermocouple()]*3),
+        sourceFileMetadata={
+            'fileName':sourceFileName,
+            'traceMetadataMap':{'AirTC_Avg':{'variableName':'TA_1_1_1','sensorID':'HMP_1'}}}
+    )
+
+    # dbDump(projectPath=projectPath,siteID='SCL',dataSourceID='BIOMET_V1',fileName=sourceFileName)
+    # breakpoint()
+    # sourceFileName = os.path.join(data,'Met_Data121.dat') 
+    # dbDump(projectPath=projectPath,siteID='SCL',dataSourceID='BIOMET_V1',fileName=sourceFileName)
+
+
+
+    # sourceFileName = os.path.join(data,'57840_Time_Series_40.dat')
+
+
+    # dataSource.dataSourceConfiguration(
+    #     verbose=False,
+    #     projectPath=projectPath,
+    #     siteID='SCL',
+    #     dataSourceID='EC_2025',
+    #     sourceSystemMetadata = dataSource.EasyFlux_IRGASON_LI7700(
+    #         measurementHeight=3.26,
+    #         northOffset=33.0,
+    #         xSeparation=0.41,
+    #         ySeparation=0.16,
+    #         zSeparation=0.0
+    #     ),
+    #     sourceFileMetadata=sourceFileName
+    # )
+
+    # ecf32(projectPath=projectPath,siteID='SCL',dataSourceID='EC_2025',verbose=False,fileName=sourceFileName)
+
+
 
     # si = site.siteConfiguration(
     #     verbose=False,
@@ -57,7 +147,7 @@ if test:
     #     projectPath=projectPath,
     #     siteID='BBS',
     #     dataSourceID='EC',
-    #     measurementSystem={'measurementType':'EC',
+    #     sourceSystemMetadata={'measurementType':'EC',
     #                     'dataLogger':'CR1000',
     #                     'sensorConfigurations':[
     #             sensorModels.CSAT3(
@@ -71,94 +161,6 @@ if test:
 
 
     # ecf32(projectPath=projectPath,siteID='BBS',dataSourceID='EC',verbose=False,fileName=sourceFileName)
-
-
-    sc = site.siteConfiguration(
-        verbose=False,
-        projectPath=projectPath,
-        siteID='SCL',
-        startDate=dateparser.parse(
-            '2024-07-10',
-            settings={'DATE_ORDER':'YMD','RETURN_AS_TIMEZONE_AWARE':True}),
-        latitude = 'N69 13.5850',
-        longitude = 'W135 15.1144',
-        altitude = 1.0,
-        siteName = 'Swiss Cheese Lake',
-        PI = 'June Skeeter & Peter Morse',
-        description = 'Wet sedge meadow, continuous permafrost',
-        )
-
-
-
-    sourceFileName = os.path.join(data,'Flux_Data1426.dat') 
-    dataSource.dataSourceConfiguration(
-        verbose=False,
-        projectPath=projectPath,
-        siteID='SCL',
-        dataSourceID='EC_2024',
-        measurementType='EC',
-        measurementSystem = dataSource.measurementSystem(
-            dataLogger='CR1000X',
-            sensorConfigurations=[
-                sensorModels.CSAT3(
-                    measurementHeight=4.25,
-                    northOffset=135.0,
-                    ),
-                sensorModels.LI7500(xSeparation=0.158,ySeparation=-0.031,verticalSeparation=0.0),
-            ]),
-        sourceFileMetadata=sourceFileName
-    )
-
-    ecf32(projectPath=projectPath,siteID='SCL',dataSourceID='EC_2024',verbose=False,fileName=sourceFileName)
-
-
-    sourceFileName = os.path.join(data,'Met_Data120.dat') 
-    dataSource.dataSourceConfiguration(
-        verbose=False,
-        projectPath=projectPath,
-        siteID='SCL',
-        dataSourceID='EC_V1',
-        measurementType='BIOMET',
-        measurementSystem = dataSource.measurementSystem(
-            # measurementType='BIOMET',
-            dataLogger='CR1000X',
-            sensorConfigurations=[
-                sensorModels.VoltDiff(),
-                sensorModels.HMP155(measurementHeight=3),
-                sensorModels.BaroVue(),
-                sensorModels.PLS()
-            ]+[sensorModels.thermocouple()]*3),
-        sourceFileMetadata={
-            'fileName':sourceFileName,
-            'traceMetadataMap':{'AirTC_Avg':{'variableName':'TA_1_1_1'}}}
-    )
-
-    dbDump(projectPath=projectPath,siteID='SCL',dataSourceID='EC_V1',fileName=sourceFileName)
-    breakpoint()
-    sourceFileName = os.path.join(data,'Met_Data121.dat') 
-    dbDump(projectPath=projectPath,siteID='SCL',dataSourceID='EC_V1',fileName=sourceFileName)
-
-
-
-    # sourceFileName = os.path.join(data,'57840_Time_Series_40.dat')
-
-
-    # dataSource.dataSourceConfiguration(
-    #     verbose=False,
-    #     projectPath=projectPath,
-    #     siteID='SCL',
-    #     dataSourceID='EC_2025',
-    #     measurementSystem = dataSource.EasyFlux_IRGASON_LI7700(
-    #         measurementHeight=3.26,
-    #         northOffset=33.0,
-    #         xSeparation=0.41,
-    #         ySeparation=0.16,
-    #         zSeparation=0.0
-    #     ),
-    #     sourceFileMetadata=sourceFileName
-    # )
-
-    # ecf32(projectPath=projectPath,siteID='SCL',dataSourceID='EC_2025',verbose=False,fileName=sourceFileName)
 
 
 setup = False
@@ -208,7 +210,7 @@ if setup:
         siteID='SCL',
         dataSourceID='SCL_V1',
         measurementType='BIOMET',
-        measurementSystem = dataSource.measurementSystem(
+        sourceSystemMetadata = dataSource.sourceSystemMetadata(
             # measurementType='BIOMET',
             dataLogger='CR1000X',
             sensorConfigurations=[
@@ -235,7 +237,7 @@ if setup:
         projectPath=projectPath,
         siteID='SCL',
         dataSourceID='EC_2024',
-        measurementSystem = dataSource.measurementSystem(
+        sourceSystemMetadata = dataSource.sourceSystemMetadata(
             measurementType='EC',
             dataLogger='CR1000X',
             sensorConfigurations=[
@@ -266,7 +268,7 @@ if setup:
         projectPath=projectPath,
         siteID='SCL',
         dataSourceID='EasyFlux_2025',
-        measurementSystem = dataSource.measurementSystem(
+        sourceSystemMetadata = dataSource.sourceSystemMetadata(
             measurementType='BIOMET',
             dataLogger='CR1000X',
             sensorConfigurations=[

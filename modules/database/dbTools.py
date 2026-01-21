@@ -120,11 +120,10 @@ class dbDump(database,dataSource):
                     if self.sourceFileMetadata['traceMetadata'][col]['dateRange'][1]<ix.max():
                         self.sourceFileMetadata['traceMetadata'][col]['dateRange'][1]=ix.max().to_pydatetime()
                         update = True
-                        print('!')
             self.writeDbYear(dbYear)
         if update:
-            ds = dataSourceConfiguration.from_class(self,{'readOnly':False,'projectPath':self.projectPath})
-        # self.firstStageIni()
+            dataSourceConfiguration.from_class(self,{'readOnly':False,'projectPath':self.projectPath})
+        self.firstStageIni()
 
     def firstStageIni(self):
         for key,value in self.sourceFileMetadata['traceMetadata'].items():

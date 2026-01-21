@@ -78,7 +78,7 @@ class ecf32(dataSource):
 
         i = 1
         self.metadataFile['Instruments'] = {}
-        for sensor in self.measurementSystem['sensorConfigurations'].values():
+        for sensor in self.sourceSystemMetadata['sensorConfigurations'].values():
             for key,value in self.template['METADATA']['Instruments'].items():
                 self.metadataFile['Instruments'][key.replace('_n_',f"_{i}_")] = parseSensor(value,sensor)
             if 'sonic' in sensor['sensorType'] and sensor['sensorModel'] in self.integratedSonics:

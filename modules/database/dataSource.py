@@ -37,7 +37,7 @@ class dataSourceConfiguration(dataSource):
         default='measurement',
                             metadata={'options':['EC','BIOMET','Met','Manual','Model']}
                             )
-    measurementSystem: dict = field(
+    sourceSystemMetadata: dict = field(
         default_factory=dict,
         metadata={
             'description':'Contains information on the measurement system collecting the data'
@@ -56,17 +56,18 @@ class dataSourceConfiguration(dataSource):
     lastModified: str = field(default=None)
 
     def __post_init__(self):
-        self.subPath = os.path.sep.join(['configurationFiles',self.siteID,self.dataSourceID])
+        self.subPath = os.path.sep.join(['configurationFiles',self.siteID,'dataSources'])#self.dataSourceID])
+        self.configName = f"{self.dataSourceID}_sourceConfig.yml"
         self.logWarning('Fix spatialObject order?')
         self.spatialObject()
         super().__post_init__()
         if self.measurementType != 'Model':
             self.modelDescription = None
-            if self.measurementSystem == {}:
+            if self.sourceSystemMetadata == {}:
                 breakpoint()
-            self.measurementSystem = measurementSystem.from_dict(self.measurementSystem|{'verbose':self.verbose,'measurementType':self.measurementType}).to_dict(keepNull=False)
+            self.sourceSystemMetadata = sourceSystemMetadata.from_dict(self.sourceSystemMetadata|{'verbose':self.verbose,'measurementType':self.measurementType}).to_dict(keepNull=False)
         else:
-            self.measurementSystem = None
+            self.sourceSystemMetadata = None
         if self.sourceFileMetadata is not None and 'traceMetadata' in self.sourceFileMetadata:
             traceMetadataMap = self.sourceFileMetadata['traceMetadata']
         elif 'traceMetadata' in self.sourceFileMetadata:
@@ -76,10 +77,10 @@ class dataSourceConfiguration(dataSource):
         if self.sourceFileMetadata is None:
             self.sourceFileMetadata = baseClass(verbose=self.verbose).to_dict()
         elif type(self.sourceFileMetadata) is str:
-            if self.measurementSystem['dataLogger']['manufacturer'] == 'CSI':
+            if self.sourceSystemMetadata['dataLogger']['manufacturer'] == 'CSI':
                 self.sourceFileMetadata = rawFile.sourceFile(
                     fileName=self.sourceFileMetadata,
-                    sourceFileType=self.measurementSystem['dataLogger']['manufacturer'],
+                    sourceFileType=self.sourceSystemMetadata['dataLogger']['manufacturer'],
                     traceMetadataMap=traceMetadataMap,
                     verbose=self.verbose
                     ).parseMetadata()
@@ -88,18 +89,22 @@ class dataSourceConfiguration(dataSource):
         else:
             self.sourceFileMetadata = rawFile.sourceFile.from_dict(
                     self.sourceFileMetadata|{
-                        'sourceFileType':self.measurementSystem['dataLogger']['manufacturer'],
+                        'sourceFileType':self.sourceSystemMetadata['dataLogger']['manufacturer'],
                         'traceMetadataMap':traceMetadataMap,
                         'verbose':self.verbose
                         }).parseMetadata()
+        if self.startDate is not None and self.endDate is not None:
+            for key in self.sourceFileMetadata['traceMetadata'].keys():
+                self.sourceFileMetadata['traceMetadata'][key]['dateRange'] = [self.startDate,self.endDate]
+                
         if self.sourceFileMetadata == {}:
             breakpoint()
         if not self.configFileExists or not self.readOnly:
             self.saveConfigFile(keepNull=False)
 
 @dataclass(kw_only=True)
-class measurementSystem(baseClass):
-    measurementType: str = field(default=None,
+class sourceSystemMetadata(baseClass):
+    measurementType: str = field(default=None,repr=False,
                             metadata={'options':['EC','BIOMET','Manual']})
     
     measurementHeight: float = field(default = None, metadata = {'description': 'Measurement height (Zm) in meters, of reference sonic'},repr=False)
@@ -189,8 +194,8 @@ class measurementSystem(baseClass):
         return (xSeparation,ySeparation)
     
 @dataclass(kw_only=True)
-class CustomFlux(measurementSystem):
-    measurementType: str = 'EC'
+class CustomFlux(sourceSystemMetadata):
+    measurementType: str = field(default='EC',repr=False)
     SONIC: str = field(repr=False)
     CO2: str = field(default=None,repr=False)
     CH4: str = field(default=None,repr=False)
@@ -209,9 +214,9 @@ class CustomFlux(measurementSystem):
     
 
 @dataclass(kw_only=True)
-class EasyFlux_IRGASON_LI7700(measurementSystem):
+class EasyFlux_IRGASON_LI7700(sourceSystemMetadata):
     
-    measurementType: str = 'EC'
+    measurementType: str = field(default='EC',repr=False)
     xSeparation: float = field(default=None,repr=False)
     ySeparation: float = field(default=None,repr=False)
     zSeparation: float = field(default=None,repr=False)
@@ -236,8 +241,8 @@ class EasyFlux_IRGASON_LI7700(measurementSystem):
         super().__post_init__()
 
 
-class SmartFlux_7500_7700(measurementSystem):
+class SmartFlux_7500_7700(sourceSystemMetadata):
     pass
 
-class SmartFlux_7200_7700(measurementSystem):
+class SmartFlux_7200_7700(sourceSystemMetadata):
     pass

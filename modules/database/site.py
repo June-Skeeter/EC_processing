@@ -46,6 +46,7 @@ class siteConfiguration(site):
     lastModified: str = field(default=None)
     
     def __post_init__(self):
+        self.configName = f"{self.siteID}_siteConfig.yml"
         self.subPath = os.path.sep.join(['configurationFiles',self.siteID])
         self.spatialObject()
         super().__post_init__()
