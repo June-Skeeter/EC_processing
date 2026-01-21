@@ -20,7 +20,8 @@ T1 = time.time()
 
 fn = r'C:\Users\jskeeter\gsc-permafrost\EC_processing\testing\data\Met_Data120.dat'
 f = TOB3(fileName=fn)
-breakpoint()
+print(f.dataTable.shape)
+# breakpoint()
 
 test = False
 if test:
