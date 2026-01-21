@@ -27,7 +27,7 @@ class sourceFile(baseClass):
         else:
             if self.fileFormat is None:
                 self.getFormat()
-            self.logWarning('traceMap?',verbose=True)
+            # self.logWarning('traceMap?',verbose=True)
             # if type(self.traceMetadata) is str and self.traceMetadata in traceMap.keys():
             #     self.traceMetadata = traceMap[self.traceMetadata]
             if hasattr(parseCSI,self.fileFormat):

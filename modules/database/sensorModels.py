@@ -4,7 +4,7 @@ import sys
 from typing import Iterable
 from dataclasses import dataclass, field
 from modules.helperFunctions.baseClass import baseClass
-from modules.database.spatialObjects import pointObject
+from modules.database.spatiotemporalObjects import pointObject
 
 # dataclasses to define specs/default values for sensors
 
@@ -17,7 +17,6 @@ class sensor(pointObject,baseClass):
     serialNumber: str = field(default = '',metadata = {'description': 'Serial# (if known)',})
     sensorType: str = field(default='',repr=False)
     measurementHeight: float = field(default = None, metadata = {'description': 'Measurement height (Zm) optional for BIOMET sensors'})
-    traceMetadata: dict = field(default=None)
 
     def __post_init__(self):
         # if self.sensorModel is None:

@@ -58,8 +58,8 @@ class dataSourceConfiguration(dataSource):
     def __post_init__(self):
         self.subPath = os.path.sep.join(['configurationFiles',self.siteID,'dataSources'])#self.dataSourceID])
         self.configName = f"{self.dataSourceID}_sourceConfig.yml"
-        self.logWarning('Fix spatialObject order?')
-        self.spatialObject()
+        self.logWarning('Fix formatSpaceTimeFields order?')
+        self.formatSpaceTimeFields()
         super().__post_init__()
         if self.measurementType != 'Model':
             self.modelDescription = None

@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from modules.database.project import project
 from modules.helperFunctions.baseClass import baseClass
 from modules.database.dbTrace import firstStageTrace
+from modules.database.site import site
 from zoneinfo import ZoneInfo
 import pandas as pd
 import numpy as np
@@ -80,7 +81,7 @@ class database(project):
 class dbDump(database,dataSource):
     fileName: str
     overwrite: bool = field(default=False,repr=False)
-    configName: str = field(default='dataSourceConfiguration.yml',repr=False,init=False)
+    # configName: str = field(default='dataSourceConfiguration.yml',repr=False,init=False)
 
     def __post_init__(self):
         self.logMessage(f'Writing: {self.fileName}',verbose=True)
@@ -129,10 +130,28 @@ class dbDump(database,dataSource):
             self.writeDbYear(dbYear)
         if update:
             dataSourceConfiguration.from_class(self,{'readOnly':False,'projectPath':self.projectPath})
-        # self.firstStageIni()
+    #     self.firstStageIni()
+        firstStage(siteID=self.siteID)
 
-    def firstStageIni(self):
-        for key,value in self.sourceFileMetadata['traceMetadata'].items():
-            kwargs = value
-            print(kwargs)
-            breakpoint()
+    # def firstStageIni(self):
+    #     Traces = {}
+    #     for key,value in self.sourceFileMetadata['traceMetadata'].items():
+    #         kwargs = value
+    #         kwargs['inputFileName'] = value['fileName']
+    #         kwargs['inputFileName_dates'] = value['dateRange']
+    #         Traces[value['variableName']] = firstStageTrace.from_dict(kwargs).to_dict()
+    #     breakpoint()
+
+@dataclass(kw_only=True)
+class firstStage(database,site):
+    # siteID: str
+    subPath: str = os.path.join('Database','Calculation_Procedures','siteID','stageID')
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.configName = f'{self.siteID}_firstStage.yml'
+
+        
+        if not self.configFileExists or not self.readOnly:
+            print(self.configFileExists)
+            self.saveConfigFile()

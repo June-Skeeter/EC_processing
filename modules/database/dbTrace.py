@@ -11,10 +11,35 @@ class trace(baseClass):
 
 
 @dataclass(kw_only=True)
-class firstStageTrace(trace):
+class rawTrace(trace):
+    # variableNumber: int = field(default=1,repr=False) # Counter variable to represent position (in source file or processing order)
+    originalVariable: str
+    fileName: str = None
+    dateRange: list = field(default_factory=list)
+    operation: str = None
+    measurementType: str = ''
+    minMax: list = field(default_factory=list)
+    sensorID: str = ''
+    traceMetadata: dict = field(default_factory=dict,repr=False)
+    ignoreByDefault: list = field(default_factory=list,repr=False)
 
-    
-    inputFileName: str = field(metadata={'description':'name of the raw input file'})
+    def __post_init__(self):
+        if self.variableName == self.__dataclass_fields__['variableName'].default:
+            self.variableName = self.originalVariable
+        if self.fileName == self.__dataclass_fields__['fileName'].default:
+            self.fileName = self.originalVariable
+        if self.traceMetadata is not None and self.variableName in self.traceMetadata:
+            for key,value in self.traceMetadata[self.variableName].items():
+                setattr(self,key,value)
+        if self.variableName in self.ignoreByDefault:
+            self.ignore = True
+        if self.units == '%':
+            self.units = 'percent'
+        return super().__post_init__()
+
+@dataclass(kw_only=True)
+class firstStageTrace(trace):
+    inputFileName: list = field(metadata={'description':'name of the raw input file'})
     inputFileName_dates: list = field(metadata={'description':'date rang corresponding to input FileName (s)'})
     instrumentType: str = field(default='', metadata={'description':''})
     measurementType: str = field(metadata={'description':'taken from measurementType variable'})

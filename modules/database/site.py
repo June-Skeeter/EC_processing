@@ -3,7 +3,7 @@ from typing import Iterable
 from datetime import datetime, timezone
 from dataclasses import dataclass, field
 from modules.database.project import project
-from modules.database.spatialObjects import pointObject
+from modules.database.spatiotemporalObjects import pointObject
 
 default_comment = f'''
 Created: {datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}
@@ -48,7 +48,7 @@ class siteConfiguration(site):
     def __post_init__(self):
         self.configName = f"{self.siteID}_siteConfig.yml"
         self.subPath = os.path.sep.join(['configurationFiles',self.siteID])
-        self.spatialObject()
+        self.formatSpaceTimeFields()
         super().__post_init__()
         if not self.configFileExists or not self.readOnly:
             self.saveConfigFile()

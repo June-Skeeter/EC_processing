@@ -7,7 +7,7 @@ from modules.helperFunctions.parseFrequency import parseFrequency
 from modules.helperFunctions.dictFuncs import dcToDict
 from modules.helperFunctions.baseClass import baseClass
 import modules.database.dataLoggers as dataLoggers
-from modules.rawDataProcessing.rawTrace import rawTraceIn
+from modules.database.dbTrace import rawTrace
 from pandas.api.types import is_datetime64_any_dtype as is_datetime
 import pandas as pd
 import os
@@ -39,7 +39,7 @@ class csiType:
 
 
 @dataclass(kw_only=True)
-class csiTrace(rawTraceIn):
+class csiTrace(rawTrace):
     defaultTypes = defaultdict(lambda: '<f4',RECORD ='<u4',TIMESTAMP = 'string') # Does not apply to TOB3 which have type specified in header
     csiTypeMap = {
         'FP2':{'struct':'H','output':'<f4'},
