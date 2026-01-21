@@ -41,7 +41,7 @@ configurations.dataSourceConfiguration(
     siteID='SCL',
     dataSourceID ='EC_2024',
     systemConfiguration = systemTypes.EC(
-        traceMetadataMap='CSI_LI7500_default',
+        traceMetadata='CSI_LI7500_default',
         dataLogger = 'CR1000X',
         sensorConfigurations=[
             sensorModels.CSAT3(

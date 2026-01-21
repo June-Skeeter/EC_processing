@@ -106,7 +106,7 @@ class csiFile(baseClass):
         metadata={
             'description':'True (all data) / False (preview header where applicable)'
             })
-    traceMetadataMap: dict = field(default=None,repr=False)
+    traceMetadata: dict = field(default=None,repr=False)
     
     def __post_init__(self):
         self.UID = self.program.split(':')[-1].replace('.','-')
@@ -198,7 +198,7 @@ class TOA5(csiTable):
             )
         # Extract metadata for each variable
         self.traceMetadata =  {
-            columnName:csiTrace(variableName=columnName,units=units,operation=operation,dtype=dtype,traceMetadataMap=self.traceMetadataMap).to_dict(keepNull=False)
+            columnName:csiTrace(variableName=columnName,units=units,operation=operation,dtype=dtype,traceMetadata=self.traceMetadata).to_dict(keepNull=False)
                 for columnName,units,operation,dtype in 
                 zip(self.asciiHeader[1],self.asciiHeader[2],self.asciiHeader[3],list(self.dataTable.dtypes))}
         self.samplingInterval = self.dataTable.TIMESTAMP.diff().median().total_seconds()
@@ -234,7 +234,7 @@ class TOB3(csiTable):
             # Extract metadata for each variable.  Add the metadata for timestamp and record which are parsed from the data frames and not in the header
             self.implicitColumns = self.timestampName+[self.recordName]
             self.traceMetadata = {
-                columnName:csiTrace(originalVariable=columnName,units = units, operation = operation,dtype=dtype,traceMetadataMap=self.traceMetadataMap).to_dict(keepNull=False)
+                columnName:csiTrace(originalVariable=columnName,units = units, operation = operation,dtype=dtype,traceMetadata=self.traceMetadata).to_dict(keepNull=False)
                     for columnName,units,operation,dtype in 
                     zip(
                         self.implicitColumns+self.asciiHeader[2],

@@ -17,7 +17,7 @@ class sensor(pointObject,baseClass):
     serialNumber: str = field(default = '',metadata = {'description': 'Serial# (if known)',})
     sensorType: str = field(default='',repr=False)
     measurementHeight: float = field(default = None, metadata = {'description': 'Measurement height (Zm) optional for BIOMET sensors'})
-    traceMetadataMap: dict = field(default=None)
+    traceMetadata: dict = field(default=None)
 
     def __post_init__(self):
         # if self.sensorModel is None:

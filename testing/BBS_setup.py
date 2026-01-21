@@ -13,7 +13,7 @@ from modules.rawDataProcessing.ecf32 import ecf32
 data = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
 
 
-sm = sensorModels.CSI_T107(traceMetadataMap={'TA_1_1_1':{'measurementType':'temperature'}})
+sm = sensorModels.CSI_T107(traceMetadata={'TA_1_1_1':{'measurementType':'temperature'}})
 
 projectPath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'outputs','testProject'))
 

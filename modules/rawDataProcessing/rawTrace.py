@@ -16,7 +16,7 @@ class rawTraceIn(trace):
     measurementType: str = ''
     minMax: list = field(default_factory=list)
     sensorID: str = ''
-    traceMetadataMap: dict = field(default_factory=dict,repr=False)
+    traceMetadata: dict = field(default_factory=dict,repr=False)
     ignoreByDefault: list = field(default_factory=list,repr=False)
     # verbose: str = None
 
@@ -24,8 +24,8 @@ class rawTraceIn(trace):
         if self.variableName == self.__dataclass_fields__['variableName'].default:
             self.variableName = self.originalVariable
         # breakpoint()
-        if self.traceMetadataMap is not None and self.variableName in self.traceMetadataMap:
-            for key,value in self.traceMetadataMap[self.variableName].items():
+        if self.traceMetadata is not None and self.variableName in self.traceMetadata:
+            for key,value in self.traceMetadata[self.variableName].items():
                 setattr(self,key,value)
         if self.variableName in self.ignoreByDefault:
             self.ignore = True

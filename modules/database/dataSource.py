@@ -69,16 +69,16 @@ class dataSourceConfiguration(dataSource):
         else:
             self.sourceSystemMetadata = None
         if self.sourceFileMetadata is not None and 'traceMetadata' in self.sourceFileMetadata:
-            traceMetadataMap = self.sourceFileMetadata['traceMetadata']
+            traceMetadata = self.sourceFileMetadata['traceMetadata']
             print('x?')
         elif self.sourceFileMetadata is not None and 'traceMetadata' in self.sourceFileMetadata:
-            traceMetadataMap = self.sourceFileMetadata['traceMetadata']
+            traceMetadata = self.sourceFileMetadata['traceMetadata']
             print('y?')
         else:
             breakpoint()
-            traceMetadataMap = {}
+            traceMetadata = {}
             print('z?')
-        print(traceMetadataMap)
+        print(traceMetadata)
         if self.sourceFileMetadata is None:
             self.sourceFileMetadata = baseClass(verbose=self.verbose).to_dict()
         elif type(self.sourceFileMetadata) is str:
@@ -86,7 +86,7 @@ class dataSourceConfiguration(dataSource):
                 self.sourceFileMetadata = rawFile.sourceFile(
                     fileName=self.sourceFileMetadata,
                     sourceFileType=self.sourceSystemMetadata['dataLogger']['manufacturer'],
-                    traceMetadataMap=traceMetadataMap,
+                    # traceMetadata=traceMetadata,
                     verbose=self.verbose
                     ).parseMetadata()
             else:
@@ -95,7 +95,7 @@ class dataSourceConfiguration(dataSource):
             self.sourceFileMetadata = rawFile.sourceFile.from_dict(
                     self.sourceFileMetadata|{
                         'sourceFileType':self.sourceSystemMetadata['dataLogger']['manufacturer'],
-                        'traceMetadataMap':traceMetadataMap,
+                        'traceMetadata':traceMetadata,
                         'verbose':self.verbose
                         }).parseMetadata()
         if self.startDate is not None and self.endDate is not None:
