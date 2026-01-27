@@ -2,9 +2,9 @@ import os
 import yaml
 from typing import Iterable
 from dataclasses import dataclass, field
-from modules.helperFunctions.baseClass import baseClass
-from modules.helperFunctions.dictFuncs import loadDict
-import modules.rawDataProcessing.parseCSI as parseCSI
+from submodules.helperFunctions.baseClass import baseClass
+from submodules.helperFunctions.dictFuncs import loadDict
+import scripts.rawDataProcessing.parseCSI as parseCSI
 
 
 # with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','configFiles','traceMetadata.yml')) as f:
@@ -13,7 +13,7 @@ import modules.rawDataProcessing.parseCSI as parseCSI
 @dataclass(kw_only=True)
 class sourceFile(baseClass):
     fileName: str = None
-    fileFormat: str = field(default=None,metadata={'options':['TOB3','TOA5']})
+    fileFormat: str = field(default=None,metadata={'options':['TOB3','TOA5','GHG']})
     sourceFileType: str = field(default=None,metadata={'options':['CSI','LICOR']},repr=False)
     traceMetadata: Iterable = field(default=None,repr=False)
     kwargs: Iterable = field(default=None,repr=False)
@@ -36,7 +36,6 @@ class sourceFile(baseClass):
             else:
                 self.logError(f"{self.fileFormat} not yet supported")
         return(sourceAttributes.to_dict())
-
 
     def parseFile(self):
         if hasattr(parseCSI,self.fileFormat):

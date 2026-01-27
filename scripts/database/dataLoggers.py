@@ -1,10 +1,10 @@
 from dataclasses import dataclass, field
-from modules.helperFunctions.baseClass import baseClass
+from submodules.helperFunctions.baseClass import baseClass
 
 @dataclass(kw_only=True)
 class dataLogger(baseClass):
     loggerModel: str = field(
-        init=False,
+        default=None,
         metadata = {
             'description': 'The logger model, auto-filled from class name',
     })
@@ -26,11 +26,17 @@ class dataLogger(baseClass):
     fileType: str = field(
         default=None,
         metadata={'description':'Type of file associated with the logger/system',
-                  'options':['dat','ghg','csv']}
+                  'options':['dat','ghg','csv']
+    })
+    program: str = field(
+        default='',
+        metadata={'description':'Name of the program running on logger'}
     )
 
     def __post_init__(self):
-        self.loggerModel = type(self).__name__
+        if self.loggerModel is None:
+            self.loggerModel = type(self).__name__
+        super().__post_init__()
 
 @dataclass(kw_only=True)
 class CR1000X(dataLogger):

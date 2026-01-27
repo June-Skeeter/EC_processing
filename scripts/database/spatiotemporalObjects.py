@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from modules.helperFunctions.parseCoordinates import parseCoordinates
+from submodules.helperFunctions.parseCoordinates import parseCoordinates
 from zoneinfo import ZoneInfo
 import dateparser
 

@@ -2,8 +2,8 @@ import os
 from typing import Iterable
 from datetime import datetime, timezone
 from dataclasses import dataclass, field
-from modules.database.project import project
-from modules.database.spatiotemporalObjects import pointObject
+from scripts.database.project import project
+from scripts.database.spatiotemporalObjects import pointObject
 
 default_comment = f'''
 Created: {datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}
@@ -24,6 +24,7 @@ class site(pointObject,project):
 class siteConfiguration(site):
     header: str = field(default=default_comment,repr=False,init=False) # YAML header, must be treated differently
 
+    fromFile: bool = True
     siteID: str = field(
         metadata = {'description': 'Unique siteID code'} 
     )
@@ -47,7 +48,7 @@ class siteConfiguration(site):
     
     def __post_init__(self):
         self.configName = f"{self.siteID}_siteConfig.yml"
-        self.subPath = os.path.sep.join(['configurationFiles',self.siteID])
+        self.subPath = os.path.sep.join(['siteMetadata',self.siteID])
         self.formatSpaceTimeFields()
         super().__post_init__()
         if not self.configFileExists or not self.readOnly:

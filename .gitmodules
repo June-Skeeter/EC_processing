@@ -1,6 +1,6 @@
 [submodule "modules/helperFunctions"]
-	path = modules/helperFunctions
+	path = submodules/helperFunctions
 	url = https://github.com/June-Skeeter/helperFunctions.git
 [submodule "modules/fluxCalculator"]
-	path = modules/fluxCalculator
+	path = submodules/fluxCalculator
 	url = https://github.com/June-Skeeter/fluxCalculator

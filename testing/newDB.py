@@ -4,13 +4,13 @@ import time
 import shutil
 import context
 import dateparser
-import modules.database.project as project
-import modules.database.site as site
-import modules.database.dataSource as dataSource
-import modules.database.sensorModels as sensorModels
-from modules.rawDataProcessing.ecf32 import ecf32
-from modules.database.dbTools import dbDump,database,firstStage
-from modules.rawDataProcessing.parseCSI import TOB3
+import scripts.database.project as project
+import scripts.database.site as site
+import scripts.database.dataSource as dataSource
+import scripts.database.sensorModels as sensorModels
+from scripts.rawDataProcessing.ecf32 import ecf32
+from scripts.database.dbTools import dbDump#,database,firstStage
+# from scripts.rawDataProcessing.parseCSI import TOB3
 
 T1 = time.time()
 
