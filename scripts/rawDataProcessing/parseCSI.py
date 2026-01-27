@@ -2,12 +2,12 @@
 
 from dataclasses import dataclass,field
 from collections import defaultdict
-from modules.helperFunctions.log import log
-from modules.helperFunctions.parseFrequency import parseFrequency
-from modules.helperFunctions.dictFuncs import dcToDict
-from modules.helperFunctions.baseClass import baseClass
-import modules.database.dataLoggers as dataLoggers
-from modules.database.dbTrace import rawTrace
+from submodules.helperFunctions.log import log
+from submodules.helperFunctions.parseFrequency import parseFrequency
+from submodules.helperFunctions.dictFuncs import dcToDict
+from submodules.helperFunctions.baseClass import baseClass
+import scripts.database.dataLoggers as dataLoggers
+from scripts.database.dbTrace import rawTrace
 from pandas.api.types import is_datetime64_any_dtype as is_datetime
 import pandas as pd
 import os

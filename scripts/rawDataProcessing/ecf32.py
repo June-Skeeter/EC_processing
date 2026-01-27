@@ -1,6 +1,6 @@
 import configparser
-from modules.database.dataSource import dataSource
-from modules.rawDataProcessing.rawFile import sourceFile
+from scripts.database.dataSource import dataSource
+from scripts.rawDataProcessing.rawFile import sourceFile
 from dataclasses import dataclass, field
 from datetime import datetime
 # from pathlib import path
@@ -28,7 +28,7 @@ class ecf32(dataSource):
     configName: str = field(default='dataSourceConfiguration.yml',repr=False,init=False)
 
     def __post_init__(self):
-        # self.subPath = os.path.sep.join(['configurationFiles',self.siteID,self.dataSourceID])
+        # self.subPath = os.path.sep.join(['siteMetadata',self.siteID,self.dataSourceID])
 
         T1 = time.time()
         super().__post_init__()

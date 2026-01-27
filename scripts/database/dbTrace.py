@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from modules.helperFunctions.baseClass import baseClass
+from submodules.helperFunctions.baseClass import baseClass
 
 @dataclass(kw_only=True)
 class trace(baseClass):
@@ -35,7 +35,8 @@ class rawTrace(trace):
             self.ignore = True
         if self.units == '%':
             self.units = 'percent'
-        return super().__post_init__()
+        super().__post_init__()
+    
 
 @dataclass(kw_only=True)
 class firstStageTrace(trace):

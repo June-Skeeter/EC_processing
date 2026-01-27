@@ -2,11 +2,11 @@ import os
 import shutil
 import dateparser
 import context
-import modules.rawDataProcessing.parseCSI as parseCSI
-import modules.databaseSetup.configurations as configurations
-import modules.databaseSetup.systemTypes as systemTypes
-import modules.databaseSetup.sensorModels as sensorModels
-from modules.rawDataProcessing.ecf32 import ecf32
+import scripts.rawDataProcessing.parseCSI as parseCSI
+import scripts.databaseSetup.configurations as configurations
+import scripts.databaseSetup.systemTypes as systemTypes
+import scripts.databaseSetup.sensorModels as sensorModels
+from scripts.rawDataProcessing.ecf32 import ecf32
 
 # print(sensorModels.IRGASON(measurementHeight=4.25,northOffset=135).toConfig(majorOrder=-1,keepNull=False))
 

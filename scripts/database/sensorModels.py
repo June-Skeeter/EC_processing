@@ -3,20 +3,23 @@ import inspect
 import sys
 from typing import Iterable
 from dataclasses import dataclass, field
-from modules.helperFunctions.baseClass import baseClass
-from modules.database.spatiotemporalObjects import pointObject
+from submodules.helperFunctions.baseClass import baseClass
+from scripts.database.spatiotemporalObjects import pointObject
 
 # dataclasses to define specs/default values for sensors
 
 @dataclass(kw_only=True)
 class sensor(pointObject,baseClass):
+    sensorFamily: str = 'BIOMET'
     verbose: bool = field(default=False,repr=False)
     sensorModel: str = field(init=False,default=None)
     sensorID: str = field(default=None,metadata = {'description': 'The sensor model, auto-filled from class name',})
     manufacturer: str = field(default = '',metadata = {'description': 'Indicates manufacturer of sensor, auto from class name',})
     serialNumber: str = field(default = '',metadata = {'description': 'Serial# (if known)',})
     sensorType: str = field(default='',repr=False)
+    variables: list = field(default_factory=list,metadata={'description':'list of variables associated with the sensor'})
     measurementHeight: float = field(default = None, metadata = {'description': 'Measurement height (Zm) optional for BIOMET sensors'})
+    timezone: str = None
 
     def __post_init__(self):
         # if self.sensorModel is None:
@@ -41,14 +44,26 @@ class NRLite(sensor):
     sensorType: str = 'net-radiometer'
 
 @dataclass(kw_only=True)
+class LI200x(sensor):
+    sensorModel: str = 'LI200x'
+    manufacturer: str = 'LICOR'
+    sensorType: str = 'pyranometer'
+
+@dataclass(kw_only=True)
 class SN500(sensor):
     sensorModel: str = 'SN500'
     manufacturer: str = 'Apogee'
-    sensorType: str = 'net-radiometer'
+    sensorType: str = 'four component net-radiometer'
+
+@dataclass(kw_only=True)
+class CS310(sensor):
+    sensorModel: str = 'CS310'
+    manufacturer: str = 'Apogee'
+    sensorType: str = 'quantum sensor'
 
 @dataclass(kw_only=True)
 class HMP155(sensor):
-    sensorModel: str = 'HMP'
+    sensorModel: str = 'HMP155'
     manufacturer: str = 'Vaisala'
     sensorType: str = 'temperature-humidity'
 
@@ -74,6 +89,7 @@ class VoltDiff(sensor):
 
 @dataclass(kw_only=True)
 class ecSensor(sensor):
+    sensorFamily: str = 'EC'
     measurementHeight: float = field(default = None, metadata = {'description': 'Measurement height (Zm) in meters, required for Sonics, optional otherwise'})
     northOffset: float = field(default = None, metadata = {'description': 'Offset from North in degrees (clockwise) of main sonic'})
     northwardSeparation: float = field(default = None,metadata = {'description':'Northward separation from reference sonic (in m) required for irgas, and any secondary sonics.  Calculated from x&y separation if not provided.'})

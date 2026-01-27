@@ -1,10 +1,10 @@
-from modules.database.dataSource import dataSource,dataSourceConfiguration
-from modules.rawDataProcessing.rawFile import sourceFile
+# from scripts.database.dataSource import dataSource,dataSourceConfiguration
+from scripts.rawDataProcessing.rawFile import sourceFile
 from dataclasses import dataclass, field
-from modules.database.project import project
-from modules.helperFunctions.baseClass import baseClass
-from modules.database.dbTrace import firstStageTrace
-from modules.database.site import site
+from scripts.database.project import project
+from submodules.helperFunctions.baseClass import baseClass
+from scripts.database.dbTrace import firstStageTrace
+from scripts.database.site import site
 from zoneinfo import ZoneInfo
 import pandas as pd
 import numpy as np
@@ -20,33 +20,29 @@ class database(project):
     dbInterval: int = 1800 # seconds
     pythonTime: str = 'POSIX_Time_int64'
     matlabTime: str = 'clean_tv'
-    siteID: str = None
-    stageID: str = ''
-    subPath: str = os.path.join('Database','yyyy','siteID','stageID')
-    dfFolder: str = None
+    # siteID: str = None
+    # stageID: str = ''
+    # dfFolder: str = None
     dbFiles: list = None
 
     def __post_init__(self):
+        self.setFolder()
+        print(self.dbFolder)
         super().__post_init__()
 
-    def setFolder(self,year,siteID=None,stageID=None):
-        if siteID is None:
-            siteID=self.siteID
-        if stageID is None:
-            stageID=self.stageID
-        self.dbFolder = self.rootPath.replace('yyyy',str(year)).replace('siteID',siteID).replace('stageID',stageID)
+    def setFolder(self,year='',siteID='',stageID=''):
+        self.dbFolder = os.path.join(self.projectPath,'Database',str(year),siteID,stageID)
         if not os.path.exists(self.dbFolder):
             self.logMessage(f'Creating new database folder: {os.path.abspath(self.dbFolder)}',verbose=True)
             os.makedirs(self.dbFolder,exist_ok=True)
 
-        
-    def readDbYear(self,year):
-        self.setFolder(year)
+    def readDbYear(self,year,siteID=None,stageID=None):
+        self.setFolder(year,siteID,stageID)
         self.datetimeIndex = pd.DatetimeIndex(pd.date_range(
                     datetime.datetime(year,1,1,0,30),
                     datetime.datetime(year+1,1,1,0,0),
                     freq=str(self.dbInterval)+'s'),
-                    tz=ZoneInfo(self.timezone))
+                    tz=ZoneInfo('UTC'))
         self.dbFiles = os.listdir(self.dbFolder)
         timestamp = ((self.datetimeIndex.astype(int)//1e9).values).astype('int64')
         datenum = timestamp.astype('float64')/86400.0+719529.0
@@ -67,44 +63,19 @@ class database(project):
                     dbYear[f] = np.fromfile(os.path.join(self.dbFolder,f),dtype='float32')
         return(dbYear)
 
+    # def writeDbYear(self,dbYear):
+    #     # self.setFolder(dbYear.index[0].year,siteID,stageID)
+    #     for col in dbYear.columns:
+    #         if col not in [self.pythonTime,self.matlabTime]:
+    #             dbYear[col].values.tofile(os.path.join(self.dbFolder,col))
             
-    def writeDbYear(self,dbYear):
-        self.setFolder(dbYear.index[0].year)
-        for col in dbYear.columns:
-            if col not in [self.pythonTime,self.matlabTime]:
-                dbYear[col].values.tofile(os.path.join(self.dbFolder,col))
-        
-
-
-
-@dataclass(kw_only=True)
-class dbDump(database,dataSource):
-    fileName: str
-    overwrite: bool = field(default=False,repr=False)
-    # configName: str = field(default='dataSourceConfiguration.yml',repr=False,init=False)
-
-    def __post_init__(self):
-        self.logMessage(f'Writing: {self.fileName}',verbose=True)
-        # else:
-        #     self.stageID = os.path.join(self.stageID,self.dataSourceID)
-        super().__post_init__()
-        if self.stageID == '':
-            self.stageID = os.path.join(self.measurementType,self.dataSourceID)
-        data,timestamp = sourceFile(fileName=self.fileName,fileFormat=self.sourceFileMetadata['fileFormat'],kwargs=self.sourceFileMetadata,verbose=self.verbose).parseFile()
-        data.index=timestamp.datetime
-        
-        if self.timezone is not None:
-            data.index = data.index.tz_localize(self.timezone)
-        keep = [value['originalVariable'] for value in self.sourceFileMetadata['traceMetadata'].values() if not value['ignore']]
-        data = data[keep]
-        print(data.shape)
-
-        update = False
+    def writeDataFrame(self,data,siteID,stageID,overwrite=False):
+        if not isinstance(data.index,pd.DatetimeIndex):
+            self.logError('datetime index required for writeDataFrame method')
         for year in data.index.year.unique():
-            self.setFolder(year)
-            dbYear = self.readDbYear(year)
+            dbYear = self.readDbYear(year,siteID,stageID)
             for col in data.columns:
-                if self.overwrite:
+                if overwrite:
                     self.logError('Option not yet implemented')
                 else:
                     if col in dbYear.columns:
@@ -112,35 +83,76 @@ class dbDump(database,dataSource):
                     else:
                         dbYear[col] = np.nan
                         dbYear[col] = (dbYear[col].fillna(data[col])).astype('float32')
-                
-                # update dateRange as relevant
-                ix = dbYear[~dbYear[col].isna()].index
-                dr = self.sourceFileMetadata['traceMetadata'][col]['dateRange']
-                if len(dr) == 0:
-                    self.sourceFileMetadata['traceMetadata'][col]['dateRange'] = [ix.min().to_pydatetime(),ix.max().to_pydatetime()]
-                    update = True
-                else:
-                    if self.sourceFileMetadata['traceMetadata'][col]['dateRange'][0]>ix.min():
-                        self.sourceFileMetadata['traceMetadata'][col]['dateRange'][0]=ix.min().to_pydatetime()
-                        update = True
-                        
-                    if self.sourceFileMetadata['traceMetadata'][col]['dateRange'][1]<ix.max():
-                        self.sourceFileMetadata['traceMetadata'][col]['dateRange'][1]=ix.max().to_pydatetime()
-                        update = True
-            self.writeDbYear(dbYear)
-        if update:
-            dataSourceConfiguration.from_class(self,{'readOnly':False,'projectPath':self.projectPath})
-    #     self.firstStageIni()
-        firstStage(siteID=self.siteID)
+                dbYear[col].values.tofile(os.path.join(self.dbFolder,col))
 
-    # def firstStageIni(self):
-    #     Traces = {}
-    #     for key,value in self.sourceFileMetadata['traceMetadata'].items():
-    #         kwargs = value
-    #         kwargs['inputFileName'] = value['fileName']
-    #         kwargs['inputFileName_dates'] = value['dateRange']
-    #         Traces[value['variableName']] = firstStageTrace.from_dict(kwargs).to_dict()
-    #     breakpoint()
+        
+
+
+
+# @dataclass(kw_only=True)
+# class dbDump(database,dataSource):
+#     fileName: str
+#     overwrite: bool = field(default=False,repr=False)
+#     # configName: str = field(default='dataSourceConfiguration.yml',repr=False,init=False)
+
+#     def __post_init__(self):
+#         self.logMessage(f'Writing: {self.fileName}',verbose=True)
+#         # else:
+#         #     self.stageID = os.path.join(self.stageID,self.dataSourceID)
+#         super().__post_init__()
+#         if self.stageID == '':
+#             self.stageID = os.path.join(self.measurementType,self.dataSourceID)
+#         data,timestamp = sourceFile(fileName=self.fileName,fileFormat=self.sourceFileMetadata['fileFormat'],kwargs=self.sourceFileMetadata,verbose=self.verbose).parseFile()
+#         data.index=timestamp.datetime
+        
+#         if self.timezone is not None:
+#             data.index = data.index.tz_localize(self.timezone)
+#         keep = [value['originalVariable'] for value in self.sourceFileMetadata['traceMetadata'].values() if not value['ignore']]
+#         data = data[keep]
+#         print(data.shape)
+
+#         update = False
+#         for year in data.index.year.unique():
+#             self.setFolder(year)
+#             dbYear = self.readDbYear(year)
+#             for col in data.columns:
+#                 if self.overwrite:
+#                     self.logError('Option not yet implemented')
+#                 else:
+#                     if col in dbYear.columns:
+#                         dbYear[col] = (dbYear[col].fillna(data[col])).astype('float32')
+#                     else:
+#                         dbYear[col] = np.nan
+#                         dbYear[col] = (dbYear[col].fillna(data[col])).astype('float32')
+                
+#                 # update dateRange as relevant
+#                 ix = dbYear[~dbYear[col].isna()].index
+#                 dr = self.sourceFileMetadata['traceMetadata'][col]['dateRange']
+#                 if len(dr) == 0:
+#                     self.sourceFileMetadata['traceMetadata'][col]['dateRange'] = [ix.min().to_pydatetime(),ix.max().to_pydatetime()]
+#                     update = True
+#                 else:
+#                     if self.sourceFileMetadata['traceMetadata'][col]['dateRange'][0]>ix.min():
+#                         self.sourceFileMetadata['traceMetadata'][col]['dateRange'][0]=ix.min().to_pydatetime()
+#                         update = True
+                        
+#                     if self.sourceFileMetadata['traceMetadata'][col]['dateRange'][1]<ix.max():
+#                         self.sourceFileMetadata['traceMetadata'][col]['dateRange'][1]=ix.max().to_pydatetime()
+#                         update = True
+#             self.writeDbYear(dbYear)
+#         if update:
+#             dataSourceConfiguration.from_class(self,{'readOnly':False,'projectPath':self.projectPath})
+#     #     self.firstStageIni()
+#         firstStage(siteID=self.siteID)
+
+#     # def firstStageIni(self):
+#     #     Traces = {}
+#     #     for key,value in self.sourceFileMetadata['traceMetadata'].items():
+#     #         kwargs = value
+#     #         kwargs['inputFileName'] = value['fileName']
+#     #         kwargs['inputFileName_dates'] = value['dateRange']
+#     #         Traces[value['variableName']] = firstStageTrace.from_dict(kwargs).to_dict()
+#     #     breakpoint()
 
 @dataclass(kw_only=True)
 class firstStage(database,site):
