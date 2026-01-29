@@ -28,11 +28,12 @@ class ecf32(dataSource):
     configName: str = field(default='dataSourceConfiguration.yml',repr=False,init=False)
 
     def __post_init__(self):
-        # self.subPath = os.path.sep.join(['siteMetadata',self.siteID,self.dataSourceID])
+        # self.subPath = ['siteMetadata',self.siteID,self.dataSourceID]
 
         T1 = time.time()
         super().__post_init__()
         #Reset rootpath to save outputs to highFrequencyDataFolder location
+        self.breakpoint()
         self.subPath = os.path.sep.join(['highFrequencyData',self.siteID,self.dataSourceID])
         self.rootPath = os.path.join(self.projectPath,self.subPath)
         os.makedirs(self.rootPath,exist_ok=True)

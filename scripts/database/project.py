@@ -21,10 +21,11 @@ class project(baseClass):
     def __post_init__(self):
         if self.projectPath is None:
             return
+        self.projectPath = os.path.normpath(self.projectPath)
         if not type(self).__name__.endswith('Configuration'):
             self.syncConfig(projectConfiguration.from_dict(self.__dict__))
         if self.configName is not None:
-            self.configFilePath = os.path.join(self.projectPath,self.subPath,self.configName)
+            self.configFilePath = os.path.normpath(os.path.join(self.projectPath,self.subPath,self.configName))
         super().__post_init__()
 
     def syncConfig(self,config,dbg=False):
@@ -41,7 +42,7 @@ class project(baseClass):
         
 @dataclass(kw_only=True)
 class projectConfiguration(project):
-    fromFile: bool = True
+    fromFile: bool = field(default=True,repr=False)
     header: str = field(default=default_comment,repr=False,init=False) # YAML header, must be treated 
     createdBy: str = field(default='')
     lastModified: str = field(default=None)

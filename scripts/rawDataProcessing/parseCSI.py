@@ -327,7 +327,7 @@ class TOB3(csiTable):
         # fileTime = np.ceil(self.dataTable[self.timestampName]/self.databaseInterval)
         # if self.samplingInterval<self.databaseInterval:
         #     for ft in fileTime.unique():
-        #         dfColumns = {k:asdict_repr(v) for k,v in self.traceMetadata.items() if v.dtype == '<f4'}
+        #         dfColumns = {k:dcToDict(v) for k,v in self.traceMetadata.items() if v.dtype == '<f4'}
         #         df = self.dataTable.loc[fileTime[fileTime==ft].index,list(dfColumns.keys())]
         #         # Output as 1d binary array for processing in eddypro 
         #         # self.ecf32(ft*self.databaseInterval,df,dfColumns,self.databaseInterval)

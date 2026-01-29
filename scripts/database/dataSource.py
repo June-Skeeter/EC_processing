@@ -6,7 +6,7 @@ from dataclasses import is_dataclass
 from scripts.database.site import site
 import scripts.database.dataLoggers as dataLoggers
 from scripts.database.dbTools import database
-import submodules.helperFunctions.packDict as packDict
+import submodules.helperFunctions.dictFuncs as dictFuncs
 from scripts.database.sensorModels import sensorModels
 # import scripts.rawDataProcessing.rawFile as rawFile
 import scripts.rawDataProcessing.parseCSI as parseCSI
@@ -34,14 +34,12 @@ class dataSource(site):
             self.formatUID('dataSourceID')
         if not type(self).__name__.endswith('dataSourceConfiguration'):
             self.syncConfig(dataSourceConfiguration)
-        # self.fileInventory = 
         super().__post_init__()
 
-        # breakpoint()
-        # self.fileInventory
 
     def dbDump(self,sourceDir,stageID = None):
         dbInstance = database(projectPath=self.projectPath)
+    
         if stageID is None:
             self.stageID = os.path.join(self.measurementType,self.dataSourceID)
         else:
@@ -50,41 +48,45 @@ class dataSource(site):
         if not os.path.isdir(sourceDir):
             self.logError(msg=f'Invalid search directory {sourceDir}')
         
-        inventoryName = os.path.join(self.projectPath,self.subPath,f"{self.dataSourceID}_fileInventory.json")
+        subPath = os.path.sep.join(['siteMetadata',self.siteID,'dataSources'])
+        inventoryName = os.path.join(self.projectPath,subPath,f"{self.dataSourceID}_fileInventory.json")
 
         if os.path.isfile(inventoryName):
-            self.fileInventory,_ = self.loadDict(fileName=inventoryName)
+            self.fileInventory = self.loadDict(fileName=inventoryName)
+            fileInventory = dictFuncs.unpackDict(self.fileInventory)
         else:
-            self.fileInventory = {}
-
+            fileInventory = {}
+        updateSourceConfig = False
         for dir,_,fname in os.walk(sourceDir):
             fname = [os.path.join(dir,f) for f in fname if fnmatch.fnmatch(f,self.filenameMatch)]
+            fname = [f for f in fname if (f not in fileInventory or type(fileInventory[f]) is not bool)]
             if len(fname)>0:
+                result = []
                 for f in fname:
+                    print(f)
                     data = self.fread(filename=f)
-                    dbInstance.writeDataFrame(data=data,siteID=self.siteID,stageID=self.stageID)
-                    print('dateRange update and other checks?')
-                    # breakpoint()
-#                 # update dateRange as relevant
-#                 ix = dbYear[~dbYear[col].isna()].index
-#                 dr = self.sourceFileMetadata['traceMetadata'][col]['dateRange']
-#                 if len(dr) == 0:
-#                     self.sourceFileMetadata['traceMetadata'][col]['dateRange'] = [ix.min().to_pydatetime(),ix.max().to_pydatetime()]
-#                     update = True
-#                 else:
-#                     if self.sourceFileMetadata['traceMetadata'][col]['dateRange'][0]>ix.min():
-#                         self.sourceFileMetadata['traceMetadata'][col]['dateRange'][0]=ix.min().to_pydatetime()
-#                         update = True
-                        
-#                     if self.sourceFileMetadata['traceMetadata'][col]['dateRange'][1]<ix.max():
-#                         self.sourceFileMetadata['traceMetadata'][col]['dateRange'][1]=ix.max().to_pydatetime()
-#                         update = True
-#         if update:
-#             dataSourceConfiguration.from_class(self,{'readOnly':False,'projectPath':self.projectPath})
-#     #     self.firstStageIni()
-#         firstStage(siteID=self.siteID)
-        # breakpoint()
-                self.fileInventory = packDict.packDict(fname,base=sourceDir,fill=True) | self.fileInventory
+                    out = dbInstance.writeDataFrame(data=data,siteID=self.siteID,stageID=self.stageID)
+                    result.append(out)
+                    if out: 
+                        for col in data.columns:
+                        # update dateRange as relevant
+                            ix = data[~data[col].isna()].index
+                            dr = self.traceMetadata[col]['dateRange']
+                            if len(dr) == 0:
+                                self.traceMetadata[col]['dateRange'] = [ix.min().to_pydatetime(),ix.max().to_pydatetime()]
+                                updateSourceConfig = True
+                            else:
+                                if self.traceMetadata[col]['dateRange'][0]>ix.min():
+                                    self.traceMetadata[col]['dateRange'][0]=ix.min().to_pydatetime()
+                                    updateSourceConfig = True
+                                    
+                                if self.traceMetadata[col]['dateRange'][1]<ix.max():
+                                    self.traceMetadata[col]['dateRange'][1]=ix.max().to_pydatetime()
+                                    updateSourceConfig = True
+                self.fileInventory = dictFuncs.updateDict(self.fileInventory,dictFuncs.packDict(fname,base=sourceDir,fill=result))
+        
+        if updateSourceConfig:
+            dataSourceConfiguration.from_class(self,{'readOnly':False,'projectPath':self.projectPath})
 
         self.saveDict(self.fileInventory,fileName=inventoryName)
 
@@ -93,7 +95,7 @@ class dataSource(site):
             self.logError(f'Files from {self.dataLogger["manufacturer"]} logger of type {self.fileFormat} not yet supported')
             
         sourceFile = self.rawFileParsers[self.fileFormat](
-            fileName=self.templateFile,
+            fileName=filename,
             extractData=extractData,
             traceMetadata=self.traceMetadata,
             verbose=self.verbose
@@ -108,6 +110,10 @@ class dataSource(site):
             self.logError('Implement UTC conversion for dbDumping')
         keep = [value['originalVariable'] for value in self.traceMetadata.values() if not value['ignore']]
         data = data[keep]
+        if self.startDate is not None:
+            data = data.loc[data.index>=self.startDate]
+        if self.endDate is not None:
+            data = data.loc[data.index<=self.endDate]
         return(data)
 
             
@@ -115,7 +121,7 @@ class dataSource(site):
 class dataSourceConfiguration(dataSource):
     header: str = field(default=default_comment,repr=False,init=False) # YAML header, must be treated differently
 
-    fromFile: bool = True
+    fromFile: bool = field(default=True,repr=False)
     dataSourceID: str = field(
         metadata = {'description': 'Unique dataSourceID code'} 
     )

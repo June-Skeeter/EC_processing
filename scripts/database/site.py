@@ -24,7 +24,7 @@ class site(pointObject,project):
 class siteConfiguration(site):
     header: str = field(default=default_comment,repr=False,init=False) # YAML header, must be treated differently
 
-    fromFile: bool = True
+    fromFile: bool = field(default=True,repr=False)
     siteID: str = field(
         metadata = {'description': 'Unique siteID code'} 
     )

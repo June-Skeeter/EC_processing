@@ -8,6 +8,7 @@ import scripts.database.dataSource as dataSource
 import scripts.database.sensorModels as sensorModels
 from scripts.rawDataProcessing.ecf32 import ecf32
 from scripts.rawDataProcessing.parseCSI import TOB3
+from scripts.database.dbTools import database
 
 
 T1 = time.time()
@@ -20,7 +21,7 @@ projectPath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'outputs',
 # md = TOB3(fileName=fn)
 # breakpoint()
 
-reset = True
+reset = False
 if reset:
     shutil.rmtree(projectPath, ignore_errors=True)
 
@@ -128,7 +129,7 @@ if reset:
             sensorModels.HMP155(measurementHeight=3,variables=['TA_1_1_3','RH_1_1_3']),
             sensorModels.SN500(measurementHeight=3,variables=["NETRAD","ALB","SW_IN","SW_OUT","LW_IN","LW_OUT"]),
             sensorModels.CS310(measurementHeight=3,variables=["PPFD_IN"]),
-            sensorModels.IRGASON(measurementHeight=3.26,sensorFamily='BIOMET',variables=['USTAR',"TKE",'WS','WD'])
+            sensorModels.IRGASON(measurementHeight=3.26,sensorFamily='BIOMET',variables=['TA_1_1_1','USTAR',"TKE",'WS','WD'])
             ],
         traceMetadata = {
             'NETRAD':{'variableName':'NETRAD_1_1_1'},
@@ -173,11 +174,38 @@ if reset:
     )
 
 
+# ds = dataSource.dataSource(
+#     projectPath=projectPath,
+#     siteID='SCL',
+#     dataSourceID='BIOMET_V1',
+#     )
+
+# searchDir = r'C:\Users\User\GSC_Work\SCL_2024'
+# searchDir = r'U:\data-dump\SCL\2024'
+# ds.dbDump(
+#     sourceDir=searchDir)
+
+
 ds = dataSource.dataSource(
     projectPath=projectPath,
     siteID='SCL',
-    dataSourceID='BIOMET_V1',
+    dataSourceID='BIOMET_V2',
     )
+
+searchDir=r'U:\data-dump\SCL\2025'
+
 ds.dbDump(
-    sourceDir=r'C:\Users\User\GSC_Work\SCL_2024')
-print(ds)
+    sourceDir=searchDir)
+
+
+dbf = database(projectPath=projectPath).readSiteData(siteID='SCL',stageID='BIOMET/BIOMET_V2')
+# print(dbf)
+
+import matplotlib.pyplot as plt
+
+plt.figure()
+plt.plot(dbf['WS']*3.6)
+plt.grid()
+plt.show()
+
+
