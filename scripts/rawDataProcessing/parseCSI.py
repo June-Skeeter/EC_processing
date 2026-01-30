@@ -2,9 +2,8 @@
 
 from dataclasses import dataclass,field
 from collections import defaultdict
-from submodules.helperFunctions.log import log
 from submodules.helperFunctions.parseFrequency import parseFrequency
-from submodules.helperFunctions.dictFuncs import dcToDict
+# from submodules.helperFunctions.dictFuncs import dcToDict
 from submodules.helperFunctions.baseClass import baseClass
 import scripts.database.dataLoggers as dataLoggers
 from scripts.database.dbTrace import rawTrace
@@ -74,6 +73,10 @@ class csiTrace(rawTrace):
 class csiFile(baseClass):
     # Some files may contain multiple tables
     # Attributes common to a given file
+    fileName: str = field(
+        metadata={
+            'descriptions': 'Name of the raw data file'
+            })
     fileObject: object = field(default=None,repr=False,init=False)
     dataLogger: dict = field(default_factory=dict,repr=False,init=False)
     stationName: str = None
@@ -95,10 +98,6 @@ class csiFile(baseClass):
         metadata={
             'description': 'Indicates the type of file (see options)',
             'options':['TOB3','TOA5']
-            })
-    fileName: str = field(
-        metadata={
-            'descriptions': 'Name of the raw data file'
             })
     extractData: bool = field(
         default=True,
@@ -168,7 +167,7 @@ class csiTable(csiFile):
             Offset = (self.dataTable[self.timestampName].diff().fillna(self.samplingInterval)-self.samplingInterval).cumsum()
             self.dataTable[self.timestampName] -= Offset
             if self.verbose:
-                log(f"Total GPS induced offset in {self.fileName} is {Offset.iloc[-1]}s",verbose=False)
+                self.logMessage(f"Total GPS induced offset in {self.fileName} is {Offset.iloc[-1]}s",verbose=False)
         
 @dataclass(kw_only=True)
 class TOA5(csiTable):
