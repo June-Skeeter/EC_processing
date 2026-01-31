@@ -10,6 +10,7 @@ import submodules.helperFunctions.dictFuncs as dictFuncs
 from scripts.database.sensorModels import sensorModels
 # import scripts.rawDataProcessing.rawFile as rawFile
 import scripts.rawDataProcessing.parseCSI as parseCSI
+import scripts.rawDataProcessing.parseCSV as parseCSV
 import fnmatch
 import numpy as np
 
@@ -22,10 +23,11 @@ Created: {datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}
 @dataclass(kw_only=True)
 class dataSource(site):
     dataSourceID: str
-    fileInventory: dict = field(default_factory=dict,init=False)
+    fileInventory: dict = field(default_factory=dict,init=False,repr=False)
     rawFileParsers: dict = field(init=False,repr=False,default_factory=lambda:{
         'TOB3':parseCSI.TOB3,
-        'TOA5':parseCSI.TOA5
+        'TOA5':parseCSI.TOA5,
+        'HOBOcsv':parseCSV.HOBOcsv,
     })
     # sourceDir: str = None
     
@@ -33,9 +35,10 @@ class dataSource(site):
         if self.UID is None:
             self.formatUID('dataSourceID')
         if not type(self).__name__.endswith('dataSourceConfiguration'):
+            self.debug = True
             self.syncConfig(dataSourceConfiguration)
         super().__post_init__()
-
+ 
 
     def dbDump(self,sourceDir,stageID = None):
         dbInstance = database(projectPath=self.projectPath)
@@ -67,6 +70,7 @@ class dataSource(site):
                     data = self.fread(filename=f)
                     out = dbInstance.writeDataFrame(data=data,siteID=self.siteID,stageID=self.stageID)
                     result.append(out)
+                    print(result)
                     if out: 
                         for col in data.columns:
                         # update dateRange as relevant
@@ -83,7 +87,9 @@ class dataSource(site):
                                 if self.traceMetadata[col]['dateRange'][1]<ix.max():
                                     self.traceMetadata[col]['dateRange'][1]=ix.max().to_pydatetime()
                                     updateSourceConfig = True
+
                 self.fileInventory = dictFuncs.updateDict(self.fileInventory,dictFuncs.packDict(fname,base=sourceDir,fill=result))
+
         
         if updateSourceConfig:
             dataSourceConfiguration.from_class(self,{'readOnly':False,'projectPath':self.projectPath})
@@ -97,7 +103,7 @@ class dataSource(site):
         sourceFile = self.rawFileParsers[self.fileFormat](
             fileName=filename,
             extractData=extractData,
-            traceMetadata=self.traceMetadata,
+            traceMetadata=self.traceMetadata.copy(),
             verbose=self.verbose
             )
         if not extractData:
@@ -129,11 +135,15 @@ class dataSourceConfiguration(dataSource):
         default=None,
         metadata={'options':['EC','BIOMET','Met','Manual','Model']}
         )
+    description: str = field(
+        default = None,
+        metadata = {'description': 'self explanatory'} 
+    )
     fileFormat: str = field(
         default=None,
         metadata={'options':['TOB3','TOA5','GHG','HOBOcsv']}
         )
-    templateFile: str = field(
+    templateFile: Iterable = field(
         default=None,
         metadata={'description':'Representative template file for parsing variable names etc.'}
     )
@@ -166,7 +176,15 @@ class dataSourceConfiguration(dataSource):
         super().__post_init__()
         self.formatDataLogger()
         self.formatSensors()
-        self.parseMetadata()
+        if type(self.templateFile) is str:
+            self.traceMetadata = self.parseMetadata(self.templateFile)
+        elif type(self.templateFile is list):
+            tempMetadata = {}
+            for fileName in self.templateFile:
+                tempMetadata = self.parseMetadata(fileName,tempMetadata)
+            self.traceMetadata = tempMetadata
+        else:
+            self.logError('Invalid templateFile formatting')
         if not self.configFileExists or not self.readOnly:
             self.saveConfigFile(keepNull=False)
 
@@ -185,27 +203,34 @@ class dataSourceConfiguration(dataSource):
         else:
             self.logError(msg=f"Cannot handle dataLogger object: {self.dataLogger}")
         
-    def parseMetadata(self):
-        sourceAttributes = self.fread(filename=self.templateFile,extractData=False)
+    def parseMetadata(self,fileName,tempMetadata={}):
+        if self.filenameMatch and not fnmatch.fnmatch(os.path.split(fileName)[-1],self.filenameMatch):
+            self.logError(f'Template file: {os.path.split(fileName)[-1]} does not match expected pattern {self.filenameMatch}')
+        sourceAttributes = self.fread(filename=fileName,extractData=False)
         for key,value in self.dataLogger.items():
             if (value == '' or value is None) and hasattr(sourceAttributes,key):
                 self.dataLogger[key] = getattr(sourceAttributes,key)
-        self.traceMetadata = sourceAttributes.traceMetadata
-        for key in self.traceMetadata:
-            if self.traceMetadata[key]['sensorID'] == '':
-                self.logMessage(f'{key} missing sensor association')
-                self.traceMetadata[key]['ignore'] = True
+            elif hasattr(sourceAttributes,key) and getattr(sourceAttributes,key) != self.dataLogger[key]:
+                if type(self.dataLogger[key]) != list:
+                    self.dataLogger[key] = [self.dataLogger[key]]
+                self.dataLogger[key].append(getattr(sourceAttributes,key))
+        tempMetadata = dictFuncs.updateDict(tempMetadata,sourceAttributes.traceMetadata)
+        for key in tempMetadata:
+            if tempMetadata[key]['sensorID'] == '':
+                self.logMessage(f'{key} missing sensor association, ignore defaulting to True')
+                tempMetadata[key]['ignore'] = True
             if self.startDate is not None and self.endDate is not None:
-                self.traceMetadata[key]['dateRange']=[self.startDate,self.endDate]
+                tempMetadata[key]['dateRange']=[self.startDate,self.endDate]
+        return(tempMetadata)
 
     def formatSensors(self):
         #If list of sensor objects dump to dict
         temp = {}
         if type(self.sensorInventory) is list:
             for sI in self.sensorInventory:
-                if sI.sensorID in temp:
+                while sI.UID in temp:
                     sI.updateUID()
-                temp[sI.sensorID] = sI.to_dict(keepNull=False)
+                temp[sI.UID] = sI.to_dict(keepNull=False)
             self.sensorInventory = temp
         else:
             for sI in self.sensorInventory.values():
@@ -216,7 +241,7 @@ class dataSourceConfiguration(dataSource):
             self.sensorInventory = temp
         EC = {'sonic':[],'irga':[],'thermocouple':[]}
         for sI in self.sensorInventory.values():
-            if sI['variables'] != []:
+            if 'variables' in sI and sI['variables'] != []:
                 for v in sI['variables']:
                     if v in self.traceMetadata:
                         self.traceMetadata[v]['sensorID'] = sI['sensorID']
@@ -316,7 +341,6 @@ class dataSourceConfiguration(dataSource):
 #             if 'sensorModel' not in sensor:
 #                 self.logError('must provide sensorModel')
 #             elif sensor['sensorModel'] not in sensorModels:
-#                 breakpoint()
 #                 self.logError(f'Sensor not currently supported: {sensor["sensorModel"]}')
 #             model = sensorModels[sensor['sensorModel']].from_dict(sensor)
 #             while model.UID in sensorDict.keys():
@@ -326,7 +350,6 @@ class dataSourceConfiguration(dataSource):
 
 #         self.sensorConfigurations = sensorDict
 #         super().__post_init__()
-#         breakpoint()
 
 #         if self.measurementType == 'EC':
 #             self.formatEC()
@@ -420,8 +443,6 @@ class dataSourceConfiguration(dataSource):
 #                     zSeparation=self.zSeparation),
 #                 sensorModels['CSI_T107']()
 #             ]
-#         else:
-#             breakpoint()
 #         super().__post_init__()
 
 

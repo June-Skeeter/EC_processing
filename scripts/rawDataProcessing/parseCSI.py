@@ -125,7 +125,6 @@ class csiTable(csiFile):
     asciiHeader: list = field(init=False,repr=False)
     nLinesAsciiHeader: int = field(repr=False)
     tableName: str = None
-    traceMetadata: dict = field(default_factory=dict)
     timestampName: str = field(default='TIMESTAMP',init=False,repr=False)
     recordName: str = field(default='RECORD',init=False,repr=False)
     samplingInterval: float = field(default=None,init=None)  # in seconds
@@ -197,7 +196,7 @@ class TOA5(csiTable):
             )
         # Extract metadata for each variable
         self.traceMetadata =  {
-            columnName:csiTrace(variableName=columnName,units=units,operation=operation,dtype=dtype,traceMetadata=self.traceMetadata).to_dict(keepNull=False)
+            columnName:csiTrace(originalVariable=columnName,units=units,operation=operation,dtype=dtype,traceMetadata=self.traceMetadata).to_dict(keepNull=False)
                 for columnName,units,operation,dtype in 
                 zip(self.asciiHeader[1],self.asciiHeader[2],self.asciiHeader[3],list(self.dataTable.dtypes))}
         self.samplingInterval = self.dataTable.TIMESTAMP.diff().median().total_seconds()

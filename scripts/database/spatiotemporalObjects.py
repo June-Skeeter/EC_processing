@@ -22,6 +22,7 @@ class spatiotemporalObject():
             'description': 'UTC offset.  For nested values, assumed to be same as parent object.  Optionally to provide if different from parent value.'
     })
     UID: str = field(default=None,repr=False)
+    UID_link: str = field(default=None,repr=False)
     latitude: list = None
     longitude: list = None
 
@@ -39,7 +40,9 @@ class spatiotemporalObject():
 
     def formatUID(self,UID=None):
         if self.UID is None:
-            self.UID = getattr(self,UID)
+            if self.UID_link is None:
+                self.UID_link = UID
+            self.UID = getattr(self,self.UID_link)
         if '_' not in self.UID or not self.UID.split('_')[-1].isnumeric():
             self.UID = self.UID + '_1'
 
@@ -49,6 +52,9 @@ class spatiotemporalObject():
             self.UID = self.UID.rsplit('_',1)[0]+'_'+str(index)
         else:
             self.formatUID()
+        if self.UID_link is not None:
+            setattr(self,self.UID_link,self.UID)
+
 
 
 @dataclass(kw_only=True)

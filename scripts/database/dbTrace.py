@@ -1,5 +1,8 @@
+import fnmatch
 from dataclasses import dataclass, field
 from submodules.helperFunctions.baseClass import baseClass
+from submodules.helperFunctions.safeFormat import safeFormat,cleanString
+
 
 @dataclass(kw_only=True)
 class trace(baseClass):
@@ -22,16 +25,26 @@ class rawTrace(trace):
     sensorID: str = ''
     traceMetadata: dict = field(default_factory=dict,repr=False)
     ignoreByDefault: list = field(default_factory=list,repr=False)
+    partialMatch: bool = field(default=False,repr=False)
 
     def __post_init__(self):
+        self.originalVariable = cleanString(self.originalVariable)
         if self.variableName == self.__dataclass_fields__['variableName'].default:
-            self.variableName = self.originalVariable
+            self.variableName = safeFormat(self.originalVariable)
         if self.fileName == self.__dataclass_fields__['fileName'].default:
-            self.fileName = self.originalVariable
-        if self.traceMetadata is not None and self.variableName in self.traceMetadata:
-            for key,value in self.traceMetadata[self.variableName].items():
-                setattr(self,key,value)
-        if self.variableName in self.ignoreByDefault:
+            self.fileName = safeFormat(self.originalVariable)
+
+        if self.traceMetadata is not None:
+            if self.partialMatch:
+                m = [k for k in self.traceMetadata if fnmatch.fnmatch(self.originalVariable,k)]
+                if len(m)>1:
+                    self.logError('Multi-match, give more precise fnmatch wildcard')
+                elif len(m)==1:
+                    self.traceMetadata[self.originalVariable] = self.traceMetadata[m[0]]
+            if self.originalVariable in self.traceMetadata:
+                for key,value in self.traceMetadata[self.originalVariable].items():
+                    setattr(self,key,value)
+        if self.originalVariable in self.ignoreByDefault:
             self.ignore = True
         if self.units == '%':
             self.units = 'percent'

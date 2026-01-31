@@ -28,8 +28,8 @@ class project(baseClass):
             self.configFilePath = os.path.normpath(os.path.join(self.projectPath,self.subPath,self.configName))
         super().__post_init__()
 
-    def syncConfig(self,config,dbg=False):
-        config = config.from_dict(self.to_dict(keepNull=False)|{'projectPath':self.projectPath,'verbose':self.verbose})
+    def syncConfig(self,config):
+        config = config.from_dict(self.to_dict(keepNull=False)|{'projectPath':self.projectPath,'verbose':self.verbose,'debug':self.debug})
         # self.depth+=1
         exclude = list(baseClass.__dataclass_fields__.keys()) + [k for k,v in project.__dataclass_fields__.items() if not v.repr]
         

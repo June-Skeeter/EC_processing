@@ -17,14 +17,16 @@ class sensor(pointObject,baseClass):
     manufacturer: str = field(default = '',metadata = {'description': 'Indicates manufacturer of sensor, auto from class name',})
     serialNumber: str = field(default = '',metadata = {'description': 'Serial# (if known)',})
     sensorType: str = field(default='',repr=False)
-    variables: list = field(default_factory=list,metadata={'description':'list of variables associated with the sensor'})
+    variables: list = field(default=None,metadata={'description':'list of variables associated with the sensor'})
     measurementHeight: float = field(default = None, metadata = {'description': 'Measurement height (Zm) optional for BIOMET sensors'})
     timezone: str = None
 
     def __post_init__(self):
         # if self.sensorModel is None:
         #     self.sensorModel = type(self).__name__
-        self.formatUID('sensorModel')
+        if self.sensorID is None:
+            self.sensorID = self.sensorModel
+        self.formatUID('sensorID')
         if self.sensorID is None:
             self.sensorID = self.UID
         elif self.sensorID is None:
