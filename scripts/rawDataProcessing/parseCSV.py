@@ -1,5 +1,6 @@
 from submodules.helperFunctions.safeFormat import safeFormat,cleanString
-from submodules.helperFunctions.baseClass import baseClass
+# from submodules.helperFunctions.baseClass import baseClass
+from scripts.rawDataProcessing.rawFile import sourceFile
 import scripts.database.dataLoggers as dataLoggers
 from scripts.database.dbTrace import rawTrace
 from dataclasses import dataclass, field
@@ -15,11 +16,7 @@ import re
 import os
 
 @dataclass(kw_only=True)
-class csvFile(baseClass):
-    fileName: str = field(
-        metadata={
-            'descriptions': 'Name of the raw data file'
-            })
+class csvFile(sourceFile):
     delimiter: str = field(default=',',repr=False)
     encoding: str = field(
         default=None,
@@ -58,17 +55,17 @@ class csvFile(baseClass):
         metadata={
             'description':'True (all data) / False (preview header where applicable)'
             })
-    traceMetadata: dict = field(
-        default=None,
-        repr=False,
-        )
-    fileFormat: str = field(
-        default='csv',
-        init=False,
-        metadata={
-            'description': 'Indicates the type of file (see options)',
-            'options':['csv','HOBOcsv']
-            })
+    # traceMetadata: dict = field(
+    #     default=None,
+    #     repr=False,
+    #     )
+    # fileFormat: str = field(
+    #     default='csv',
+    #     init=False,
+    #     metadata={
+    #         'description': 'Indicates the type of file (see options)',
+    #         'options':['csv','HOBOcsv']
+    #         })
     dropCols: list = field(
         default_factory=list,
         metadata={'description':'Optional list of columns to drop'})
@@ -163,6 +160,7 @@ class HOBOcsv(csvFile):
                         self.timestampName = key
             if self.timestampName is None:
                 self.logError('Must specify timestampName name if parseDate = True, or provide timestampFormat explicitly')
+        
         super().__post_init__()        
 
 
@@ -173,7 +171,7 @@ class HOBOcsv(csvFile):
         
         tempTraces = {}
         for col in self.dataTable.columns:
-            trace = rawTrace(originalVariable=col,partialMatch=partial,traceMetadata=self.traceMetadata)
+            trace = rawTrace(originalVariable=col,partialMatch=partial,traceMetadata=self.traceMetadata,debug=self.debug)
             tempTraces[trace.fileName] = trace.to_dict(keepNull=False)
         self.traceMetadata = tempTraces
         self.dataTable.columns = [v['fileName'] for v in self.traceMetadata.values()]

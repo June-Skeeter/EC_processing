@@ -4,21 +4,17 @@ from datetime import datetime, timezone
 from dataclasses import dataclass, field
 from dataclasses import is_dataclass
 from scripts.database.site import site
+from scripts.database.project import configCommon
 import scripts.database.dataLoggers as dataLoggers
 from scripts.database.dbTools import database
 import submodules.helperFunctions.dictFuncs as dictFuncs
 from scripts.database.sensorModels import sensorModels
-# import scripts.rawDataProcessing.rawFile as rawFile
 import scripts.rawDataProcessing.parseCSI as parseCSI
 import scripts.rawDataProcessing.parseCSV as parseCSV
 import fnmatch
 import numpy as np
 
-
-default_comment = f'''
-Created: {datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}
-'''
-
+mdMap = site.metadataMap
 
 @dataclass(kw_only=True)
 class dataSource(site):
@@ -27,6 +23,7 @@ class dataSource(site):
     rawFileParsers: dict = field(init=False,repr=False,default_factory=lambda:{
         'TOB3':parseCSI.TOB3,
         'TOA5':parseCSI.TOA5,
+        'mixedArray':parseCSI.mixedArray,
         'HOBOcsv':parseCSV.HOBOcsv,
     })
     # sourceDir: str = None
@@ -67,10 +64,9 @@ class dataSource(site):
                 result = []
                 for f in fname:
                     print(f)
-                    data = self.fread(filename=f)
+                    data = self.readSourceFile(filename=f)
                     out = dbInstance.writeDataFrame(data=data,siteID=self.siteID,stageID=self.stageID)
                     result.append(out)
-                    print(result)
                     if out: 
                         for col in data.columns:
                         # update dateRange as relevant
@@ -96,15 +92,19 @@ class dataSource(site):
 
         self.saveDict(self.fileInventory,fileName=inventoryName)
 
-    def fread(self,filename,extractData=True):
+    def readSourceFile(self,filename,extractData=True):
         if self.fileFormat not in self.rawFileParsers:
             self.logError(f'Files from {self.dataLogger["manufacturer"]} logger of type {self.fileFormat} not yet supported')
+            
+        elif self.fileFormat not in ['mixedArray'] and self.filenameMatch and not fnmatch.fnmatch(os.path.split(filename)[-1],self.filenameMatch):
+            self.logError(f'Template file: {os.path.split(filename)[-1]} does not match expected pattern {self.filenameMatch}')
             
         sourceFile = self.rawFileParsers[self.fileFormat](
             fileName=filename,
             extractData=extractData,
             traceMetadata=self.traceMetadata.copy(),
-            verbose=self.verbose
+            verbose=self.verbose,
+            debug=self.debug
             )
         if not extractData:
             return(sourceFile)
@@ -114,59 +114,69 @@ class dataSource(site):
             data.index = data.index.tz_localize(self.timezone)
         else:
             self.logError('Implement UTC conversion for dbDumping')
-        keep = [value['originalVariable'] for value in self.traceMetadata.values() if not value['ignore']]
+        keep = [
+            value['fileName'] for value in self.traceMetadata.values()
+            if not value['ignore'] and value['fileName'] in data.columns]
         data = data[keep]
         if self.startDate is not None:
             data = data.loc[data.index>=self.startDate]
         if self.endDate is not None:
             data = data.loc[data.index<=self.endDate]
+        duplicates = data.index.duplicated()
+        if duplicates.sum()>0:
+            self.logMessage(f'Removed n={duplicates.sum()} rows at positions: {data.index[duplicates]}')
+            data = data[~duplicates].copy()
         return(data)
 
-            
-@dataclass(kw_only=True)
-class dataSourceConfiguration(dataSource):
-    header: str = field(default=default_comment,repr=False,init=False) # YAML header, must be treated differently
+      
+headerText = f'''
+Datasource configuration file defines key parameters for individual data sources.
+An data source, is any set of files sharing common metadata, e.g. GHG files from an EC station with common configuration settings.
+When settings change significantly (e.g., instrumentation swap) the configuration is not common and the files should be treated as having separate sources.
+Values defined here (e.g., startDate) are shared with nested sub-site objects (e.g., dataSource) unless explicitly defined in the dataSourceConfiguration
+Created: {datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}
+'''      
 
-    fromFile: bool = field(default=True,repr=False)
+@dataclass(kw_only=True)
+class dataSourceConfiguration(configCommon,dataSource):
+    header: str = field(default=headerText,repr=False,init=False) # YAML header, must be treated differently
+
     dataSourceID: str = field(
-        metadata = {'description': 'Unique dataSourceID code'} 
+        metadata=mdMap('Unique dataSourceID code')
+    )
+    siteID: str = field(
+        metadata=mdMap('Unique siteID code, must correspond to an existing site. Site-level metadata (e.g. startDate, coordinates, etc.) will be propagated to any undefined values in the dataSourceConfiguration wherever applicable.')
     )
     measurementType: str = field(
         default=None,
-        metadata={'options':['EC','BIOMET','Met','Manual','Model']}
+        metadata=mdMap('Code describing the type of measurement the source corresponds to', options=['EC','BIOMET','Met','Manual','Model'])
         )
     description: str = field(
         default = None,
-        metadata = {'description': 'self explanatory'} 
+        metadata=mdMap('self explanatory')
     )
     fileFormat: str = field(
         default=None,
-        metadata={'options':['TOB3','TOA5','GHG','HOBOcsv']}
+        metadata=mdMap('Format of sourceFile. Must correspond to a class Method defined in the rawProcessingModule e.g., TOB3 is defined in parseCIS.py',options=['TOB3','TOA5','GHG','HOBOcsv','mixedArray'])
         )
     templateFile: Iterable = field(
         default=None,
-        metadata={'description':'Representative template file for parsing variable names etc.'}
+        metadata=mdMap('Representative template file for parsing variable names etc.')
     )
     filenameMatch: str = field(
         default=None,
-        metadata={'description':'Regex wildcard pattern for file matching.'}
+        metadata=mdMap('Regex wildcard pattern for file matching.')
     )
     dataLogger: Iterable = field(
-        default_factory=lambda:dataLoggers.dataLogger(),
-        metadata={
-            'description':'Data logger metadata'
-    })
+        default_factory=lambda:dataLoggers.dataLogger().to_dict(),
+        metadata=mdMap('Data logger metadata'))
     sensorInventory: Iterable = field(
         default_factory=dict,
-        metadata={
-            'description':'List or dict of sensor objects, will dump to dict, but supports list of inputs'
-    })
+        metadata=mdMap('List or dict of sensor objects, will dump to dict, but supports list of inputs'))
     traceMetadata: dict = field(
         default_factory=dict,
-        metadata={'description':'dict describing traces in the source File'}
+        metadata=mdMap('dict describing traces in the source File')
         )
-    
-    lastModified: str = field(default=None)
 
     def __post_init__(self):
         self.configName = f"{self.dataSourceID}_sourceConfig.yml"
@@ -178,14 +188,15 @@ class dataSourceConfiguration(dataSource):
         self.formatSensors()
         if type(self.templateFile) is str:
             self.traceMetadata = self.parseMetadata(self.templateFile)
-        elif type(self.templateFile is list):
+        elif type(self.templateFile) is list:
             tempMetadata = {}
-            for fileName in self.templateFile:
-                tempMetadata = self.parseMetadata(fileName,tempMetadata)
+            for templateFile in self.templateFile:
+                tempMetadata = self.parseMetadata(templateFile,tempMetadata)
             self.traceMetadata = tempMetadata
-        else:
+        elif self.templateFile is not None:
             self.logError('Invalid templateFile formatting')
-        if not self.configFileExists or not self.readOnly:
+        # if not self.configFileExists or not self.readOnly:
+        if not self.readOnly:
             self.saveConfigFile(keepNull=False)
 
     def formatDataLogger(self):
@@ -203,12 +214,10 @@ class dataSourceConfiguration(dataSource):
         else:
             self.logError(msg=f"Cannot handle dataLogger object: {self.dataLogger}")
         
-    def parseMetadata(self,fileName,tempMetadata={}):
-        if self.filenameMatch and not fnmatch.fnmatch(os.path.split(fileName)[-1],self.filenameMatch):
-            self.logError(f'Template file: {os.path.split(fileName)[-1]} does not match expected pattern {self.filenameMatch}')
-        sourceAttributes = self.fread(filename=fileName,extractData=False)
+    def parseMetadata(self,templateFile,tempMetadata={}):
+        sourceAttributes = self.readSourceFile(filename=templateFile,extractData=False)
         for key,value in self.dataLogger.items():
-            if (value == '' or value is None) and hasattr(sourceAttributes,key):
+            if (value == self.__dataclass_fields__['dataLogger'].default_factory()[key]) and hasattr(sourceAttributes,key):
                 self.dataLogger[key] = getattr(sourceAttributes,key)
             elif hasattr(sourceAttributes,key) and getattr(sourceAttributes,key) != self.dataLogger[key]:
                 if type(self.dataLogger[key]) != list:
@@ -308,8 +317,8 @@ class dataSourceConfiguration(dataSource):
 #     measurementType: str = field(default=None,repr=False,
 #                             metadata={'options':['EC','BIOMET','Manual']})
     
-#     measurementHeight: float = field(default = None, metadata = {'description': 'Measurement height (Zm) in meters, of reference sonic'},repr=False)
-#     northOffset: float = field(default = None, metadata = {'description': 'Offset from North in degrees (clockwise) of reference sonic'},repr=False)
+#     measurementHeight: float = field(default = None, metadata=mdMap('Measurement height (Zm) in meters, of reference sonic'},repr=False)
+#     northOffset: float = field(default = None, metadata=mdMap('Offset from North in degrees (clockwise) of reference sonic'},repr=False)
 #     # canopyHeight: float = None
 #     dataLogger: Iterable = field(default_factory=dict)
 #     sensorConfigurations: Iterable = field(default_factory=dict)

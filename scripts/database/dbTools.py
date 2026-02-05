@@ -1,11 +1,11 @@
 # from scripts.database.dataSource import dataSource,dataSourceConfiguration
-from scripts.rawDataProcessing.rawFile import sourceFile
 from dataclasses import dataclass, field
 from scripts.database.project import project
-from submodules.helperFunctions.baseClass import baseClass
+# from submodules.helperFunctions.baseClass import baseClass
 from submodules.helperFunctions.dictFuncs import packDict,unpackDict,updateDict
-from scripts.database.dbTrace import firstStageTrace
+# from scripts.database.dbTrace import firstStageTrace
 from scripts.database.site import site
+# import matplotlib.pyplot as plt
 from zoneinfo import ZoneInfo
 import pandas as pd
 import numpy as np
@@ -88,8 +88,9 @@ class database(project):
                     else:
                         dbYear[col] = np.nan
                         dbYear[col] = (dbYear[col].fillna(data[col])).astype('float32')
+                
                 dbYear[col].values.tofile(os.path.join(self.dbFolder,col))
-            self.dbMap = updateDict(self.dbMap,packDict(self.subPath,fill=self.modTime()))
+            self.dbMap = updateDict(self.dbMap,packDict(self.subPath,fill=self.currentTimeString()))
             databaseConfiguration(projectPath=self.projectPath,dbMap=self.dbMap,readOnly=False)
         return(True)
 

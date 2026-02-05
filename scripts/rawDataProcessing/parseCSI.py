@@ -3,8 +3,8 @@
 from dataclasses import dataclass,field
 from collections import defaultdict
 from submodules.helperFunctions.parseFrequency import parseFrequency
-# from submodules.helperFunctions.dictFuncs import dcToDict
-from submodules.helperFunctions.baseClass import baseClass
+from submodules.helperFunctions.dictFuncs import updateDict
+from scripts.rawDataProcessing.rawFile import sourceFile
 import scripts.database.dataLoggers as dataLoggers
 from scripts.database.dbTrace import rawTrace
 from pandas.api.types import is_datetime64_any_dtype as is_datetime
@@ -70,21 +70,15 @@ class csiTrace(rawTrace):
         super().__post_init__()
 
 @dataclass(kw_only=True)
-class csiFile(baseClass):
+class csiFile(sourceFile):
     # Some files may contain multiple tables
     # Attributes common to a given file
-    fileName: str = field(
-        metadata={
-            'descriptions': 'Name of the raw data file'
-            })
     fileObject: object = field(default=None,repr=False,init=False)
     dataLogger: dict = field(default_factory=dict,repr=False,init=False)
     stationName: str = None
     loggerModel: str = None
     serialNumber: str = None
     program: str = None
-    dataTable: pd.DataFrame = field(repr=False,init=False)
-    datetimeTrace: pd.DataFrame = field(repr=False,init=False)
     fileTimestamp: datetime = field(repr=False,init=False)
     campbellBaseTime: float = field(
         default=631152000.0,
@@ -93,30 +87,20 @@ class csiFile(baseClass):
         metadata={
             'description':'Start of CSI epoch in POSIX epoch: pd.to_datetime("1990-01-01").timestamp()'
             })
-    fileFormat: str = field(
-        init=False,
-        metadata={
-            'description': 'Indicates the type of file (see options)',
-            'options':['TOB3','TOA5']
-            })
-    extractData: bool = field(
-        default=True,
-        repr=False,
-        metadata={
-            'description':'True (all data) / False (preview header where applicable)'
-            })
-    traceMetadata: dict = field(default=None,repr=False)
     
     def __post_init__(self):
-        self.UID = self.program.split(':')[-1].replace('.','-')
         super().__post_init__()
         self.processFile()
-        if hasattr(dataLoggers,self.loggerModel):
+        if self.loggerModel is None and self.extractData:
+            pass
+        elif hasattr(dataLoggers,self.loggerModel):
             logger = getattr(dataLoggers,self.loggerModel)
             self.dataLogger = logger(
                 stationName=self.stationName,
                 serialNumber=self.serialNumber,
                 ).to_dict(keepNull=False)
+        else:
+            self.logError('Could not identify logger')
         
     
 @dataclass(kw_only=True)
@@ -133,18 +117,19 @@ class csiTable(csiFile):
     mode: str = field(default='r',repr=False)
 
     def __post_init__(self):
-        if self.fileFormat == 'TOB3':
-            with open(self.fileName, self.mode) as self.fileObject:
-                self.asciiHeader = [self.readAsciiLine(self.fileObject.readline()) for l in range(self.nLinesAsciiHeader)]
-        else:
-            with open(self.fileName, self.mode) as self.fileObject:
-                self.asciiHeader = [self.readAsciiLine(self.fileObject.readline()) for l in range(self.nLinesAsciiHeader)]
-        if self.fileFormat != self.asciiHeader[0][0]:
-            self.logError(f"{self.fileName} is not in {self.fileFormat} format")
-        self.stationName=self.asciiHeader[0][1]
-        self.loggerModel=self.asciiHeader[0][2]
-        self.serialNumber=self.asciiHeader[0][3]
-        self.program=self.asciiHeader[0][5]
+        if self.nLinesAsciiHeader > 0:
+            if self.fileFormat == 'TOB3':
+                with open(self.fileName, self.mode) as self.fileObject:
+                    self.asciiHeader = [self.readAsciiLine(self.fileObject.readline()) for l in range(self.nLinesAsciiHeader)]
+            else:
+                with open(self.fileName, self.mode) as self.fileObject:
+                    self.asciiHeader = [self.readAsciiLine(self.fileObject.readline()) for l in range(self.nLinesAsciiHeader)]
+            if self.fileFormat != self.asciiHeader[0][0]:
+                self.logError(f"{self.fileName} is not in {self.fileFormat} format")
+            self.stationName=self.asciiHeader[0][1]
+            self.loggerModel=self.asciiHeader[0][2]
+            self.serialNumber=self.asciiHeader[0][3]
+            self.program=self.asciiHeader[0][5]
         super().__post_init__()
     
     def readAsciiLine(self,line):
@@ -155,12 +140,12 @@ class csiTable(csiFile):
         
     def finishTable(self):
         self.datetimeTrace = pd.DataFrame()
-        if is_datetime(self.dataTable[self.timestampName]):
+        if 'self.timestampName' in self.dataTable.columns and is_datetime(self.dataTable[self.timestampName]):
             self.datetimeTrace['datetime'] = self.dataTable[self.timestampName]
+        elif is_datetime(self.dataTable.index):
+            self.datetimeTrace['datetime'] = self.dataTable.index
         else:
             self.datetimeTrace['datetime'] = pd.to_datetime((self.dataTable['POSIX_Time']*1e9).astype('int64')+self.dataTable['NANOSECONDS'],unit='ns') 
-            # self.dataTable.index = pd.to_datetime((self.dataTable['POSIX_Time']*1e9).astype('int64')+self.dataTable['NANOSECONDS'],unit='ns') 
-        # breakpoint()
         if self.gpsDriftCorrection:
             # Identify gaps in time series
             Offset = (self.dataTable[self.timestampName].diff().fillna(self.samplingInterval)-self.samplingInterval).cumsum()
@@ -176,8 +161,6 @@ class TOA5(csiTable):
     def processFile(self):
         #First read metadata from files header
         self.fileTimestamp = datetime.strptime(re.search(r'([0-9]{4}\_[0-9]{2}\_[0-9]{2}\_[0-9]{4})', self.fileName.rsplit('.',1)[0]).group(0),'%Y_%m_%d_%H%M')
-        # with open(self.fileName) as self.fileObject:
-        #     self.readAsciiHeader()
         self.tableName = self.asciiHeader[0][-1]
     
         # get preview if not extracting all data
@@ -344,3 +327,127 @@ class TOB3(csiTable):
         # else:
         #     self.dataTable = self.dataTable.resample(f'{self.databaseInterval}s').asfreq()
             
+@dataclass(kw_only=True)
+class mixedArray(csiTable):
+    templateFile: str = None
+    nLinesAsciiHeader: int = 0
+
+    def __post_init__(self):
+        super().__post_init__()
+
+    def processFile(self):
+        if self.templateFile is None and self.extractData is False:
+            self.templateFile = self.fileName
+            self.readDEF()
+        elif self.templateFile is not None:
+            self.readDEF()
+        elif self.traceMetadata is None:
+            self.logError('Missing metadata')
+        if self.traceMetadata is not None and self.extractData:
+            self.readArray()
+            self.finishTable()
+
+    def readDEF(self):
+        if self.traceMetadata is None:
+            self.traceMetadata = {}
+        with open(self.templateFile,'r',encoding='utf-8-sig') as f:
+            lines = f.readlines()
+        Header,header = '',True
+        Wiring,wiring = '',False
+        Labels,labels = {},False
+        entries = False
+        tableID,samplingInterval,Tables,tables,ntables = None,None,{},False,0
+        self.mxCols = 0
+        for i,l in enumerate(lines):
+            if 'final storage' in l:
+                Storage = l
+            elif 'Output_Table' in l or tables:
+                tables = True
+                if 'Output_Table' in l:
+                    ntables += 1
+                    tableID,samplingInterval = [m.strip() for m in l.split('Output_Table')]
+                    tableID = int(tableID)
+                    Tables[tableID] = ''
+                else:
+                    Tables[tableID]  = Tables[tableID]+l
+            elif 'Table Entries' in l:
+                entries = True
+            elif 'Labels' in l or labels:
+                labels = True
+                if 'Labels' not in l:
+                    l = l.split()
+                    if len(l):
+                        if not l[0].isdigit():
+                            sensor = '_'.join(l)
+                        else:
+                            Labels[l[1]]=sensor
+            elif 'Wiring' in l or wiring:
+                if 'Wiring' in l:
+                    self.loggerModel = l.split('for ')[-1].rstrip('-\n')
+                wiring = True
+                Wiring = Wiring+l
+            elif header:
+                Header = Header+l
+
+        for ID in Tables:
+            data = {'fileName':[],'originalVariable':[],'operation':[],'units':[],'ignore':[]}
+            ix = 0
+            for v in Tables[ID].split():
+                if ix == 1:
+                    if v == str(ID):
+                        data['fileName'].append(f'{ID}-ID_{v}')
+                        ignore=True
+                    else:
+                        data['fileName'].append(f'{ID}-{v}')
+                        if 'RTM' in v:
+                            ignore=True
+                        else:
+                            ignore=False
+                    data['originalVariable'].append(v)
+                    operation = v.split('_')[-1]
+                    if operation not in ['AVG','STD','MAX','MIN','TOT']:
+                        operation = ''
+                    r = v.rstrip(f'_{operation}').split('_')
+                    if r[-1][0].isdigit():
+                        r.pop(-1)
+                    if len(r)>1:
+                        unit = r[-1]
+                    else:
+                        unit = ''
+                    data['operation'].append(operation)
+                    data['units'].append(unit)
+                    data['ignore'].append(ignore)
+                ix += 1
+                if ix ==3: ix = 0
+            
+            df = pd.DataFrame(data=data)
+            if len(df.index)>self.mxCols:
+                self.mxCols = len(df.index)
+            df['sensorID'] = ''
+            for l,sensor in Labels.items():
+                df.loc[df['originalVariable'].str.contains(l),'sensorID']=sensor
+            df.index = df['fileName']
+            df = {key:csiTrace.from_dict(value).to_dict() for key,value in df.to_dict('index').items()}
+            self.traceMetadata = updateDict(self.traceMetadata,df)
+            
+    def readArray(self):
+        # Count by arrayID prefixes to get max cols
+        self.mxCols = pd.DataFrame(data=[k.split('-') for k in self.traceMetadata.keys()],columns=['Array','Cols']).groupby('Array').count().max().values[0]
+        df = pd.read_csv(self.fileName,header=None,names=[i for i in range(self.mxCols)])
+        cols = list(self.traceMetadata.keys())
+        for i,ID in enumerate(df[0].unique()):
+            sub = df.loc[df[0]==ID].copy()
+            sub = sub.dropna(how='all',axis=1)
+            sub.columns = [c for c in cols if int(c.split('-')[0])==ID]
+            HHMM = sub[f'{ID}-Hour_Minute_RTM'].astype(str).str.zfill(4)
+            HH = HHMM.str[:2]
+            MM = HHMM.str[2:4]
+            SS = '00'
+            HHMM = HH+':'+MM+':'+SS
+            YJ = sub[f'{ID}-Year_RTM'].astype(str)+'-'+sub[f'{ID}-Day_RTM'].astype(str)
+            sub.index = pd.DatetimeIndex(pd.to_datetime(YJ,format='%Y-%j')+pd.to_timedelta(HHMM))
+            if i == 0:
+                self.dataTable = sub.copy()
+            else:
+                self.dataTable = self.dataTable.join(sub,how='outer')
+                

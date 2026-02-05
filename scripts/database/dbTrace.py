@@ -15,7 +15,6 @@ class trace(baseClass):
 
 @dataclass(kw_only=True)
 class rawTrace(trace):
-    # variableNumber: int = field(default=1,repr=False) # Counter variable to represent position (in source file or processing order)
     originalVariable: str
     fileName: str = None
     dateRange: list = field(default_factory=list)
@@ -36,7 +35,9 @@ class rawTrace(trace):
 
         if self.traceMetadata is not None:
             if self.partialMatch:
-                m = [k for k in self.traceMetadata if fnmatch.fnmatch(self.originalVariable,k)]
+                m = [k for k in self.traceMetadata if fnmatch.fnmatch(self.originalVariable,k) or fnmatch.fnmatch(self.fileName,k)]
+                # if self.debug:
+                #     breakpoint()
                 if len(m)>1:
                     self.logError('Multi-match, give more precise fnmatch wildcard')
                 elif len(m)==1:
