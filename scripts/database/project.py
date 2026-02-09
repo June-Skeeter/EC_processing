@@ -43,10 +43,10 @@ class project(baseClass):
                 setattr(self,key,value)
 
     @classmethod
-    def template(cls,projectPath=None):
+    def template(cls,projectPath=None,kwargs={}):
         if not cls.__name__.endswith('Configuration'):
             sys.exit('template generation is only for configuration classes')
-        if projectPath is None:
+        if projectPath is None and 'projectPath' not in kwargs:
             sys.exit('Provide project path to generate template file')
         # Fill required args with variable name
         signature = inspect.signature(cls.__init__)
@@ -57,7 +57,7 @@ class project(baseClass):
             if param.name not in ['self','projectPath'] and param.default is param.empty:
                 required_args[param.name] = param.name
         hiddenDefaults = {'typeCheck':False,'readOnly':True,'fromFile':False}
-        kwargs = required_args|hiddenDefaults    
+        kwargs = required_args|hiddenDefaults|kwargs
         template = cls.from_dict(kwargs)
         templateFilePath = template.configFilePath
         template = template.to_dict()

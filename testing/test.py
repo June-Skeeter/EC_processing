@@ -10,9 +10,11 @@ import scripts.database.sensorModels as sensorModels
 
 from submodules.helperFunctions.cmdParse import cmdParse
 
-defaultArgs = {'a':'b'}
-# print(
-cmdParse(defaultArgs)
+# defaultArgs = {'projectPath':os.getcwd()}
+# # print(
+# cmdParse(defaultArgs)
+
+
 
 # # parseCSI.mixedArray(fileName=r'testing\data\WX_data.dat',arrayDEF=r'testing\data\OverWinter.DEF')
 # defPath = r"testing\data\PSTS.DEF"
