@@ -18,7 +18,7 @@ cl = project.project.fromTemplate(fp)
 print(cl)
 # if len(args['siteID'])==0:
 #     args.pop('siteID')
-#     site.siteConfiguration.template(kwargs=args)
+site.siteConfiguration.template(kwargs=args)
 # else:
 #     for id in args['siteID']:
 #         kwargs = args.copy()
