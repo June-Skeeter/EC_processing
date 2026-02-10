@@ -2,3 +2,5 @@
 testing/outputs
 *__pycache__/
 *.pyc
+*projectPath
+*testing/permafrostMethane

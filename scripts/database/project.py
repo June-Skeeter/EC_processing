@@ -42,45 +42,46 @@ class project(baseClass):
                 ):
                 setattr(self,key,value)
 
-    @classmethod
-    def template(cls,projectPath=None,kwargs={}):
-        if not cls.__name__.endswith('Configuration'):
-            sys.exit('template generation is only for configuration classes')
-        if projectPath is None and 'projectPath' not in kwargs:
-            sys.exit('Provide project path to generate template file')
-        # Fill required args with variable name
-        signature = inspect.signature(cls.__init__)
-        required_args = {'projectPath':projectPath,
-                         'lastModified':baseClass.currentTimeString()}
-        for param in signature.parameters.values():
-            # Exclude 'self' and parameters with default values
-            if param.name not in ['self','projectPath'] and param.default is param.empty:
-                required_args[param.name] = param.name
-        hiddenDefaults = {'typeCheck':False,'readOnly':True,'fromFile':False}
-        kwargs = required_args|hiddenDefaults|kwargs
-        template = cls.from_dict(kwargs)
-        templateFilePath = template.configFilePath
-        template = template.to_dict()
-        data = CommentedMap()
-        for key,value in template.items():
-            data[key] = value
+    # @classmethod
+    # def template(cls,projectPath=None,kwargs={}):
+    #     if not cls.__name__.endswith('Configuration'):
+    #         sys.exit('template generation is only for configuration classes')
+    #     if projectPath is None and 'projectPath' not in kwargs:
+    #         sys.exit('Provide project path to generate template file')
+    #     # Fill required args with variable name
+    #     signature = inspect.signature(cls.__init__)
+    #     required_args = {'projectPath':projectPath,
+    #                      'lastModified':baseClass.currentTimeString()}
+    #     for param in signature.parameters.values():
+    #         # Exclude 'self' and parameters with default values
+    #         if param.name not in ['self','projectPath'] and param.default is param.empty:
+    #             required_args[param.name] = param.name
+    #     hiddenDefaults = {'typeCheck':False,'readOnly':True,'fromFile':False}
+    #     kwargs = required_args|hiddenDefaults|kwargs
+    #     template = cls.from_dict(kwargs)
+    #     templateFilePath = template.configFilePath
+    #     template = template.to_dict()
+    #     data = CommentedMap()
+    #     for key,value in template.items():
+    #         data[key] = value
 
-            comment = f'datatype={cls.__dataclass_fields__[key].type.__name__}; '
-            # if len( cls.__dataclass_fields__[key].metadata.items()) == 0:
-            #     sys.exit(f"{cls.__name__}: {key} missing metadata")
-            for desc,com in cls.__dataclass_fields__[key].metadata.items():
+    #         comment = f'datatype={cls.__dataclass_fields__[key].type.__name__}; '
+    #         # if len( cls.__dataclass_fields__[key].metadata.items()) == 0:
+    #         #     sys.exit(f"{cls.__name__}: {key} missing metadata")
+    #         for desc,com in cls.__dataclass_fields__[key].metadata.items():
 
-                comment = comment + f"{desc}={com}; "
-            data.yaml_add_eol_comment(comment,key=key)
-        baseClass().saveDict(data,templateFilePath,header=cls.__dataclass_fields__['header'].default)
-        # os.makedirs(os.path.split(templateFilePath)[0],exist_ok=True)
-        # with open(templateFilePath,'w') as f:
-        #     f.write(cls.__dataclass_fields__['header'].default)
-        #     yaml.dump(data,f)
+    #             comment = comment + f"{desc}={com}; "
+    #         data.yaml_add_eol_comment(comment,key=key)
+    #     baseClass().saveDict(data,templateFilePath,header=cls.__dataclass_fields__['header'].default)
+    #     # os.makedirs(os.path.split(templateFilePath)[0],exist_ok=True)
+    #     # with open(templateFilePath,'w') as f:
+    #     #     f.write(cls.__dataclass_fields__['header'].default)
+    #     #     yaml.dump(data,f)
 
 
 @dataclass(kw_only=True)
 class configCommon:
+    projectPath: str = field(metadata=mdMap('Root path of the current project'),repr=False)
     lastModified: str = field(default=None,metadata=mdMap('last time configuration file was modified programmatically'))
     fromFile: bool = field(default=True,repr=False)
     readOnly: bool = field(default=False, repr=False)
@@ -98,8 +99,8 @@ Created: {datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}
 class projectConfiguration(configCommon,project):
 
     header: str = field(default=headerText,repr=False,init=False) # YAML header, must be treated 
-    createdBy: str = field(default='',metadata=mdMap('Name of project creator'))
-    projectDescription: str = field(default='',metadata=mdMap('Description of the project'))
+    createdBy: str = field(default=None,metadata=mdMap('Name of project creator'))
+    projectDescription: str = field(default=None,metadata=mdMap('Description of the project'))
 
 
 
