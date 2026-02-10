@@ -14,11 +14,13 @@ if args['projectPath'] == 'test' and os.path.isdir(args['projectPath']):
 args = {}
 
 fp = project.projectConfiguration.template(kwargs=args)
-cl = project.project.fromTemplate(fp)
-print(cl)
+# cl = project.project.fromTemplate(fp)
+# print(cl)
 # if len(args['siteID'])==0:
 #     args.pop('siteID')
-site.siteConfiguration.template(kwargs=args)
+sp = site.siteConfiguration.template(kwargs=args)
+cl = project.project.fromTemplate(sp)
+print(cl.__dataclass_fields__)
 # else:
 #     for id in args['siteID']:
 #         kwargs = args.copy()

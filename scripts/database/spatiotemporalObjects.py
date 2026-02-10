@@ -19,7 +19,7 @@ class spatiotemporalObject():
     timezone: str = field(
         default = 'UTC',
         metadata = {
-            'description': 'UTC offset.  For nested values, assumed to be same as parent object.  Optionally to provide if different from parent value.'
+            'description': 'UTC is the assumed default, otherwise give alternative offset.  Consult zoneinfo.available_timezones() for list of all timezones.  For nested values, assumed to be same as parent object.  Optionally to provide if different from parent value.'
     })
     UID: str = field(default=None,repr=False)
     UID_link: str = field(default=None,repr=False)
