@@ -8,21 +8,16 @@ from submodules.helperFunctions.cmdParse import cmdParse
 defaultArgs = {'projectPath':os.getcwd(),'siteID':[]}
 args = cmdParse(defaultArgs)
 
-if args['projectPath'] == 'test' and os.path.isdir(args['projectPath']):
-    shutil.rmtree(args['projectPath'])
+# if args['projectPath'] == 'test' and os.path.isdir(args['projectPath']):
+#     shutil.rmtree(args['projectPath'])
 
-args = {}
+# args = {}
 
-fp = project.projectConfiguration.template(kwargs=args)
-# cl = project.project.fromTemplate(fp)
-# print(cl)
-# if len(args['siteID'])==0:
-#     args.pop('siteID')
-sp = site.siteConfiguration.template(kwargs=args)
-cl = project.project.fromTemplate(sp)
-print(cl.__dataclass_fields__)
-# else:
-#     for id in args['siteID']:
-#         kwargs = args.copy()
-#         kwargs['siteID'] = id
-#         site.siteConfiguration.template(kwargs=kwargs)
+# fp = project.projectConfiguration.template(kwargs=args)
+# sp = site.siteConfiguration.template(kwargs=args)
+
+# dp = dataSource.dataSourceConfiguration.template(kwargs=args)
+# cl = dataSource.dataSourceConfiguration.fromTemplate(dp)
+
+prj = project.projectConfiguration.from_yaml(r'C:\Users\jskeeter\gsc-permafrost\EC_processing\projectPath\projectConfiguration.yml',kwargs={'projectPath':'projectPath'})
+print(prj)

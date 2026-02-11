@@ -31,8 +31,11 @@ if reset:
         createdBy='June Skeeter',
         projectDescription='Sandbox for testing analysis of Swiss Cheese Lake Data',
         verbose=False)
+    
+    # prj = project.project(projectPath=projectPath)
+    # print(prj)
 
-    # Define Site(s)
+    # # Define Site(s)
     site.siteConfiguration(
         verbose=False,
         projectPath=projectPath,
@@ -46,6 +49,9 @@ if reset:
         description = 'Wet sedge meadow, continuous permafrost',
         canopyHeight=0.4,
         )
+    breakpoint()
+    s = site.site(projectPath=projectPath,siteID='SCL')
+    print(s)
 
 #     # Define data source(s)
 #     dataSource.dataSourceConfiguration(
