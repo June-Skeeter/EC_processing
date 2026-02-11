@@ -28,13 +28,15 @@ class project(baseClass):
         self.projectPath = os.path.normpath(self.projectPath)
         if not type(self).__name__.endswith('Configuration'):
             self.syncConfig(projectConfiguration)
+        print(type(self))
+        print('??')
         if self.configName is not None:
             self.configFilePath = os.path.normpath(os.path.join(self.projectPath,self.subPath,self.configName))
         super().__post_init__()
 
     def syncConfig(self,config):
         args = {k:getattr(self,k) for k in config.requiredArgs()}
-        config = config.from_dict(args|{'verbose':self.verbose,'debug':self.debug,'readOnly':self.readOnly})
+        config = config.from_dict(args|{'verbose':self.verbose,'debug':self.debug,'readOnly':True})
         exclude = list(baseClass.__dataclass_fields__.keys()) + [k for k,v in project.__dataclass_fields__.items() if not v.repr]
         for key,value in config.__dict__.items():
             if (key not in exclude
@@ -64,8 +66,6 @@ class projectConfiguration(configCommon,project):
     header: str = field(default=headerText,repr=False,init=False) # YAML header, must be treated 
     createdBy: str = field(default=None,metadata=mdMap('Name of project creator'))
     projectDescription: str = field(default=None,metadata=mdMap('Description of the project'))
-
-
 
     def __post_init__(self):
         self.configName = 'projectConfiguration.yml'

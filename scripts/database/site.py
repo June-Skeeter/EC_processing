@@ -14,6 +14,7 @@ class site(pointObject,project):
             self.formatUID('siteID')
         super().__post_init__()
         if not type(self).__name__.endswith('siteConfiguration'):
+            print(type(self))
             self.syncConfig(siteConfiguration)
 
 headerText = f'''

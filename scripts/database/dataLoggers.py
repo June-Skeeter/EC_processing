@@ -57,6 +57,7 @@ class CR10X(dataLogger):
 class HOBO(dataLogger):
     manufacturer: str = 'onset'
     fileType: str = 'csv'
+    
 @dataclass
 class LI7550(dataLogger):
     manufacturer: str = 'LICOR'
