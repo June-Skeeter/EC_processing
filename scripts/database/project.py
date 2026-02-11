@@ -27,57 +27,20 @@ class project(baseClass):
             return
         self.projectPath = os.path.normpath(self.projectPath)
         if not type(self).__name__.endswith('Configuration'):
-            self.syncConfig(projectConfiguration.from_dict(self.__dict__))
+            self.syncConfig(projectConfiguration)
         if self.configName is not None:
             self.configFilePath = os.path.normpath(os.path.join(self.projectPath,self.subPath,self.configName))
         super().__post_init__()
 
     def syncConfig(self,config):
-        config = config.from_dict(self.to_dict(keepNull=False)|{'projectPath':self.projectPath,'verbose':self.verbose,'debug':self.debug,'readOnly':self.readOnly})
+        args = {k:getattr(self,k) for k in config.requiredArgs()}
+        config = config.from_dict(args|{'verbose':self.verbose,'debug':self.debug,'readOnly':self.readOnly})
         exclude = list(baseClass.__dataclass_fields__.keys()) + [k for k,v in project.__dataclass_fields__.items() if not v.repr]
-        
         for key,value in config.__dict__.items():
-            if (key not in exclude #and value is not None 
+            if (key not in exclude
                 and (key not in self.__dict__.keys() or self.__dict__[key] is None)
                 ):
                 setattr(self,key,value)
-
-    # @classmethod
-    # def template(cls,projectPath=None,kwargs={}):
-    #     if not cls.__name__.endswith('Configuration'):
-    #         sys.exit('template generation is only for configuration classes')
-    #     if projectPath is None and 'projectPath' not in kwargs:
-    #         sys.exit('Provide project path to generate template file')
-    #     # Fill required args with variable name
-    #     signature = inspect.signature(cls.__init__)
-    #     required_args = {'projectPath':projectPath,
-    #                      'lastModified':baseClass.currentTimeString()}
-    #     for param in signature.parameters.values():
-    #         # Exclude 'self' and parameters with default values
-    #         if param.name not in ['self','projectPath'] and param.default is param.empty:
-    #             required_args[param.name] = param.name
-    #     hiddenDefaults = {'typeCheck':False,'readOnly':True,'fromFile':False}
-    #     kwargs = required_args|hiddenDefaults|kwargs
-    #     template = cls.from_dict(kwargs)
-    #     templateFilePath = template.configFilePath
-    #     template = template.to_dict()
-    #     data = CommentedMap()
-    #     for key,value in template.items():
-    #         data[key] = value
-
-    #         comment = f'datatype={cls.__dataclass_fields__[key].type.__name__}; '
-    #         # if len( cls.__dataclass_fields__[key].metadata.items()) == 0:
-    #         #     sys.exit(f"{cls.__name__}: {key} missing metadata")
-    #         for desc,com in cls.__dataclass_fields__[key].metadata.items():
-
-    #             comment = comment + f"{desc}={com}; "
-    #         data.yaml_add_eol_comment(comment,key=key)
-    #     baseClass().saveDict(data,templateFilePath,header=cls.__dataclass_fields__['header'].default)
-    #     # os.makedirs(os.path.split(templateFilePath)[0],exist_ok=True)
-    #     # with open(templateFilePath,'w') as f:
-    #     #     f.write(cls.__dataclass_fields__['header'].default)
-    #     #     yaml.dump(data,f)
-
 
 @dataclass(kw_only=True)
 class configCommon:

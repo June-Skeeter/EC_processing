@@ -11,6 +11,7 @@ import submodules.helperFunctions.dictFuncs as dictFuncs
 from scripts.database.sensorModels import sensorModels
 import scripts.rawDataProcessing.parseCSI as parseCSI
 import scripts.rawDataProcessing.parseCSV as parseCSV
+from ruamel.yaml.comments import CommentedMap
 import fnmatch
 import numpy as np
 
@@ -207,11 +208,12 @@ class dataSourceConfiguration(configCommon,dataSource):
                 self.logError(f'Could not find data logger: {self.dataLogger}')
         elif is_dataclass(self.dataLogger):
             self.dataLogger = self.dataLogger.to_dict()
-        elif type(self.dataLogger) is dict and 'loggerModel' in self.dataLogger:
+        elif type(self.dataLogger) in [dict,CommentedMap] and 'loggerModel' in self.dataLogger:
             self.dataLogger=getattr(dataLoggers,self.dataLogger['loggerModel']).from_dict(self.dataLogger).to_dict()
-        elif type(self.dataLogger) is dict:
+        elif type(self.dataLogger) in [dict,CommentedMap]:
             self.dataLogger=dataLoggers.dataLogger.from_dict(self.dataLogger).to_dict()
         else:
+            breakpoint()
             self.logError(msg=f"Cannot handle dataLogger object: {self.dataLogger}")
         
     def parseMetadata(self,templateFile,tempMetadata={}):

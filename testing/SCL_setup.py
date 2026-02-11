@@ -32,8 +32,8 @@ if reset:
         projectDescription='Sandbox for testing analysis of Swiss Cheese Lake Data',
         verbose=False)
     
-    # prj = project.project(projectPath=projectPath)
-    # print(prj)
+    prj = project.project(projectPath=projectPath)
+    print(prj)
 
     # # Define Site(s)
     site.siteConfiguration(
@@ -49,77 +49,80 @@ if reset:
         description = 'Wet sedge meadow, continuous permafrost',
         canopyHeight=0.4,
         )
-    breakpoint()
+    # breakpoint()
     s = site.site(projectPath=projectPath,siteID='SCL')
     print(s)
 
-#     # Define data source(s)
-#     dataSource.dataSourceConfiguration(
-#         verbose=False,
-#         projectPath=projectPath,
-#         siteID='SCL',
-#         dataSourceID='BIOMET_V1',
-#         measurementType='BIOMET',
-#         startDate='2024-07-10 00:00:00+00:00',
-#         endDate='2024-09-15 00:00:00+00:00',
-#         templateFile=os.path.join(data,'Met_Data120.dat') ,
-#         filenameMatch = 'Met_*.dat',
-#         fileFormat = 'TOB3',
-#         dataLogger='CR1000X',
-#         sensorInventory=[
-#             sensorModels.HMP155(measurementHeight=3,variables=['AirTC_Avg','RH']),
-#             sensorModels.NRLite(measurementHeight=1,variables=['NetRad_Avg','NetRad_Corrected_Avg']),
-#             sensorModels.LI200x(measurementHeight=1,variables=['SlrW_Avg']),
-#             sensorModels.PLS(),
-#             sensorModels.BaroVue()
-#             ]+[sensorModels.thermocouple()]*3,
-#         traceMetadata = {
-#             'AirTC_Avg':{'variableName':'TA_1_1_1'},
-#             'RH':{'variableName':'RH_1_1_1'},
-#             'NetRad_Avg':{'ignore':True},
-#             'NetRad_Corrected_Avg':{'variableName':'NETRAD_1_1_1'},
-#             }
-#         )
+    # Define data source(s)
+    dataSource.dataSourceConfiguration(
+        verbose=False,
+        projectPath=projectPath,
+        siteID='SCL',
+        dataSourceID='BIOMET_V1',
+        measurementType='BIOMET',
+        startDate='2024-07-10 00:00:00+00:00',
+        endDate='2024-09-15 00:00:00+00:00',
+        templateFile=os.path.join(data,'Met_Data120.dat') ,
+        filenameMatch = 'Met_*.dat',
+        fileFormat = 'TOB3',
+        dataLogger='CR1000X',
+        sensorInventory=[
+            sensorModels.HMP155(measurementHeight=3,variables=['AirTC_Avg','RH']),
+            sensorModels.NRLite(measurementHeight=1,variables=['NetRad_Avg','NetRad_Corrected_Avg']),
+            sensorModels.LI200x(measurementHeight=1,variables=['SlrW_Avg']),
+            sensorModels.PLS(),
+            sensorModels.BaroVue()
+            ]+[sensorModels.thermocouple()]*3,
+        traceMetadata = {
+            'AirTC_Avg':{'variableName':'TA_1_1_1'},
+            'RH':{'variableName':'RH_1_1_1'},
+            'NetRad_Avg':{'ignore':True},
+            'NetRad_Corrected_Avg':{'variableName':'NETRAD_1_1_1'},
+            }
+        )
 
-#     dataSource.dataSourceConfiguration(
-#         verbose=False,
-#         projectPath=projectPath,
-#         siteID='SCL',
-#         dataSourceID='EC_V1',
-#         measurementType='EC',
-#         # startDate='2024-07-10 00:00:00+00:00',
-#         endDate='2024-09-15 00:00:00+00:00',
-#         templateFile=os.path.join(data,'Flux_Data1426.dat') ,
-#         filenameMatch = 'Flux_*.dat',
-#         fileFormat = 'TOB3',
-#         dataLogger='CR1000X',
-#         sensorInventory=[sensorModels.CSAT3(
-#                             measurementHeight=3.285,
-#                             northOffset=33.0,
-#                             variables=['Ux','Uy','Uz','Ts','Diagnostic_CSAT']
-#                             ),
-#                         sensorModels.LI7500(
-#                             xSeparation=0.15,
-#                             ySeparation=-0.06,
-#                             verticalSeparation=0.0,
-#                             variables=["CO2","CO2","press","LI7500_diag","LI7550_SignalStrength"]
-#                             ),
-#                         sensorModels.LI7700(
-#                             xSeparation=0.23,
-#                             ySeparation=-0.13,
-#                             verticalSeparation=0.04,
-#                             variables=["Diagnostic_7700","CH4_density","CH4_mole_fraction","Temperature","Pressure","RSSI"]),
-#         ],
-#         traceMetadata = {
-#             "CO2":{'measurementType':'molar_density'},
-#             "CO2":{'measurementType':'molar_density'},
-#             "CH4_density":{'measurementType':'molar_density'},
-#             "CH4_mole_fraction":{'measurementType':'mixing_ratio'},
-#             "seconds":{'ignore':True},
-#             "nanoseconds":{'ignore':True},
-#             }
-#         )
+    dataSource.dataSourceConfiguration(
+        verbose=False,
+        projectPath=projectPath,
+        siteID='SCL',
+        dataSourceID='EC_V1',
+        measurementType='EC',
+        # startDate='2024-07-10 00:00:00+00:00',
+        endDate='2024-09-15 00:00:00+00:00',
+        templateFile=os.path.join(data,'Flux_Data1426.dat') ,
+        filenameMatch = 'Flux_*.dat',
+        fileFormat = 'TOB3',
+        dataLogger='CR1000X',
+        sensorInventory=[sensorModels.CSAT3(
+                            measurementHeight=3.285,
+                            northOffset=33.0,
+                            variables=['Ux','Uy','Uz','Ts','Diagnostic_CSAT']
+                            ),
+                        sensorModels.LI7500(
+                            xSeparation=0.15,
+                            ySeparation=-0.06,
+                            verticalSeparation=0.0,
+                            variables=["CO2","CO2","press","LI7500_diag","LI7550_SignalStrength"]
+                            ),
+                        sensorModels.LI7700(
+                            xSeparation=0.23,
+                            ySeparation=-0.13,
+                            verticalSeparation=0.04,
+                            variables=["Diagnostic_7700","CH4_density","CH4_mole_fraction","Temperature","Pressure","RSSI"]),
+        ],
+        traceMetadata = {
+            "CO2":{'measurementType':'molar_density'},
+            "CO2":{'measurementType':'molar_density'},
+            "CH4_density":{'measurementType':'molar_density'},
+            "CH4_mole_fraction":{'measurementType':'mixing_ratio'},
+            "seconds":{'ignore':True},
+            "nanoseconds":{'ignore':True},
+            }
+        )
 
+
+    ds = dataSource.dataSource(projectPath=projectPath,siteID='SCL',dataSourceID='EC_V1')
+    print(ds)
 
 #     dataSource.dataSourceConfiguration(
 #         verbose=False,
